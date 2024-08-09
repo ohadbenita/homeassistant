@@ -1,4 +1,4 @@
-name: Validate Home Assistant Configuration
+name: Config Validation
 
 on:
   push:
@@ -9,11 +9,17 @@ on:
       - master
 
 jobs:
-  check:
-    name: Home Assistant config check
+  validate:
+    name: Validate HASS configuration
     runs-on: ubuntu-latest
+
     steps:
-      - name: checkout
-        uses: actions/checkout@master
-      - name: check config
-        uses: glitchcrab/action-hass-check-config@main
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Pull Home Assistant Docker image
+        run: docker pull ghcr.io/home-assistant/home-assistant:stable
+
+      - name: Validate Configuration
+        run: |
+          docker run --rm -v $PWD:/config ghcr.io/home-assistant/home-assistant:stable python /usr/src/homeassistant/homeassistant/scripts/check_config.py -c /config
