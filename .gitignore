@@ -1,0 +1,17 @@
+*.db
+*.log
+*.yaml~
+secrets.yaml
+__pycache__/
+.vscode/
+.cloud/
+.storage/
+custom_components/
+backups/
+home-assistant_v2.db
+home-assistant.log*
+deps/
+www/
+image/
+.HA_VERSION
+.DS_Store
