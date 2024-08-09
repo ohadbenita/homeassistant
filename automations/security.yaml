@@ -81,3 +81,27 @@
       target:
         entity_id: >
           {{ states.lock | map(attribute='entity_id') | list }}
+
+
+- alias: Open covers when away mode is turned off
+  id: security_open_covers_away_mode_off
+  initial_state: true
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: input_boolean.away_mode
+      to: 'off'
+  condition:
+    - condition: state
+      entity_id: person.ohad
+      state: 'home'
+    - condition: state
+      entity_id: sensor.ohadbenita_ssid
+      state: 'Benita'
+  action:
+    - service: cover.set_cover_position
+      data:
+        position: 90
+      target:
+        entity_id: >
+          {{ states.cover | map(attribute='entity_id') | list }}
