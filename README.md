@@ -2,6 +2,8 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/ohadbenita/homeassistant.svg?style=plasticr)](https://github.com/ohadbenita/homeassistant/commits/master)
 [![Commits Year](https://img.shields.io/github/commit-activity/y/ohadbenita/homeassistant.svg?style=plasticr)](https://github.com/ohadbenita/homeassistant/commits/master)
 [![GitHub stars](https://img.shields.io/github/stars/ohadbenita/homeassistant.svg?style=plasticr)](https://github.com/ohadbenita/homeassistant/stargazers)
+[![Discord](https://img.shields.io/discord/702447199681904720.svg?style=plasticr)](https://discord.gg/ayZ3Kkg)
+
 
 # Ohadbenita's Home Assistant Configuration
 
@@ -48,11 +50,12 @@ Contributions are welcome! If you have any suggestions, bug reports, or feature 
 
 ## Community
 
-Join our community on Discord to discuss Home Assistant configurations, share ideas, and get help.
+Join our [community on Discord](https://discord.gg/ayZ3Kkg) to discuss Home Assistant configurations, share ideas, and get help
 
 ## Support
 
 If you find this configuration helpful, consider supporting my work by buying me a coffee:
+
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/OeZ1R5f)
 
 ---
