@@ -48,8 +48,7 @@ Contributions are welcome! If you have any suggestions, bug reports, or feature 
 
 ## Community
 
-Join our community on Discord to discuss Home Assistant configurations, share ideas, and get help:
-[![Discord](https://img.shields.io/discord/ayZ3Kkg.svg?style=plasticr)](https://discord.gg/ayZ3Kkg)
+Join our community on Discord to discuss Home Assistant configurations, share ideas, and get help.
 
 ## Support
 
