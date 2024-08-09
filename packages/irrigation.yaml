@@ -1,0 +1,71 @@
+group:
+  irrigation_switches:
+    name: Irrigation switches
+    entities:
+      - switch.irrigation_l5
+      - switch.irrigation_l4
+      - switch.irrigation_l2
+      - switch.irrigation_l3
+
+automation:
+  - alias: Weekly Irrigation Cycle
+    id: irrigation_simple_weekly_schedule
+    initial_state: true
+    trigger:
+      - platform: sun
+        event: sunset
+        offset: "2:00:00"
+      - platform: sun
+        event: sunrise
+        offset: "-2:00:00"
+
+    action:
+      - service: switch.turn_on
+        entity_id: switch.irrigation_l6 # master
+      - delay: "00:00:05"
+      - service: switch.turn_on
+        entity_id: group.irrigation_switches
+
+      - delay: "00:20:00"
+
+      - service: switch.turn_off
+        entity_id: group.irrigation_switches
+      - delay: "00:00:05"
+      - service: switch.turn_off
+        entity_id: switch.irrigation_l6 # master
+
+
+  - alias: Irrigation Watchdog
+    id: irrigation_watchdog_shutdown
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/30"
+        seconds: "*"
+
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: switch.irrigation_l6
+          state: 'on'
+          for:
+            minutes: 30
+
+    action:
+      - service: switch.turn_off
+        entity_id: switch.irrigation_l6
+      - service: switch.turn_off
+        entity_id: group.irrigation_switches
+
+      - wait_for_trigger:
+        - platform: state
+          entity_id: switch.irrigation_l6
+          to: 'off'
+        timeout:
+          minutes: 2
+        continue_on_timeout: false
+
+      - service: notify.ohad_telegram
+        data:
+          message: 'Irrigation Watchdog had to stop the irrigation, please check the issue with the automation'

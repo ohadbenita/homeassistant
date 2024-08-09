@@ -1,0 +1,34 @@
+- alias: "Turn on cloak room light on motion"
+  id: cloak_room_turn_light_on_motion
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.cloak_room_occupancy
+      to: 'on'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: state
+      entity_id: binary_sensor.cloak_room_occupancy
+      state: 'on'
+  action:
+    - service: homeassistant.turn_on
+      entity_id: switch.shelly1pmminig3_dcda0cafe368_switch_0
+
+
+- alias: "Turn off cloak room light when no motion is detected"
+  id: cloak_room_turn_light_off_when_no_motion_detected
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.cloak_room_occupancy
+      to: 'off'
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: state
+      entity_id: binary_sensor.cloak_room_occupancy
+      state: 'off'
+  action:
+    - service: homeassistant.turn_off
+      entity_id: switch.shelly1pmminig3_dcda0cafe368_switch_0

@@ -1,0 +1,48 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+lovelace:
+  resources:
+    - url: /local/mushroom.js
+      type: module
+
+homeassistant:
+  packages: !include_dir_named packages/
+  auth_mfa_modules:
+    - type: totp
+
+recorder:
+  purge_keep_days: 90
+  db_url: !secret hass_db_url
+
+automation: !include_dir_merge_list automations
+input_text: !include input_text.yaml
+input_boolean: !include input_boolean.yaml
+notify: !include notification.yaml
+scene: !include scenes.yaml
+script: !include_dir_merge_named scripts
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - !secret nginx_docker_ip
+    - !secret nginx_alternate_docker_ip
+  ip_ban_enabled: True
+  login_attempts_threshold: 10
+
+logger:
+  default: info
+  logs:
+    homeassistant.components.telegram_bot: debug
+
+telegram_bot:
+  - platform: polling
+    api_key: !secret telegram_chat_bot_api_key
+    allowed_chat_ids:
+      - !secret telegram_homeassistant_notifications_chat_id
+

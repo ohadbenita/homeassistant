@@ -1,0 +1,3 @@
+- name: ohad_telegram
+  platform: telegram
+  chat_id: !secret telegram_homeassistant_notifications_chat_id

@@ -1,0 +1,83 @@
+- alias: Lock the Entrance door at night
+  id: nuki_entrance_door_lock_at_night
+  initial_state: true
+  trigger:
+    - platform: time
+      at: "23:00:00"
+    - platform: time
+      at: "00:00:00"
+
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: lock.entrance_door
+        state: unlocked
+
+  action:
+    - service: lock.lock
+      target:
+        entity_id: lock.entrance_door
+
+- alias: Lock the kitchen door at night
+  id: nuki_kitchen_door_lock_at_night
+  initial_state: true
+  trigger:
+    - platform: time
+      at: "23:00:00"
+    - platform: time
+      at: "00:00:00"
+
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: lock.kitchen_door
+        state: unlocked
+
+  action:
+    - service: lock.lock
+      target:
+        entity_id: lock.kitchen_door
+
+- alias: Lock the kids bathroom door at night
+  id: nuki_kids_bathroom_door_lock_at_night
+  initial_state: true
+  trigger:
+    - platform: time
+      at: "23:00:00"
+    - platform: time
+      at: "00:00:00"
+
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: lock.kids_bathroom_door
+        state: unlocked
+
+  action:
+    - service: lock.lock
+      target:
+        entity_id: lock.kids_bathroom_door
+
+
+- alias: Close everything when away mode is turned on
+  id: security_set_all_covers_to_5_on_away_mode
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: input_boolean.away_mode
+      to: 'on'
+
+  action:
+    - service: cover.set_cover_position
+      data:
+        position: 5
+      target:
+        entity_id: >
+          {{ states.cover | map(attribute='entity_id') | list }}
+    - service: lock.lock
+      target:
+        entity_id: >
+          {{ states.lock | map(attribute='entity_id') | list }}

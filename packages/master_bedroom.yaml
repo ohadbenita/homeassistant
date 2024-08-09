@@ -1,0 +1,90 @@
+input_datetime:
+  ohad_iphone_alarm:
+    name: Ohad iPhone alarm
+    has_date: true
+    has_time: true
+
+automation:
+  - alias: "Turn on master bedroom wardrobe light on motion"
+    id: master_bedroom_wardrobe_turn_light_on_motion
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_wardrobe_contact
+        to: 'on'
+      - platform: homeassistant
+        event: start
+    condition:
+      - condition: state
+        entity_id: binary_sensor.master_bedroom_wardrobe_contact
+        state: 'on'
+    action:
+      - service: homeassistant.turn_on
+        entity_id: switch.shelly1pmminig3_34b7da8da318_switch_0
+
+
+  - alias: "Turn off master bedroom wardrobe light when no motion is detected"
+    id: master_bedroom_wardrobe_turn_light_off_no_motion_detected
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_wardrobe_contact
+        to: 'off'
+      - platform: homeassistant
+        event: start
+    condition:
+      - condition: state
+        entity_id: binary_sensor.master_bedroom_wardrobe_contact
+        state: 'off'
+    action:
+      - service: homeassistant.turn_off
+        entity_id: switch.shelly1pmminig3_34b7da8da318_switch_0
+
+
+  - alias: 'Open shutters in the morning when the alarm goes off'
+    id: master_bedroom_shutters_open_alarm_goes_off
+    trigger:
+      - platform: state
+        entity_id: input_datetime.ohad_iphone_alarm
+
+    condition:
+      - condition: template
+        value_template: >
+          {% set alarm_time = states('input_datetime.ohad_iphone_alarm') %}
+          {% set current_time = now().strftime('%Y-%m-%d %H:%M:00') %}
+          {% set current_time_obj = strptime(current_time, '%Y-%m-%d %H:%M:%S') %}
+          {% set alarm_time_obj = strptime(alarm_time, '%Y-%m-%d %H:%M:%S') %}
+          {{ (alarm_time_obj - current_time_obj).total_seconds() <= 600 }}
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - delay: '00:10:00'
+
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.master_bedroom_main_window
+        data:
+          position: 85
+
+
+  - alias: 'Close master bedroom shutters at night'
+    id: master_bedroom_shutters_close_night
+    trigger:
+      - platform: time
+        at: '23:00:00'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.master_bedroom_main_window
+        data:
+          position: 20

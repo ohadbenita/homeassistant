@@ -1,0 +1,117 @@
+input_text:
+  hass_last_notified_available_version:
+    name: hass_last_notified_available_version
+
+  hass_last_notified_upgraded_version:
+    name: hass_last_notified_upgraded_version
+
+sensor:
+  - platform: rest
+    name: Home Assistant Released Version
+    scan_interval: 300
+    json_attributes:
+        - body
+        - html_url
+    resource: https://api.github.com/repos/home-assistant/home-assistant/releases/latest
+    username: !secret github_username
+    password: !secret github_access_token
+    authentication: basic
+    value_template: '{{ value_json.tag_name }}'
+    headers:
+      Accept: application/vnd.github.v3+json
+      Content-Type: application/json
+      User-Agent: Home Assistant REST sensor
+
+automation:
+  - alias: Notify HASS is online
+    initial_state: true
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - service: notify.mobile_app_ohadbenita
+        data:
+          title: "HA Service"
+          message: "🤖 HomeAssistant is online - {{ states('sensor.current_local_version') }}"
+
+
+  - alias: Home Assistant Release Check
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.hass_docker_version_dockerhub_update_available
+        to: 'on'
+
+      - platform: homeassistant
+        event: start
+
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: >-
+            {% if is_state('input_text.hass_last_notified_available_version', states('sensor.hass_docker_version')) %}
+                False
+            {% else %}
+                True
+            {% endif %}
+
+    action:
+      - service: notify.ohad_telegram
+        data_template:
+          message: >-
+            A new version of Home Assistant is available, {{ states('sensor.hass_docker_version') }}, while existing local version is {{states('sensor.current_local_version') }}
+
+            Link: {{ state_attr('sensor.home_assistant_released_version', 'html_url') }}
+
+      - service: input_text.set_value
+        data_template:
+          entity_id: input_text.hass_last_notified_available_version
+          value: "{{ states('sensor.hass_docker_version') }}"
+
+
+  - alias: Notify if upgrade occurred
+    id: ha_notify_on_upgrade
+    initial_state: true
+    trigger:
+      - platform: homeassistant
+        event: start
+
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: >-
+            {% if is_state('input_text.hass_last_notified_upgraded_version', states('sensor.current_local_version')) %}
+                False
+            {% else %}
+                True
+            {% endif %}
+
+    action:
+    - service: notify.ohad_telegram
+      data_template:
+        message: >-
+          HASS has been upgraded from {{states('input_text.hass_last_notified_upgraded_version')}} to {{states('sensor.current_local_version')}}, you can find the release notes @ https://github.com/home-assistant/home-assistant/releases/{{states('sensor.current_local_version')}}
+
+    - service: input_text.set_value
+      data_template:
+        entity_id: input_text.hass_last_notified_upgraded_version
+        value: "{{ states('sensor.current_local_version') }}"
+
+
+  - alias: Notify when Zigbee sensors go offline
+    id: ha_zigbee_sensor_offline_notification
+    initial_state: true
+    trigger:
+      - platform: mqtt
+        topic: z2m-mainfloor/+/availability
+        payload: offline
+
+    action:
+      - service: notify.ohad_telegram
+        data:
+          message: |
+            {{ trigger.topic.split('/')[1] }} is {{ trigger.payload }}
+    mode: queued
+    max: 10

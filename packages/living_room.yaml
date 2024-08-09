@@ -1,0 +1,110 @@
+automation:
+  - alias: 'Close living room shutters at 23:00'
+    id: living_room_shutters_close_at_night
+    trigger:
+      platform: time
+      at: '23:00:00'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_right_window
+            - cover.living_room_middle_window
+            - cover.living_room_left_window
+        data:
+          position: 15
+
+  - alias: 'Open living room shutters in the morning'
+    id: living_room_open_living_room_shutters_morning
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.entrance_to_living_room_01_occupancy
+        from: 'off'
+        to: 'on'
+
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: >-
+            {{ as_timestamp(now()) - as_timestamp(state_attr('automation.open_living_room_shutters_in_the_morning', 'last_triggered') or today_at('00:00')) | int > 7200 }}
+        - condition: time
+          after: '06:30:00'
+          before: '10:00:00'
+        - condition: state
+          entity_id: input_boolean.away_mode
+          state: 'off'
+
+    action:
+      - service: cover.set_cover_position
+        data_template:
+          entity_id: cover.living_room_right_window
+          position: >-
+            {{ max(state_attr('cover.living_room_right_window', 'current_position') | int, 70) }}
+
+      - service: cover.set_cover_position
+        data_template:
+          entity_id: cover.living_room_middle_window
+          position: >-
+            {{ max(state_attr('cover.living_room_middle_window', 'current_position') | int, 70) }}
+
+      - service: cover.set_cover_position
+        data_template:
+          entity_id: cover.living_room_left_window
+          position: >-
+            {{ max(state_attr('cover.living_room_left_window', 'current_position') | int, 70) }}
+
+
+  - alias: 'Close living room shutters - sunset'
+    id: living_room_shutters_close_before_sunset
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: shutters_close_sunset
+          event_response_type: ResponseYes
+
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: shutters_close_sunset
+          event_response_type: ResponseNone
+
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_left_window
+        data:
+          position: 5
+
+
+  - alias: Open living room shutters on sunset
+    id: living_room_open_shutters_on_sunset
+    initial_state: true
+    trigger:
+      platform: sun
+      event: sunset
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_right_window
+            - cover.living_room_middle_window
+            - cover.living_room_left_window
+        data:
+          position: 70
+

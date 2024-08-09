@@ -1,0 +1,139 @@
+automation:
+  - alias: Notify shutters are about to be closed at sunset
+    id: dining_room_actionable_notification_shutter_close_at_sunset
+    initial_state: true
+    trigger:
+      platform: sun
+      event: sunset
+      offset: "-03:00:00"
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - service: script.activate_alexa_actionable_notification
+        data_template:
+          text: 'The sun is about to set, so I am going to close the dining room shutters, can I proceed ?'
+          event_id: 'shutters_close_sunset'
+          alexa_device: 'media_player.kitchen_echo'
+
+
+  - alias: 'Close dining room shutters before sunset'
+    id: dining_room_shutters_close_before_sunset
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: shutters_close_sunset
+          event_response_type: ResponseYes
+
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: shutters_close_sunset
+          event_response_type: ResponseNone
+
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.dining_room_right_window
+            - cover.dining_room_main_window
+            - cover.dining_room_left_window
+        data:
+          position: 30
+
+
+  - alias: Open dining room shutters on sunset
+    id: dining_room_open_shutters_on_sunset
+    initial_state: true
+    trigger:
+      platform: sun
+      event: sunset
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.dining_room_right_window
+            - cover.dining_room_left_window
+        data:
+          position: 70
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.dining_room_main_window
+        data:
+          position: 100
+
+
+  - alias: 'Close dining room shutters at night'
+    id: dining_room_shutters_close_night
+    trigger:
+      - platform: time
+        at: '23:00:00'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - service: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.dining_room_right_window
+            - cover.dining_room_main_window
+            - cover.dining_room_left_window
+        data:
+          position: 15
+
+
+  - alias: 'Open dining room shutters in the morning'
+    id: dining_room_open_shutters_morning
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.entrance_to_living_room_01_occupancy
+        from: 'off'
+        to: 'on'
+
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: >-
+            {{ as_timestamp(now()) - as_timestamp(state_attr('automation.open_dining_room_shutters_in_the_morning', 'last_triggered') or today_at('00:00')) | int > 7200 }}
+        - condition: time
+          after: '06:30:00'
+          before: '10:00:00'
+        - condition: state
+          entity_id: input_boolean.away_mode
+          state: 'off'
+
+    action:
+      - service: cover.set_cover_position
+        data_template:
+          entity_id: cover.dining_room_main_window
+          position: >-
+            {{ max(state_attr('cover.dining_room_main_window', 'current_position') | int, 100) }}
+
+      - service: cover.set_cover_position
+        data_template:
+          entity_id: cover.dining_room_right_window
+          position: >-
+            {{ max(state_attr('cover.dining_room_right_window', 'current_position') | int, 70) }}
+
+      - service: cover.set_cover_position
+        data_template:
+          entity_id: cover.dining_room_left_window
+          position: >-
+            {{ max(state_attr('cover.dining_room_left_window', 'current_position') | int, 70) }}
+

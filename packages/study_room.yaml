@@ -1,0 +1,20 @@
+automation:
+  - alias: "Study Room - Turn AC off when no one is in the room"
+    id: study_room_turn_ac_off
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
+        to: 'off'
+        for:
+          minutes: 10
+
+    condition:
+      condition: template
+      value_template: >-
+        {{ not is_state('climate.study_room_ac', 'off') }}
+
+    action:
+      - service: climate.turn_off
+        data_template:
+          entity_id: climate.study_room_ac

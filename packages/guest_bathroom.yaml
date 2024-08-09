@@ -1,0 +1,29 @@
+automation:
+  - alias: 'Turn on Guest Bathroom light on motion'
+    id: guest_bathroom_turn_on_when_motion_detected
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.guest_bathroom_occupancy
+        from: 'off'
+        to: 'on'
+
+    action:
+      - service: homeassistant.turn_on
+        entity_id: switch.shelly1pmminig3_34b7da8c3e68_switch_0
+
+
+  - alias: "Turn off Guest Bathroom light when no motion is detected"
+    id: guest_bathroom_turn_off_when_no_motion_detected
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.guest_bathroom_occupancy
+        from: 'on'
+        to: 'off'
+        for:
+          minutes: 5
+
+    action:
+      - service: homeassistant.turn_off
+        entity_id: switch.shelly1pmminig3_34b7da8c3e68_switch_0

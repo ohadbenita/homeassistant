@@ -1,0 +1,34 @@
+binary_sensor:
+  - platform: rest
+    name: lehavim_red_alert
+    unique_id: lehavim_red_alert
+    resource: https://2ku3x7oqpf.execute-api.il-central-1.amazonaws.com/Stage/status?d=676
+    scan_interval: 2
+    value_template: >-
+      {{ bool(value_json.exists) }}
+
+automation:
+  - alias: Lehavim red alert
+    id: red_alert_lehavim
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.lehavim_red_alert
+        to: 'on'
+
+    action:
+      - service: notify.ohad_telegram
+        data_template:
+          message: >-
+            Red alert in Lehavim, you got 45 seconds to get to a shelter
+
+      - service: script.alexa_notification
+        data:
+          alexa_device: media_player.everywhere
+          notification_type: announce
+          current_volume: >-
+            {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
+          message: >-
+            Red alert, please head to the nearest shelter now.
+            Red alert, please head to the nearest shelter now.
+            Red alert, please head to the nearest shelter now!

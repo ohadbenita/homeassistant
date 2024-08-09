@@ -1,0 +1,77 @@
+automation:
+  - alias: Water Leak detection
+    id: kitchen_water_leak_detection
+    initial_state: true
+    trigger:
+      - entity_id:
+          - binary_sensor.kitchen_sink_water_leak
+        platform: state
+        to: 'on'
+    action:
+      - service: notify.ohad_telegram
+        data_template:
+          message: "Water leak has been detected @ {{ trigger.from_state.attributes.friendly_name }} !!!"
+
+  - alias: Smnoke detection on
+    id: kitchen_smoke_detection_on
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.kitchen_ceiling_smoke
+        platform: state
+        from: 'off'
+        to: 'on'
+    action:
+      - service: notify.ohad_telegram
+        data_template:
+          message: "Smoke has been detected"
+      - service: notify.mobile_app_ohadbenita
+        data_template:
+          title: "Hazards"
+          message: "Smoke has been detected, density is {{states('sensor.kitchen_ceiling_smoke_density')}}%"
+
+  - alias: Smnoke detection off
+    id: kitchen_smoke_detection_off
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.kitchen_ceiling_smoke
+        platform: state
+        from: 'on'
+        to: 'off'
+    action:
+      - service: notify.ohad_telegram
+        data_template:
+          message: "Smoke is not detected anymore"
+      - service: notify.mobile_app_ohadbenita
+        data_template:
+          title: "Hazards"
+          message: "Smoke is not detected, density is {{states('sensor.kitchen_ceiling_smoke_density')}}%"
+
+
+  - alias: Pantry lights - turn off when motion detected
+    id: kitchen_pantry_lights_on_motion_detected
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.pantry_occupancy
+        platform: state
+        from: 'off'
+        to: 'on'
+    action:
+      - service: homeassistant.turn_on
+        entity_id:
+          - switch.shellyplus2pm_d48afc581860_switch_0
+          - switch.shellyplus2pm_d48afc581860_switch_1
+
+
+  - alias: Pantry lights - turn off when no motion detected
+    id: kitchen_pantry_lights_off_no_motion
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.pantry_occupancy
+        platform: state
+        from: 'on'
+        to: 'off'
+    action:
+      - service: homeassistant.turn_off
+        entity_id:
+          - switch.shellyplus2pm_d48afc581860_switch_0
+          - switch.shellyplus2pm_d48afc581860_switch_1

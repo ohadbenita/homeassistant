@@ -1,0 +1,49 @@
+automation:
+  - alias: "Adi Room - Set AC to night mode (summer)"
+    id: adi_room_ac_night_automation
+    initial_state: true
+    trigger:
+      - platform: time
+        at: "00:30:00"
+      - platform: time
+        at: "01:30:00"
+
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: >-
+            {{ not (
+                is_state_attr('climate.adi_room_ac', 'preset_mode', 'sleep') and
+                is_state_attr('climate.adi_room_ac', 'temperature', 24) and
+                is_state_attr('climate.adi_room_ac', 'fan_mode', 'silent') and
+                is_state_attr('climate.adi_room_ac', 'swing_mode', 'both')
+              )
+            }}
+        - condition: state
+          entity_id: climate.adi_room_ac
+          state: 'cool'
+
+    action:
+      - service: switch.turn_off
+        entity_id: switch.adi_room_ac_beeper
+
+      - service: climate.set_preset_mode
+        data:
+          entity_id: climate.adi_room_ac
+          preset_mode: sleep
+      - service: climate.set_temperature
+        data:
+          entity_id: climate.adi_room_ac
+          temperature: 24
+      - service: climate.set_fan_mode
+        data:
+          entity_id: climate.adi_room_ac
+          fan_mode: silent
+      - service: climate.set_swing_mode
+        data:
+          swing_mode: both
+          entity_id: climate.adi_room_ac
+
+      - service: switch.turn_on
+        entity_id: switch.adi_room_ac_beeper
