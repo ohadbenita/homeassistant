@@ -2,6 +2,7 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/ohadbenita/homeassistant.svg?style=plasticr)](https://github.com/ohadbenita/homeassistant/commits/master)
 [![Commits Year](https://img.shields.io/github/commit-activity/y/ohadbenita/homeassistant.svg?style=plasticr)](https://github.com/ohadbenita/homeassistant/commits/master)
 [![GitHub stars](https://img.shields.io/github/stars/ohadbenita/homeassistant.svg?style=plasticr)](https://github.com/ohadbenita/homeassistant/stargazers)
+![Home Assistant Release](https://img.shields.io/github/v/release/home-assistant/core?label=Home%20Assistant&logo=home-assistant&sort=semver)
 [![Discord](https://img.shields.io/discord/702447199681904720.svg?style=plasticr)](https://discord.gg/ayZ3Kkg)
 
 
