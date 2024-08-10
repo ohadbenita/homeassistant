@@ -1,3 +1,4 @@
+---
 input_text:
   hass_last_notified_available_version:
     name: hass_last_notified_available_version

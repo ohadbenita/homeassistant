@@ -8,6 +8,7 @@ __pycache__/
 .storage/
 custom_components/
 backups/
+blueprints/
 home-assistant_v2.db
 home-assistant.log*
 deps/

@@ -1,3 +1,4 @@
+---
 - alias: Lock the Entrance door at night
   id: nuki_entrance_door_lock_at_night
   initial_state: true

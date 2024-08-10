@@ -1,3 +1,4 @@
+---
 automation:
   - alias: 'Turn on Guest Bathroom light on motion'
     id: guest_bathroom_turn_on_when_motion_detected

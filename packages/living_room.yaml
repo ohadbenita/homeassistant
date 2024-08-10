@@ -1,3 +1,4 @@
+---
 automation:
   - alias: 'Close living room shutters at 23:00'
     id: living_room_shutters_close_at_night
@@ -107,4 +108,3 @@ automation:
             - cover.living_room_left_window
         data:
           position: 70
-

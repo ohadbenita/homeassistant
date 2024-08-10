@@ -1,3 +1,4 @@
+---
 automation:
   - alias: "Adi Room - Set AC to night mode (summer)"
     id: adi_room_ac_night_automation

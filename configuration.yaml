@@ -1,4 +1,4 @@
-
+---
 # Loads default set of integrations. Do not remove.
 default_config:
 
@@ -45,4 +45,3 @@ telegram_bot:
     api_key: !secret telegram_chat_bot_api_key
     allowed_chat_ids:
       - !secret telegram_homeassistant_notifications_chat_id
-

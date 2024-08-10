@@ -1,3 +1,4 @@
+---
 automation:
   - alias: Notify shutters are about to be closed at sunset
     id: dining_room_actionable_notification_shutter_close_at_sunset
@@ -136,4 +137,3 @@ automation:
           entity_id: cover.dining_room_left_window
           position: >-
             {{ max(state_attr('cover.dining_room_left_window', 'current_position') | int, 70) }}
-
