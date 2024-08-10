@@ -1,8 +1,9 @@
+---
 binary_sensor:
   - platform: rest
     name: lehavim_red_alert
     unique_id: lehavim_red_alert
-    resource: https://2ku3x7oqpf.execute-api.il-central-1.amazonaws.com/Stage/status?d=676
+    resource: !secret red_alert_lehavim_url
     scan_interval: 2
     value_template: >-
       {{ bool(value_json.exists) }}

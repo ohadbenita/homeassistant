@@ -1,6 +1,7 @@
-name: Config Validation
+---
+name: Home Assistant CI
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - master

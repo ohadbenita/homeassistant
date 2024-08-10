@@ -16,10 +16,11 @@ automation:
     action:
       - service: script.activate_alexa_actionable_notification
         data_template:
-          text: 'The sun is about to set, so I am going to close the dining room shutters, can I proceed ?'
+          text: >-
+            The sun is about to set, so I am going to close the dining room
+            shutters, can I proceed?
           event_id: 'shutters_close_sunset'
           alexa_device: 'media_player.kitchen_echo'
-
 
   - alias: 'Close dining room shutters before sunset'
     id: dining_room_shutters_close_before_sunset
@@ -45,7 +46,6 @@ automation:
             - cover.dining_room_left_window
         data:
           position: 30
-
 
   - alias: Open dining room shutters on sunset
     id: dining_room_open_shutters_on_sunset
@@ -74,7 +74,6 @@ automation:
         data:
           position: 100
 
-
   - alias: 'Close dining room shutters at night'
     id: dining_room_shutters_close_night
     trigger:
@@ -95,7 +94,6 @@ automation:
             - cover.dining_room_left_window
         data:
           position: 15
-
 
   - alias: 'Open dining room shutters in the morning'
     id: dining_room_open_shutters_morning

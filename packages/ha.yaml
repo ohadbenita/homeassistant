@@ -11,8 +11,8 @@ sensor:
     name: Home Assistant Released Version
     scan_interval: 300
     json_attributes:
-        - body
-        - html_url
+      - body
+      - html_url
     resource: https://api.github.com/repos/home-assistant/home-assistant/releases/latest
     username: !secret github_username
     password: !secret github_access_token
@@ -90,15 +90,15 @@ automation:
             {% endif %}
 
     action:
-    - service: notify.ohad_telegram
-      data_template:
-        message: >-
-          HASS has been upgraded from {{states('input_text.hass_last_notified_upgraded_version')}} to {{states('sensor.current_local_version')}}, you can find the release notes @ https://github.com/home-assistant/home-assistant/releases/{{states('sensor.current_local_version')}}
+      - service: notify.ohad_telegram
+        data_template:
+          message: >-
+            HASS has been upgraded from {{states('input_text.hass_last_notified_upgraded_version')}} to {{states('sensor.current_local_version')}}, you can find the release notes @ https://github.com/home-assistant/home-assistant/releases/{{states('sensor.current_local_version')}}
 
-    - service: input_text.set_value
-      data_template:
-        entity_id: input_text.hass_last_notified_upgraded_version
-        value: "{{ states('sensor.current_local_version') }}"
+      - service: input_text.set_value
+        data_template:
+          entity_id: input_text.hass_last_notified_upgraded_version
+          value: "{{ states('sensor.current_local_version') }}"
 
 
   - alias: Notify when Zigbee sensors go offline

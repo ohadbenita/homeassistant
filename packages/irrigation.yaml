@@ -22,7 +22,7 @@ automation:
 
     action:
       - service: switch.turn_on
-        entity_id: switch.irrigation_l6 # master
+        entity_id: switch.irrigation_l6  # master
       - delay: "00:00:05"
       - service: switch.turn_on
         entity_id: group.irrigation_switches
@@ -33,7 +33,7 @@ automation:
         entity_id: group.irrigation_switches
       - delay: "00:00:05"
       - service: switch.turn_off
-        entity_id: switch.irrigation_l6 # master
+        entity_id: switch.irrigation_l6  # master
 
 
   - alias: Irrigation Watchdog
@@ -60,9 +60,9 @@ automation:
         entity_id: group.irrigation_switches
 
       - wait_for_trigger:
-        - platform: state
-          entity_id: switch.irrigation_l6
-          to: 'off'
+          - platform: state
+            entity_id: switch.irrigation_l6
+            to: 'off'
         timeout:
           minutes: 2
         continue_on_timeout: false

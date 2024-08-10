@@ -1,3 +1,4 @@
+---
 automation:
   - alias: "Study Room - Turn AC off when no one is in the room"
     id: study_room_turn_ac_off

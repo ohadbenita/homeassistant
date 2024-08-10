@@ -32,7 +32,7 @@ http:
   trusted_proxies:
     - !secret nginx_docker_ip
     - !secret nginx_alternate_docker_ip
-  ip_ban_enabled: True
+  ip_ban_enabled: true
   login_attempts_threshold: 10
 
 logger:

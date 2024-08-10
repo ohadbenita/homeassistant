@@ -1,3 +1,4 @@
+---
 alexa_notification:
   description: 'Send a notification through an Alexa device while saving and restoring volume settings'
   fields:

@@ -1,3 +1,4 @@
+---
 automation:
   - alias: "Roi Room - Set AC to night mode (summer)"
     id: roi_room_ac_night_automation
@@ -86,7 +87,7 @@ automation:
 
     action:
       - service: homeassistant.turn_on
-        entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0 # needs to be replaced with the switch we'll install there
+        entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0  # needs to be replaced with the switch we'll install there
 
 
   - alias: "Turn off Roi room light on motion"
@@ -109,4 +110,4 @@ automation:
 
     action:
       - service: homeassistant.turn_off
-        entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0 # needs to be replaced with the switch we'll install there
+        entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0  # needs to be replaced with the switch we'll install there
