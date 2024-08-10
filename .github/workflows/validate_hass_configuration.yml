@@ -1,6 +1,10 @@
 ---
 name: Home Assistant CI
 
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 on:  # yamllint disable-line rule:truthy
   push:
     branches:
