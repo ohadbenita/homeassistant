@@ -10,9 +10,9 @@ input_number:
   battery_low_level_threshold:
     name: Battery Low Level Threshold
     initial: 50
-    min: 0
-    max: 100
-    step: 1
+    min: 20
+    max: 80
+    step: 5
 
 sensor:
   - platform: rest
