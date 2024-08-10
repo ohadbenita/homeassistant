@@ -1,4 +1,4 @@
-![Home Assistant Configuration](https://github.com/ohadbenita/homeassistant/actions/workflows/validate_hass_configuration.yml/badge.svg)
+[![Home Assistant Configuration](https://github.com/ohadbenita/homeassistant/actions/workflows/validate_hass_configuration.yml/badge.svg)](https://github.com/ohadbenita/homeassistant/actions/workflows/validate_hass_configuration.yml)
 [![GitHub last commit](https://img.shields.io/github/last-commit/ohadbenita/homeassistant.svg?style=plasticr)](https://github.com/ohadbenita/homeassistant/commits/master)
 [![Commits Year](https://img.shields.io/github/commit-activity/y/ohadbenita/homeassistant.svg?style=plasticr)](https://github.com/ohadbenita/homeassistant/commits/master)
 [![GitHub stars](https://img.shields.io/github/stars/ohadbenita/homeassistant.svg?style=plasticr)](https://github.com/ohadbenita/homeassistant/stargazers)
