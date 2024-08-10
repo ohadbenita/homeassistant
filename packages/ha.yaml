@@ -6,6 +6,14 @@ input_text:
   hass_last_notified_upgraded_version:
     name: hass_last_notified_upgraded_version
 
+input_number:
+  battery_low_level_threshold:
+    name: Battery Low Level Threshold
+    initial: 50
+    min: 0
+    max: 100
+    step: 1
+
 sensor:
   - platform: rest
     name: Home Assistant Released Version
@@ -22,6 +30,7 @@ sensor:
       Accept: application/vnd.github.v3+json
       Content-Type: application/json
       User-Agent: Home Assistant REST sensor
+
 
 automation:
   - alias: Notify HASS is online
@@ -116,3 +125,54 @@ automation:
             {{ trigger.topic.split('/')[1] }} is {{ trigger.payload }}
     mode: queued
     max: 10
+
+
+  - alias: "Weekly Battery Level Check"
+    id: ha_weekly_battery_level_check
+    trigger:
+      platform: time
+      at: "09:00:00"
+    condition:
+      condition: time
+      weekday:
+        - sun
+    action:
+      - variables:
+          threshold: "{{ states('input_number.battery_low_level_threshold') | int }}"
+          exclude:
+            entity_id:
+              - sensor.ellas_iphone_battery_level
+              - sensor.ohadbenita_battery_level
+              - sensor.rinats_iphone_battery_level
+              - sensor.rois_iphone_battery_level
+          low_battery_devices: >
+            {% set threshold = states('input_number.battery_low_level_threshold') | int %}
+            {% set exclude = exclude %}
+            {% set result = namespace(sensors=[]) %}
+            {% for state in states.sensor | selectattr('attributes.device_class', '==', 'battery') %}
+              {% if 0 <= state.state | int(-1) < threshold and not state.entity_id in exclude.entity_id %}
+                {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
+              {% endif %}
+            {% endfor %}
+            {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'battery') | selectattr('state', '==', 'on') %}
+              {% if not state.entity_id in exclude.entity_id %}
+                {% set result.sensors = result.sensors + [state.name] %}
+              {% endif %}
+            {% endfor %}
+            {{ result.sensors | join('\n') }}
+      - choose:
+        - conditions:  # yamllint disable-line rule:indentation
+            - condition: template
+              value_template: "{{ low_battery_devices | length > 0 }}"
+          sequence:
+            - service: notify.ohad_telegram
+              data:
+                title: "Low Battery Alert"
+                message: >
+                  The following devices have low battery levels (below {{ threshold }}%):
+                  {{ low_battery_devices }}
+        default:
+          - service: notify.ohad_telegram
+            data:
+              title: "Battery Check"
+              message: "All devices have sufficient battery levels."
