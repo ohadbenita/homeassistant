@@ -16,9 +16,18 @@
         state: unlocked
 
   action:
-    - service: lock.lock
-      target:
-        entity_id: lock.entrance_door
+    - alias: "Lock with retry"
+      repeat:
+        sequence:
+          - action: lock.lock
+            target:
+              entity_id: lock.entrance_door
+          - delay:
+              seconds: 5
+        until:
+          - condition: state
+            entity_id: lock.entrance_door
+            state: locked
 
 - alias: Lock the kitchen door at night
   id: nuki_kitchen_door_lock_at_night
@@ -37,9 +46,18 @@
         state: unlocked
 
   action:
-    - service: lock.lock
-      target:
-        entity_id: lock.kitchen_door
+    - alias: "Lock with retry"
+      repeat:
+        sequence:
+          - action: lock.lock
+            target:
+              entity_id: lock.kitchen_door
+          - delay:
+              seconds: 5
+        until:
+          - condition: state
+            entity_id: lock.kitchen_door
+            state: locked
 
 - alias: Lock the kids bathroom door at night
   id: nuki_kids_bathroom_door_lock_at_night
@@ -58,9 +76,18 @@
         state: unlocked
 
   action:
-    - service: lock.lock
-      target:
-        entity_id: lock.kids_bathroom_door
+    - alias: "Lock with retry"
+      repeat:
+        sequence:
+          - action: lock.lock
+            target:
+              entity_id: lock.kids_bathroom_door
+          - delay:
+              seconds: 5
+        until:
+          - condition: state
+            entity_id: lock.kids_bathroom_door
+            state: locked
 
 
 - alias: Close everything when away mode is turned on
