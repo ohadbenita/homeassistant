@@ -2,6 +2,7 @@
 - alias: Lock the Entrance door at night
   id: nuki_entrance_door_lock_at_night
   initial_state: true
+  mode: single
   trigger:
     - platform: time
       at: "23:00:00"
@@ -22,8 +23,7 @@
           - action: lock.lock
             target:
               entity_id: lock.entrance_door
-          - delay:
-              seconds: 5
+          - delay: "00:00:05"
         until:
           - condition: state
             entity_id: lock.entrance_door
@@ -32,6 +32,7 @@
 - alias: Lock the kitchen door at night
   id: nuki_kitchen_door_lock_at_night
   initial_state: true
+  mode: single
   trigger:
     - platform: time
       at: "23:00:00"
@@ -52,8 +53,7 @@
           - action: lock.lock
             target:
               entity_id: lock.kitchen_door
-          - delay:
-              seconds: 5
+          - delay: "00:00:05"
         until:
           - condition: state
             entity_id: lock.kitchen_door
@@ -62,6 +62,7 @@
 - alias: Lock the kids bathroom door at night
   id: nuki_kids_bathroom_door_lock_at_night
   initial_state: true
+  mode: single
   trigger:
     - platform: time
       at: "23:00:00"
@@ -82,8 +83,7 @@
           - action: lock.lock
             target:
               entity_id: lock.kids_bathroom_door
-          - delay:
-              seconds: 5
+          - delay: "00:00:05"
         until:
           - condition: state
             entity_id: lock.kids_bathroom_door
