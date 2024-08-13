@@ -14,7 +14,7 @@
       state: 'on'
   action:
     - service: homeassistant.turn_on
-      entity_id: switch.shelly1pmminig3_dcda0cafe368_switch_0
+      entity_id: switch.shellyplus2pm_fcb467a684e8_switch_0
 
 
 - alias: "Turn off cloak room light when no motion is detected"
@@ -32,4 +32,4 @@
       state: 'off'
   action:
     - service: homeassistant.turn_off
-      entity_id: switch.shelly1pmminig3_dcda0cafe368_switch_0
+      entity_id: switch.shellyplus2pm_fcb467a684e8_switch_0
