@@ -84,10 +84,15 @@ automation:
       - condition: state
         entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
         state: 'on'
+      - condition: time
+        before: '23:00:00'
+        after: '08:00:00'
 
     action:
       - service: homeassistant.turn_on
-        entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0  # needs to be replaced with the switch we'll install there
+        entity_id:
+          - switch.shellyplus2pm_10061ccdc57c_switch_0  # light
+          - switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
 
 
   - alias: "Turn off Roi room light on motion"
@@ -107,7 +112,12 @@ automation:
       - condition: state
         entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
         state: 'off'
+      - condition: time
+        before: '23:00:00'
+        after: '08:00:00'
 
     action:
       - service: homeassistant.turn_off
-        entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0  # needs to be replaced with the switch we'll install there
+        entity_id:
+          - switch.shellyplus2pm_10061ccdc57c_switch_0  # light
+          - switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
