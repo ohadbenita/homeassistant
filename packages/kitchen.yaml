@@ -76,3 +76,32 @@ automation:
         entity_id:
           - switch.shellyplus2pm_d48afc581860_switch_0
           - switch.shellyplus2pm_d48afc581860_switch_1
+
+
+  - alias: 'Turn on kitchen lights upon first movement in the morning'
+    id: kitchen_turn_on_light_morning_first_movement
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.entrance_to_living_room_01_occupancy
+        from: 'off'
+        to: 'on'
+
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: >-
+            {{ as_timestamp(now()) - as_timestamp(state_attr('automation.turn_on_kitchen_lights_upon_first_movement_in_the_morning', 'last_triggered') or today_at('00:00')) | int > 7200 }}
+        - condition: time
+          after: '06:30:00'
+          before: '10:00:00'
+        - condition: state
+          entity_id: input_boolean.away_mode
+          state: 'off'
+
+    action:
+      - service: homeassistant.turn_on
+        entity_id:
+          - switch.shellyplus2pm_fcb4670e68e8_switch_0
+          - switch.shellyplus2pm_fcb4670e68e8_switch_1
