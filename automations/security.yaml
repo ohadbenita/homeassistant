@@ -1,6 +1,6 @@
 ---
-- alias: Lock the Entrance door at night
-  id: nuki_entrance_door_lock_at_night
+- alias: Lock doors at night
+  id: nuki_doors_lock_at_night
   initial_state: true
   mode: single
   trigger:
@@ -8,16 +8,8 @@
       at: "23:00:00"
     - platform: time
       at: "00:00:00"
-
-  condition:
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: lock.entrance_door
-        state: unlocked
-
   action:
-    - alias: "Lock with retry"
+    - alias: "Lock entrance door with retry"
       repeat:
         sequence:
           - action: lock.lock
@@ -29,25 +21,7 @@
             entity_id: lock.entrance_door
             state: locked
 
-- alias: Lock the kitchen door at night
-  id: nuki_kitchen_door_lock_at_night
-  initial_state: true
-  mode: single
-  trigger:
-    - platform: time
-      at: "23:00:00"
-    - platform: time
-      at: "00:00:00"
-
-  condition:
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: lock.kitchen_door
-        state: unlocked
-
-  action:
-    - alias: "Lock with retry"
+    - alias: "Lock kitchen door with retry"
       repeat:
         sequence:
           - action: lock.lock
@@ -59,25 +33,7 @@
             entity_id: lock.kitchen_door
             state: locked
 
-- alias: Lock the kids bathroom door at night
-  id: nuki_kids_bathroom_door_lock_at_night
-  initial_state: true
-  mode: single
-  trigger:
-    - platform: time
-      at: "23:00:00"
-    - platform: time
-      at: "00:00:00"
-
-  condition:
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: lock.kids_bathroom_door
-        state: unlocked
-
-  action:
-    - alias: "Lock with retry"
+    - alias: "Lock bathroom door with retry"
       repeat:
         sequence:
           - action: lock.lock
