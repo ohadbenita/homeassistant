@@ -21,18 +21,18 @@ automation:
         offset: "-2:00:00"
 
     action:
-      - service: switch.turn_on
+      - action: switch.turn_on
         entity_id: switch.irrigation_l6  # master
       - delay: "00:00:05"
-      - service: switch.turn_on
+      - action: switch.turn_on
         entity_id: group.irrigation_switches
 
       - delay: "00:20:00"
 
-      - service: switch.turn_off
+      - action: switch.turn_off
         entity_id: group.irrigation_switches
       - delay: "00:00:05"
-      - service: switch.turn_off
+      - action: switch.turn_off
         entity_id: switch.irrigation_l6  # master
 
 
@@ -54,9 +54,9 @@ automation:
             minutes: 30
 
     action:
-      - service: switch.turn_off
+      - action: switch.turn_off
         entity_id: switch.irrigation_l6
-      - service: switch.turn_off
+      - action: switch.turn_off
         entity_id: group.irrigation_switches
 
       - wait_for_trigger:
@@ -67,6 +67,6 @@ automation:
           minutes: 2
         continue_on_timeout: false
 
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data:
           message: 'Irrigation Watchdog had to stop the irrigation, please check the issue with the automation'

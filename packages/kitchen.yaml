@@ -9,7 +9,7 @@ automation:
         platform: state
         to: 'on'
     action:
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data_template:
           message: "Water leak has been detected @ {{ trigger.from_state.attributes.friendly_name }} !!!"
 
@@ -22,10 +22,10 @@ automation:
         from: 'off'
         to: 'on'
     action:
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data_template:
           message: "Smoke has been detected"
-      - service: notify.mobile_app_ohadbenita
+      - action: notify.mobile_app_ohadbenita
         data_template:
           title: "Hazards"
           message: "Smoke has been detected, density is {{states('sensor.kitchen_ceiling_smoke_density')}}%"
@@ -39,10 +39,10 @@ automation:
         from: 'on'
         to: 'off'
     action:
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data_template:
           message: "Smoke is not detected anymore"
-      - service: notify.mobile_app_ohadbenita
+      - action: notify.mobile_app_ohadbenita
         data_template:
           title: "Hazards"
           message: "Smoke is not detected, density is {{states('sensor.kitchen_ceiling_smoke_density')}}%"
@@ -57,7 +57,7 @@ automation:
         from: 'off'
         to: 'on'
     action:
-      - service: homeassistant.turn_on
+      - action: homeassistant.turn_on
         entity_id:
           - switch.shellyplus2pm_d48afc581860_switch_0
           - switch.shellyplus2pm_d48afc581860_switch_1
@@ -72,7 +72,7 @@ automation:
         from: 'on'
         to: 'off'
     action:
-      - service: homeassistant.turn_off
+      - action: homeassistant.turn_off
         entity_id:
           - switch.shellyplus2pm_d48afc581860_switch_0
           - switch.shellyplus2pm_d48afc581860_switch_1
@@ -101,7 +101,7 @@ automation:
           state: 'off'
 
     action:
-      - service: homeassistant.turn_on
+      - action: homeassistant.turn_on
         entity_id:
           - switch.shellyplus2pm_fcb4670e68e8_switch_0
           - switch.shellyplus2pm_fcb4670e68e8_switch_1

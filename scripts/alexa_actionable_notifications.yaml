@@ -15,12 +15,12 @@ alexa_notification:
       description: 'The message to send to the device'
       example: 'some important message'
   sequence:
-    - service: media_player.volume_set
+    - action: media_player.volume_set
       data_template:
         entity_id: '{{ alexa_device }}'
         volume_level: '0.25'
 
-    - service: notify.alexa_media
+    - action: notify.alexa_media
       data_template:
         data:
           type: '{{ notification_type }}'
@@ -28,7 +28,7 @@ alexa_notification:
           - '{{ alexa_device }}'
         message: '{{ message }}'
 
-    - service: media_player.volume_set
+    - action: media_player.volume_set
       data_template:
         entity_id: '{{ alexa_device }}'
         volume_level: '{{ current_volume }}'
@@ -46,21 +46,21 @@ activate_alexa_actionable_notification:
       description: 'Alexa device you want to trigger'
       example: 'media_player.bedroom_echo'
   sequence:
-    - service: media_player.volume_set
+    - action: media_player.volume_set
       data:
         volume_level: '0.3'
         entity_id: "{{ alexa_device }}"
 
-    - service: input_text.set_value
+    - action: input_text.set_value
       data:
         entity_id: input_text.alexa_actionable_notification
         value: '{"text": "{{ text }}", "event": "{{ event_id }}"}'
 
-    - service: media_player.play_media
+    - action: media_player.play_media
       data:
         entity_id: "{{ alexa_device }}"
         media_content_type: skill
         media_content_id: !secret alexa_actionable_actions_skill_id
 
-    - service: script.turn_on
+    - action: script.turn_on
       entity_id: script.alexa_notification

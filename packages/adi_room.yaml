@@ -26,25 +26,25 @@ automation:
           state: 'cool'
 
     action:
-      - service: switch.turn_off
+      - action: switch.turn_off
         entity_id: switch.adi_room_ac_beeper
 
-      - service: climate.set_preset_mode
+      - action: climate.set_preset_mode
         data:
           entity_id: climate.adi_room_ac
           preset_mode: sleep
-      - service: climate.set_temperature
+      - action: climate.set_temperature
         data:
           entity_id: climate.adi_room_ac
           temperature: 24
-      - service: climate.set_fan_mode
+      - action: climate.set_fan_mode
         data:
           entity_id: climate.adi_room_ac
           fan_mode: silent
-      - service: climate.set_swing_mode
+      - action: climate.set_swing_mode
         data:
           swing_mode: both
           entity_id: climate.adi_room_ac
 
-      - service: switch.turn_on
+      - action: switch.turn_on
         entity_id: switch.adi_room_ac_beeper

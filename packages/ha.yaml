@@ -39,7 +39,7 @@ automation:
       - platform: homeassistant
         event: start
     action:
-      - service: notify.mobile_app_ohadbenita
+      - action: notify.mobile_app_ohadbenita
         data:
           title: "HA Service"
           message: "🤖 HomeAssistant is online - {{ states('sensor.current_local_version') }}"
@@ -67,14 +67,14 @@ automation:
             {% endif %}
 
     action:
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data_template:
           message: >-
             A new version of Home Assistant is available, {{ states('sensor.hass_docker_version') }}, while existing local version is {{states('sensor.current_local_version') }}
 
             Link: {{ state_attr('sensor.home_assistant_released_version', 'html_url') }}
 
-      - service: input_text.set_value
+      - action: input_text.set_value
         data_template:
           entity_id: input_text.hass_last_notified_available_version
           value: "{{ states('sensor.hass_docker_version') }}"
@@ -99,12 +99,12 @@ automation:
             {% endif %}
 
     action:
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data_template:
           message: >-
             HASS has been upgraded from {{states('input_text.hass_last_notified_upgraded_version')}} to {{states('sensor.current_local_version')}}, you can find the release notes @ https://github.com/home-assistant/home-assistant/releases/{{states('sensor.current_local_version')}}
 
-      - service: input_text.set_value
+      - action: input_text.set_value
         data_template:
           entity_id: input_text.hass_last_notified_upgraded_version
           value: "{{ states('sensor.current_local_version') }}"
@@ -119,7 +119,7 @@ automation:
         payload: offline
 
     action:
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data:
           message: |
             {{ trigger.topic.split('/')[1] }} is {{ trigger.payload }}
@@ -165,14 +165,14 @@ automation:
             - condition: template
               value_template: "{{ low_battery_devices | length > 0 }}"
           sequence:
-            - service: notify.ohad_telegram
+            - action: notify.ohad_telegram
               data:
                 title: "Low Battery Alert"
                 message: >
                   The following devices have low battery levels (below {{ threshold }}%):
                   {{ low_battery_devices }}
         default:
-          - service: notify.ohad_telegram
+          - action: notify.ohad_telegram
             data:
               title: "Battery Check"
               message: "All devices have sufficient battery levels."

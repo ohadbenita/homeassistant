@@ -11,7 +11,7 @@ automation:
         hours: 1
 
     action:
-      - service: notify.mobile_app_ohadbenita
+      - action: notify.mobile_app_ohadbenita
         data_template:
           title: "Appliances"
           message: "Nuki battery level is {{states('sensor.entrance_door_battery')}}%, please recharge the batteries"

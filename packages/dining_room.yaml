@@ -14,7 +14,7 @@ automation:
         state: 'off'
 
     action:
-      - service: script.activate_alexa_actionable_notification
+      - action: script.activate_alexa_actionable_notification
         data_template:
           text: >-
             The sun is about to set, so I am going to close the dining room
@@ -38,7 +38,7 @@ automation:
           event_response_type: ResponseNone
 
     action:
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         target:
           entity_id:
             - cover.dining_room_right_window
@@ -60,14 +60,14 @@ automation:
         state: 'off'
 
     action:
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         target:
           entity_id:
             - cover.dining_room_right_window
             - cover.dining_room_left_window
         data:
           position: 70
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         target:
           entity_id:
             - cover.dining_room_main_window
@@ -86,7 +86,7 @@ automation:
         state: 'off'
 
     action:
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         target:
           entity_id:
             - cover.dining_room_right_window
@@ -118,19 +118,19 @@ automation:
           state: 'off'
 
     action:
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         data_template:
           entity_id: cover.dining_room_main_window
           position: >-
             {{ max(state_attr('cover.dining_room_main_window', 'current_position') | int, 100) }}
 
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         data_template:
           entity_id: cover.dining_room_right_window
           position: >-
             {{ max(state_attr('cover.dining_room_right_window', 'current_position') | int, 70) }}
 
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         data_template:
           entity_id: cover.dining_room_left_window
           position: >-

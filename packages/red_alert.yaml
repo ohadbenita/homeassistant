@@ -18,12 +18,12 @@ automation:
         to: 'on'
 
     action:
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data_template:
           message: >-
             Red alert in Lehavim, you got 45 seconds to get to a shelter
 
-      - service: script.alexa_notification
+      - action: script.alexa_notification
         data:
           alexa_device: media_player.everywhere
           notification_type: announce

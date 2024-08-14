@@ -36,7 +36,7 @@
             state: 'on'
 
   action:
-    - service: homeassistant.turn_on
+    - action: homeassistant.turn_on
       entity_id: switch.shelly1pmminig3_34b7da8f85bc_switch_0
 
 
@@ -67,7 +67,7 @@
         state: 'off'
 
   action:
-    - service: homeassistant.turn_off
+    - action: homeassistant.turn_off
       entity_id: switch.shelly1pmminig3_34b7da8f85bc_switch_0
 
 
@@ -94,7 +94,7 @@
           state: 'on'
 
   action:
-    - service: homeassistant.turn_on
+    - action: homeassistant.turn_on
       entity_id: switch.shelly1pmminig3_54320451ae98_switch_0
 
 
@@ -119,5 +119,5 @@
       state: 'off'
 
   action:
-    - service: homeassistant.turn_off
+    - action: homeassistant.turn_off
       entity_id: switch.shelly1pmminig3_54320451ae98_switch_0

@@ -25,15 +25,15 @@ automation:
           state: 'cool'
 
     action:
-      - service: climate.set_temperature
+      - action: climate.set_temperature
         data:
           temperature: 24
           entity_id: climate.ella_ac
-      - service: climate.set_fan_mode
+      - action: climate.set_fan_mode
         data:
           fan_mode: low
           entity_id: climate.ella_ac
-      - service: climate.set_swing_mode
+      - action: climate.set_swing_mode
         data:
           swing_mode: rangefull
           entity_id: climate.ella_ac
@@ -55,6 +55,6 @@ automation:
         {{ not is_state('climate.ella_ac', 'off') }}
 
     action:
-      - service: climate.turn_off
+      - action: climate.turn_off
         data_template:
           entity_id: climate.ella_ac

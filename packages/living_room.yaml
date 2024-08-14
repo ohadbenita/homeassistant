@@ -12,7 +12,7 @@ automation:
         state: 'off'
 
     action:
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         target:
           entity_id:
             - cover.living_room_right_window
@@ -44,19 +44,19 @@ automation:
           state: 'off'
 
     action:
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         data_template:
           entity_id: cover.living_room_right_window
           position: >-
             {{ max(state_attr('cover.living_room_right_window', 'current_position') | int, 70) }}
 
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         data_template:
           entity_id: cover.living_room_middle_window
           position: >-
             {{ max(state_attr('cover.living_room_middle_window', 'current_position') | int, 70) }}
 
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         data_template:
           entity_id: cover.living_room_left_window
           position: >-
@@ -79,7 +79,7 @@ automation:
           event_response_type: ResponseNone
 
     action:
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         target:
           entity_id:
             - cover.living_room_left_window
@@ -100,7 +100,7 @@ automation:
         state: 'off'
 
     action:
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         target:
           entity_id:
             - cover.living_room_right_window

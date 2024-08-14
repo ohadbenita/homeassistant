@@ -8,10 +8,10 @@ automation:
         at: '05:00:00'
 
     action:
-      - service: switch.turn_off
+      - action: switch.turn_off
         entity_id: switch.athom_01
 
       - delay: '00:02:00'
 
-      - service: switch.turn_on
+      - action: switch.turn_on
         entity_id: switch.athom_01

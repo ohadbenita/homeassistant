@@ -13,7 +13,7 @@
       entity_id: binary_sensor.cloak_room_occupancy
       state: 'on'
   action:
-    - service: homeassistant.turn_on
+    - action: homeassistant.turn_on
       entity_id: switch.shellyplus2pm_fcb467a684e8_switch_0
 
 
@@ -31,5 +31,5 @@
       entity_id: binary_sensor.cloak_room_occupancy
       state: 'off'
   action:
-    - service: homeassistant.turn_off
+    - action: homeassistant.turn_off
       entity_id: switch.shellyplus2pm_fcb467a684e8_switch_0

@@ -12,7 +12,7 @@ automation:
         to: 'on'
 
     action:
-      - service: homeassistant.turn_on
+      - action: homeassistant.turn_on
         entity_id: switch.shelly1pmminig3_34b7da8c3e68_switch_0
 
 
@@ -28,5 +28,5 @@ automation:
           minutes: 10
 
     action:
-      - service: homeassistant.turn_off
+      - action: homeassistant.turn_off
         entity_id: switch.shelly1pmminig3_34b7da8c3e68_switch_0

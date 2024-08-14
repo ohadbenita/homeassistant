@@ -20,7 +20,7 @@ automation:
         entity_id: binary_sensor.master_bedroom_wardrobe_contact
         state: 'on'
     action:
-      - service: homeassistant.turn_on
+      - action: homeassistant.turn_on
         entity_id: switch.shelly1pmminig3_34b7da8da318_switch_0
 
 
@@ -38,7 +38,7 @@ automation:
         entity_id: binary_sensor.master_bedroom_wardrobe_contact
         state: 'off'
     action:
-      - service: homeassistant.turn_off
+      - action: homeassistant.turn_off
         entity_id: switch.shelly1pmminig3_34b7da8da318_switch_0
 
 
@@ -63,7 +63,7 @@ automation:
     action:
       - delay: '00:10:00'
 
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         target:
           entity_id:
             - cover.master_bedroom_main_window
@@ -83,7 +83,7 @@ automation:
         state: 'off'
 
     action:
-      - service: cover.set_cover_position
+      - action: cover.set_cover_position
         target:
           entity_id:
             - cover.master_bedroom_main_window

@@ -55,13 +55,13 @@
       to: 'on'
 
   action:
-    - service: cover.set_cover_position
+    - action: cover.set_cover_position
       data:
         position: 5
       target:
         entity_id: >
           {{ states.cover | map(attribute='entity_id') | list }}
-    - service: lock.lock
+    - action: lock.lock
       target:
         entity_id: >
           {{ states.lock | map(attribute='entity_id') | list }}
@@ -83,7 +83,7 @@
       entity_id: sensor.ohadbenita_ssid
       state: 'Benita'
   action:
-    - service: cover.set_cover_position
+    - action: cover.set_cover_position
       data:
         position: 90
       target:
