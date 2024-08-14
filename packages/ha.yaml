@@ -6,6 +6,7 @@ input_text:
   hass_last_notified_upgraded_version:
     name: hass_last_notified_upgraded_version
 
+
 input_number:
   battery_low_level_threshold:
     name: Battery Low Level Threshold
@@ -13,6 +14,13 @@ input_number:
     min: 20
     max: 80
     step: 5
+
+
+input_boolean:
+  skip_firmware_updates:
+    name: Skip firmware checks by end of week
+    icon: mdi:update
+
 
 sensor:
   - platform: rest
@@ -129,6 +137,7 @@ automation:
 
   - alias: "Weekly Battery Level Check"
     id: ha_weekly_battery_level_check
+    initial_state: true
     trigger:
       platform: time
       at: "09:00:00"
@@ -176,3 +185,82 @@ automation:
             data:
               title: "Battery Check"
               message: "All devices have sufficient battery levels."
+
+
+  - alias: "Check for Pending Device Updates"
+    id: ha_check_for_pending_firmware_updates
+    description: "Send a Telegram message if there are pending updates for devices"
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        hours: "/1"
+
+    condition:
+      - condition: template
+        value_template: >
+          {{ states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | list | count > 0 }}
+
+    action:
+      - action: notify.ohad_telegram
+        data:
+          message: "There are pending firmware updates for your devices. Do you want to update now?"
+          data:
+            inline_keyboard:
+              - "Update Now:/trigger_firmware_update, Snooze Updates (EOW):/snooze_firmware_updates"
+
+
+  - alias: "Trigger Firmware Update via Telegram"
+    id: ha_check_trigger_firmware_updates
+    description: "Trigger firmware update when the user responds via Telegram."
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: telegram_callback
+        event_data:
+          data: "/trigger_firmware_update"
+
+    action:
+      - action: update.install
+        data_template:
+          entity_id: >
+            {{ states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
+
+      - action: notify.ohad_telegram
+        data:
+          message: "Triggered installation of pending firmware updates"
+
+
+  - alias: "Update check firmware skipped helper"
+    id: ha_update_firmware_update_skipped_helper
+    description: "Turn firmware check skipped when the user responds via Telegram."
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: telegram_callback
+        event_data:
+          data: "/snooze_firmware_updates"
+
+    action:
+      - action: input_boolean.turn_on
+        entity_id: input_boolean.skip_firmware_updates
+
+      - action: notify.ohad_telegram
+        data:
+          message: "Update check will be snoozed by end of week"
+
+
+  - alias: Reset Firmware Check helper
+    id: ha_reset_firmware_check_helper
+    initial_state: true
+    trigger:
+      platform: time
+      at: '02:00:00'
+    condition:
+      condition: and
+      conditions:
+        - condition: time
+          weekday:
+            - "sun"
+    action:
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.skip_firmware_updates
