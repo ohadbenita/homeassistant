@@ -15,3 +15,39 @@ automation:
         data_template:
           title: "Appliances"
           message: "Nuki battery level is {{states('sensor.entrance_door_battery')}}%, please recharge the batteries"
+
+
+  - alias: "Turn on entrance light when motion is detected"
+    id: entrance_lights_on_when_motion_detected
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.entrance_door_occupancy
+        to: 'on'
+      - platform: homeassistant
+        event: start
+    condition:
+      - condition: state
+        entity_id: binary_sensor.entrance_door_occupancy
+        state: 'on'
+    action:
+      - action: homeassistant.turn_on
+        entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1
+
+
+  - alias: "Turn off entrance light when motion is not detected"
+    id: entrance_lights_off_when_motion_not_detected
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.entrance_door_occupancy
+        to: 'off'
+      - platform: homeassistant
+        event: start
+    condition:
+      - condition: state
+        entity_id: binary_sensor.entrance_door_occupancy
+        state: 'off'
+    action:
+      - action: homeassistant.turn_off
+        entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1
