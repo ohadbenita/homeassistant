@@ -20,16 +20,31 @@ automation:
   - alias: "Turn on entrance light when motion is detected"
     id: entrance_lights_on_when_motion_detected
     initial_state: true
+    mode: single
     trigger:
       - platform: state
         entity_id: binary_sensor.entrance_door_occupancy
         to: 'on'
       - platform: homeassistant
         event: start
+
     condition:
-      - condition: state
-        entity_id: binary_sensor.entrance_door_occupancy
-        state: 'on'
+      condition: and
+      conditions:
+        - condition: or
+          conditions:
+            - condition: sun
+              before: sunrise
+              before_offset: "01:00:00"
+            - condition: sun
+              after: sunset
+              after_offset: "-01:00:00"
+        - condition: or
+          conditions:
+            - condition: state
+              entity_id: binary_sensor.entrance_door_occupancy
+              state: 'on'
+
     action:
       - action: homeassistant.turn_on
         entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1
@@ -38,6 +53,7 @@ automation:
   - alias: "Turn off entrance light when motion is not detected"
     id: entrance_lights_off_when_motion_not_detected
     initial_state: true
+    mode: single
     trigger:
       - platform: state
         entity_id: binary_sensor.entrance_door_occupancy
