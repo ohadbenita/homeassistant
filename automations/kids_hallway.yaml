@@ -1,6 +1,6 @@
 ---
 - alias: "Turn on kids hallway lights on motion"
-  id: kids_hallway_lights_turn_on_basement_on_motion
+  id: kids_hallway_turn_lights_on_basement_on_motion
   initial_state: true
   trigger:
     - platform: state
@@ -30,8 +30,8 @@
         - switch.shelly1pmminig3_dcda0cafe368_switch_0
         - switch.shelly1pmminig3_34b7da8f8b78_switch_0
 
-- alias: "Turn off basement stairs light when no motion detected"
-  id: stair_light_turn_off_basement_when_no_motion_detected
+- alias: "Turn off kids hallway light when no motion detected"
+  id: kids_hallway_turn_lights_off_when_no_motion_detected
   initial_state: true
   trigger:
     - platform: state
