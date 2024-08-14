@@ -52,7 +52,7 @@ automation:
 
   - alias: "Turn on Adi room light on motion"
     id: adi_room_turn_light_on_motion
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_cb6db4_radar_target
@@ -78,7 +78,7 @@ automation:
 
   - alias: "Turn off Adi room light when no motion is detected"
     id: adi_room_turn_light_off_no_motion_detected
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_cb6db4_radar_target
