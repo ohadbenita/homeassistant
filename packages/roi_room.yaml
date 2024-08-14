@@ -95,7 +95,7 @@ automation:
           - switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
 
 
-  - alias: "Turn off Roi room light on motion"
+  - alias: "Turn off Roi room light when no motion is detected"
     id: roi_room_turn_light_off_no_motion_detected
     initial_state: false
     trigger:
