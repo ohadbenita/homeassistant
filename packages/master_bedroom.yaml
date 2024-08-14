@@ -89,3 +89,38 @@ automation:
             - cover.master_bedroom_main_window
         data:
           position: 20
+
+  - alias: "Turn on master bedroom spots when light is turned on"
+    id: master_bedroom_spots_turn_on_when_fan_light_is_on
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+        to: 'on'
+      - platform: homeassistant
+        event: start
+    condition:
+      - condition: state
+        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+        state: 'on'
+    action:
+      - action: homeassistant.turn_on
+        entity_id: light.shellydimmer2_ec64c9c66fdc
+
+
+  - alias: "Turn off master bedroom spots when light is turned off"
+    id: master_bedroom_spots_turn_off_when_fan_light_is_off
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+        to: 'off'
+      - platform: homeassistant
+        event: start
+    condition:
+      - condition: state
+        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+        state: 'off'
+    action:
+      - action: homeassistant.turn_off
+        entity_id: light.shellydimmer2_ec64c9c66fdc
