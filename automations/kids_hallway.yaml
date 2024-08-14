@@ -1,0 +1,60 @@
+---
+- alias: "Turn on kids hallway lights on motion"
+  id: kids_hallway_lights_turn_on_basement_on_motion
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.kids_hallway_01_occupancy
+      to: 'on'
+    - platform: state
+      entity_id:
+        - binary_sensor.kids_hallway_02_occupancy
+      to: 'on'
+    - platform: homeassistant
+      event: start
+
+  condition:
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: binary_sensor.kids_hallway_01_occupancy
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.kids_hallway_02_occupancy
+          state: 'on'
+
+  action:
+    - action: homeassistant.turn_on
+      entity_id:
+        - switch.shelly1pmminig3_dcda0cafe368_switch_0
+        - switch.shelly1pmminig3_34b7da8f8b78_switch_0
+
+- alias: "Turn off basement stairs light when no motion detected"
+  id: stair_light_turn_off_basement_when_no_motion_detected
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.kids_hallway_01_occupancy
+      to: 'off'
+    - platform: state
+      entity_id:
+        - binary_sensor.kids_hallway_02_occupancy
+      to: 'off'
+    - platform: homeassistant
+      event: start
+
+  condition:
+    - condition: state
+      entity_id: binary_sensor.kids_hallway_01_occupancy
+      state: 'off'
+    - condition: state
+      entity_id: binary_sensor.kids_hallway_02_occupancy
+      state: 'off'
+
+  action:
+    - action: homeassistant.turn_off
+      entity_id:
+        - switch.shelly1pmminig3_dcda0cafe368_switch_0
+        - switch.shelly1pmminig3_34b7da8f8b78_switch_0
