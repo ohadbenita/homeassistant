@@ -1,7 +1,7 @@
 ---
 automation:
-  - alias: "Study Room - Turn AC off when no one is in the room"
-    id: study_room_turn_ac_off
+  - alias: "Study Room - Turn AC and lights off when no one is in the room"
+    id: study_room_turn_ac_and_lights_off
     initial_state: true
     trigger:
       - platform: state
@@ -16,6 +16,28 @@ automation:
         {{ not is_state('climate.study_room_ac', 'off') }}
 
     action:
-      - service: climate.turn_off
+      - action: climate.turn_off
         data_template:
           entity_id: climate.study_room_ac
+
+      - action: homeassistant.turn_off
+        data_template:
+          entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+
+
+  - alias: "Study Room - Turn AC and lights when no one is in the room"
+    id: study_room_turn_ac_and_lights_on
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
+        to: 'on'
+
+    action:
+      - action: climate.turn_on
+        data_template:
+          entity_id: climate.study_room_ac
+
+      - action: homeassistant.turn_on
+        data_template:
+          entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
