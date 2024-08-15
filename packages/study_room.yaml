@@ -32,6 +32,7 @@ automation:
 
 
   - alias: "Study Room - Turn AC and lights when no one is in the room"
+    initial_state: false
     id: study_room_turn_ac_and_lights_on
     initial_state: true
     trigger:

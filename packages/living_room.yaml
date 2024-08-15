@@ -4,7 +4,7 @@ automation:
     id: living_room_shutters_close_at_night
     trigger:
       platform: time
-      at: '23:00:00'
+      at: '21:00:00'
 
     condition:
       - condition: state
