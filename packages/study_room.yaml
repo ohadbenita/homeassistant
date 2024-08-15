@@ -31,16 +31,26 @@ automation:
           entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
 
 
-  - alias: "Study Room - Turn AC and lights when no one is in the room"
-    initial_state: false
-    id: study_room_turn_ac_and_lights_on
+  - alias: "Study Room - Turn lights on immediately, AC after 5 minutes"
     initial_state: true
+    id: study_room_turn_lights_on_ac_delay
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
         to: 'on'
 
     action:
+      # Turn on the lights immediately
+      - action: homeassistant.turn_on
+        entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+
+      - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
+            to: 'on'
+            for: "00:05:00"
+        continue_on_timeout: false
+
       - action: switch.turn_on
         entity_id: switch.study_room_ac_beeper
 
@@ -56,20 +66,19 @@ automation:
       - action: climate.set_preset_mode
         data:
           preset_mode: sleep
-          entity_id: climate.roi_room_ac
+          entity_id: climate.study_room_ac
+
       - action: climate.set_temperature
         data:
           temperature: 24
-          entity_id: climate.roi_room_ac
+          entity_id: climate.study_room_ac
+
       - action: climate.set_fan_mode
         data:
           fan_mode: silent
-          entity_id: climate.roi_room_ac
+          entity_id: climate.study_room_ac
+
       - action: climate.set_swing_mode
         data:
           swing_mode: both
-          entity_id: climate.roi_room_ac
-
-      - action: homeassistant.turn_on
-        data_template:
-          entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+          entity_id: climate.study_room_ac
