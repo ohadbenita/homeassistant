@@ -108,3 +108,48 @@ automation:
             - cover.living_room_left_window
         data:
           position: 70
+
+  - alias: 'Toggle living room AC state'
+    id: living_room_ac_toggle_state
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_ac_action
+        to: 'single'
+
+    action:
+      - action: climate.toggle
+        target:
+          entity_id: climate.living_room_ac
+
+
+  - alias: 'Increase living room AC temperature by 1 degree'
+    id: living_room_ac_increase_temp_one_degree
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_ac_action
+        to: 'double'
+
+    action:
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.living_room_ac
+        data:
+          temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float + 1 }}"
+
+
+  - alias: 'Decrease living room AC temperature by 1 degree'
+    id: living_room_ac_decrease_temp_one_degree
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_ac_action
+        to: 'hold'
+
+    action:
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.living_room_ac
+        data:
+          temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float -1 }}"
