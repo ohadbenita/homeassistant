@@ -264,3 +264,21 @@ automation:
     action:
       - service: input_boolean.turn_off
         entity_id: input_boolean.skip_firmware_updates
+
+
+  - alias: Alert on Synology disk issues
+    id: ha_synology_alert_on_disk_issues
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.benita_nas_drive_1_status
+          - sensor.benita_nas_drive_2_status
+          - sensor.benita_nas_drive_3_status
+          - sensor.benita_nas_drive_4_status
+        from: 'normal'
+
+    action:
+      - action: notify.ohad_telegram
+        data_template:
+          message: One of the Synology disks is malfunctioning, please check it as soon as possible.
