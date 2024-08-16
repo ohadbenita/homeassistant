@@ -181,3 +181,41 @@ automation:
       - action: climate.turn_off
         data_template:
           entity_id: climate.living_room_ac
+
+
+  - alias: "Turn on living room couch light when TV light is turned on"
+    id: living_room_couch_light_turn_on_when_tv_light_is_on
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: switch.shelly1_34945470bfa1 # TV light
+        to: 'on'
+      - platform: homeassistant
+        event: start
+    condition:
+      - condition: state
+        entity_id: switch.shelly1_34945470bfa1 # TV light
+        state: 'on'
+    action:
+      - action: homeassistant.turn_on
+        target:
+          entity_id: switch.shelly1_e8db84d27b53
+
+
+  - alias: "Turn off living room couch light when TV light is turned off"
+    id: living_room_couch_light_turn_off_when_tv_light_is_off
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: switch.shelly1_34945470bfa1 # TV light
+        to: 'off'
+      - platform: homeassistant
+        event: start
+    condition:
+      - condition: state
+        entity_id: switch.shelly1_34945470bfa1 # TV light
+        state: 'off'
+    action:
+      - action: homeassistant.turn_off
+        target:
+          entity_id: switch.shelly1_e8db84d27b53
