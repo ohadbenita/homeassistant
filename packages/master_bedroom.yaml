@@ -104,9 +104,11 @@ automation:
         entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
         state: 'on'
     action:
-      - action: homeassistant.turn_on
-        entity_id: light.shellydimmer2_ec64c9c66fdc
-
+      - action: light.turn_on
+        target:
+          entity_id: light.shellydimmer2_ec64c9c66fdc
+        data:
+          brightness_pct: 100
 
   - alias: "Turn off master bedroom spots when light is turned off"
     id: master_bedroom_spots_turn_off_when_fan_light_is_off

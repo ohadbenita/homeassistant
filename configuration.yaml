@@ -37,8 +37,6 @@ http:
 
 logger:
   default: info
-  logs:
-    homeassistant.components.telegram_bot: debug
 
 telegram_bot:
   - platform: polling
