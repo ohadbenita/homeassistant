@@ -153,3 +153,31 @@ automation:
           entity_id: climate.living_room_ac
         data:
           temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float -1 }}"
+
+
+  - alias: "Living Room - Turn AC off when no one is in the room"
+    id: living_room_no_presence_turn_ac_off
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.apollo_msr_2_04f838_radar_target
+          - binary_sensor.apollo_msr_2_354f7c_radar_target
+        to: 'off'
+        for:
+          minutes: 15
+
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: binary_sensor.apollo_msr_2_04f838_radar_target
+          state: 'off'
+        - condition: state
+          entity_id: binary_sensor.apollo_msr_2_354f7c_radar_target
+          state: 'off'
+
+    action:
+      - action: climate.turn_off
+        data_template:
+          entity_id: climate.living_room_ac
