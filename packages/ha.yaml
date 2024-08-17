@@ -187,24 +187,45 @@ automation:
               message: "All devices have sufficient battery levels."
 
 
-  - alias: "Check for Pending Device Updates"
+  - alias: "Check for Pending Device Firmware Updates"
     id: ha_check_for_pending_firmware_updates
     description: "Send a Telegram message if there are pending updates for devices"
     initial_state: true
     trigger:
-      - platform: time_pattern
-        hours: "/1"
+      - platform: homeassistant
+        event: start
+      - platform: template
+        value_template: >
+          {{ states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | list | count > 0 }}
+      - platform: state
+        entity_id: input_boolean.skip_firmware_updates
+        to: 'off'
 
     condition:
       - condition: template
         value_template: >
           {{ states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | list | count > 0 }}
+      - condition: state
+        entity_id: input_boolean.skip_firmware_updates
+        state: 'off'
 
     action:
       - action: notify.ohad_telegram
         data:
-          message: "There are pending firmware updates for your devices. Do you want to update now?"
+          message: >
+            {% set updates = states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | list %}
+            {% if updates | count > 0 %}
+            There are pending firmware updates for the following devices:
+            {%- for update in updates %}
+              {% set release_url = update.attributes.release_url %}
+              - Entity: {{ update.entity_id | replace('_', '\_') }} - Installed: {{ update.attributes.installed_version }} | Available: [{{ update.attributes.latest_version }}]({{ release_url }})
+            {%- endfor %}
+            Do you want to update now?
+            {% else %}
+            There are no pending firmware updates at this time.
+            {% endif %}
           data:
+            parse_mode: markdown
             inline_keyboard:
               - "Update Now:/trigger_firmware_update, Snooze Updates (EOW):/snooze_firmware_updates"
 
