@@ -90,7 +90,7 @@ automation:
         data:
           position: 20
 
-  - alias: "Turn on master bedroom spots when light is turned on"
+  - alias: "Turn on master bedroom light when fan light is turned on"
     id: master_bedroom_spots_turn_on_when_fan_light_is_on
     initial_state: true
     trigger:
@@ -109,9 +109,14 @@ automation:
           entity_id: light.shellydimmer2_ec64c9c66fdc
         data:
           brightness_pct: 100
+      - action: homeassistant.turn_on
+        entity_id:
+          - switch.shellyplus2pm_fcb4670e673c_switch_0
+          - switch.shellyplus2pm_fcb4670e673c_switch_1
 
-  - alias: "Turn off master bedroom spots when light is turned off"
-    id: master_bedroom_spots_turn_off_when_fan_light_is_off
+
+  - alias: "Turn off master bedroom lights when light is turned off"
+    id: master_bedroom_lights_turn_off_when_fan_light_is_off
     initial_state: true
     trigger:
       - platform: state
@@ -125,4 +130,7 @@ automation:
         state: 'off'
     action:
       - action: homeassistant.turn_off
-        entity_id: light.shellydimmer2_ec64c9c66fdc
+        entity_id:
+          - light.shellydimmer2_ec64c9c66fdc
+          - switch.shellyplus2pm_fcb4670e673c_switch_0
+          - switch.shellyplus2pm_fcb4670e673c_switch_1
