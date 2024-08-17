@@ -82,3 +82,41 @@ automation:
         data:
           swing_mode: both
           entity_id: climate.study_room_ac
+
+
+  - alias: "Study Room - Close cover on sunset"
+    initial_state: true
+    id: study_room_close_cover_sunset
+    trigger:
+      - platform: sun
+        event: sunset
+        offset: "-03:00:00"
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - action: cover.close_cover
+        entity_id: cover.study_room
+
+
+  - alias: "Study Room - Open cover in the morning"
+    initial_state: true
+    id: study_room_open_cover_morning
+    trigger:
+      - platform: time
+        at: "08:00:00"
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - action: cover.set_cover_position
+        data_template:
+          entity_id: cover.study_room
+          position: >-
+            {{ max(state_attr('cover.study_room', 'current_position') | int, 80) }}
