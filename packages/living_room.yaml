@@ -202,3 +202,75 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id: switch.shelly1_e8db84d27b53
+
+
+  - alias: 'Kitchen - toggle lights by single button press'
+    id: kitchen_toggle_lights_by_switch
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.entrance_01_action
+        to: 'single'
+
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >
+                  {% set switches = [states('switch.shellyplus2pm_fcb4670e68e8_switch_0'), states('switch.shellyplus2pm_fcb4670e68e8_switch_1'), states('switch.shelly1_34945470bfa1'), states('switch.shelly1_e8db84d27b53')] %}
+                  {% set on_switches = switches | select('eq', 'on') | list %}
+                  {{ on_switches | length > 2 }}
+            sequence:
+              - service: switch.turn_off
+                target:
+                  entity_id:
+                    - switch.shellyplus2pm_fcb4670e68e8_switch_0
+                    - switch.shellyplus2pm_fcb4670e68e8_switch_1
+                    - switch.shelly1_34945470bfa1
+                    - switch.shelly1_e8db84d27b53
+        default:
+          - service: switch.turn_on
+            target:
+              entity_id:
+                - switch.shellyplus2pm_fcb4670e68e8_switch_0
+                - switch.shellyplus2pm_fcb4670e68e8_switch_1
+                - switch.shelly1_34945470bfa1
+                - switch.shelly1_e8db84d27b53
+
+
+  - alias: 'Kitchen - turn everything off by double button press'
+    id: kitchen_turn_everything_off
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.entrance_01_action
+        to: 'double'
+
+    action:
+      - action: lock.lock
+        target:
+          entity_id: >
+            {{ states.lock | map(attribute='entity_id') | list }}
+
+      - action: switch.turn_off
+        entity_id:
+          - switch.shellyplus2pm_fcb4670e68e8_switch_0
+          - switch.shellyplus2pm_fcb4670e68e8_switch_1
+          - switch.shelly1_34945470bfa1
+          - switch.shelly1_e8db84d27b53
+
+      - action: cover.set_cover_position
+        data:
+          position: 35
+        target:
+          entity_id:
+            - cover.living_room_left_window
+            - cover.living_room_middle_window
+            - cover.living_room_right_window
+            - cover.dining_room_right_window
+            - cover.dining_room_left_window
+
+      - action: climate.turn_off
+        entity_id: climate.living_room_ac
