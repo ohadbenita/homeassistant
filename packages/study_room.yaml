@@ -90,7 +90,6 @@ automation:
     trigger:
       - platform: sun
         event: sunset
-        offset: "-03:00:00"
 
     condition:
       - condition: state
