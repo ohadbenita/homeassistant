@@ -109,10 +109,10 @@ automation:
           entity_id: light.shellydimmer2_ec64c9c66fdc
         data:
           brightness_pct: 100
-      - action: homeassistant.turn_on
-        entity_id:
-          - switch.shellyplus2pm_fcb4670e673c_switch_0
-          - switch.shellyplus2pm_fcb4670e673c_switch_1
+      # - action: homeassistant.turn_on
+      #   entity_id:
+      #     - switch.shellyplus2pm_fcb4670e673c_switch_0
+      #     - switch.shellyplus2pm_fcb4670e673c_switch_1
 
 
   - alias: "Turn off master bedroom lights when light is turned off"
