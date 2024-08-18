@@ -120,3 +120,29 @@ automation:
           entity_id: cover.study_room
           position: >-
             {{ max(state_attr('cover.study_room', 'current_position') | int, 80) }}
+
+
+  - alias: "Study Room - Toggle light by switch"
+    initial_state: true
+    id: study_room_toggle_light_by_switch
+    trigger:
+      - platform: state
+        entity_id: sensor.study_room_01_action
+        to: 'open'
+
+    action:
+      - action: switch.toggle
+        entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+
+
+  - alias: "Study Room - Toggle AC by switch"
+    initial_state: true
+    id: study_room_toggle_ac_by_switch
+    trigger:
+      - platform: state
+        entity_id: sensor.study_room_01_action
+        to: 'close'
+
+    action:
+      - action: climate.toggle
+        entity_id: climate.study_room_ac
