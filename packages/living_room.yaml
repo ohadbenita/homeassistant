@@ -249,11 +249,6 @@ automation:
         to: 'double'
 
     action:
-      - action: lock.lock
-        target:
-          entity_id: >
-            {{ states.lock | map(attribute='entity_id') | list }}
-
       - action: switch.turn_off
         entity_id:
           - switch.shellyplus2pm_fcb4670e68e8_switch_0
@@ -274,3 +269,10 @@ automation:
 
       - action: climate.turn_off
         entity_id: climate.living_room_ac
+
+      - delay: '00:00:20'
+
+      - action: lock.lock
+        target:
+          entity_id: >
+            {{ states.lock | map(attribute='entity_id') | list }}
