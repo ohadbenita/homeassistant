@@ -94,52 +94,6 @@ automation:
           position: 35
 
 
-  - alias: 'Toggle living room AC state'
-    id: living_room_ac_toggle_state
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: sensor.living_room_ac_action
-        to: 'single'
-
-    action:
-      - action: climate.toggle
-        target:
-          entity_id: climate.living_room_ac
-
-
-  - alias: 'Increase living room AC temperature by 1 degree'
-    id: living_room_ac_increase_temp_one_degree
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: sensor.living_room_ac_action
-        to: 'double'
-
-    action:
-      - action: climate.set_temperature
-        target:
-          entity_id: climate.living_room_ac
-        data:
-          temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float + 1 }}"
-
-
-  - alias: 'Decrease living room AC temperature by 1 degree'
-    id: living_room_ac_decrease_temp_one_degree
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: sensor.living_room_ac_action
-        to: 'hold'
-
-    action:
-      - action: climate.set_temperature
-        target:
-          entity_id: climate.living_room_ac
-        data:
-          temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float -1 }}"
-
-
   - alias: "Living Room - Turn AC off when no one is in the room"
     id: living_room_no_presence_turn_ac_off
     initial_state: false
@@ -276,3 +230,106 @@ automation:
         target:
           entity_id: >
             {{ states.lock | map(attribute='entity_id') | list }}
+
+
+  - alias: 'Living room fireplace switch - turn on AC'
+    id: living_room_fireplace_switch_turn_on_ac
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_2_single'
+
+    action:
+      - action: climate.turn_on
+        target:
+          entity_id: climate.living_room_ac
+
+
+  - alias: 'Living room fireplace switch - turn off AC'
+    id: living_room_fireplace_switch_turn_off_ac
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_1_single'
+
+    action:
+      - action: climate.turn_off
+        target:
+          entity_id: climate.living_room_ac
+
+
+  - alias: 'Living room fireplace switch - Increase AC temperature'
+    id: living_room_fireplace_increase_ac_temperature
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_4_single'
+
+    action:
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.living_room_ac
+        data:
+          temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float + 1 }}"
+
+
+  - alias: 'Living room fireplace switch - Decrease AC temperature'
+    id: living_room_fireplace_decrease_ac_temperature
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_3_single'
+
+    action:
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.living_room_ac
+        data:
+          temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float - 1 }}"
+
+
+  - alias: 'Living room fireplace switch - Open shutters'
+    id: living_room_fireplace_open_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_6_single'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_right_window
+            - cover.living_room_middle_window
+            - cover.living_room_left_window
+        data:
+          position: 80
+
+  - alias: 'Living room fireplace switch - Close shutters'
+    id: living_room_fireplace_close_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_5_single'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_right_window
+            - cover.living_room_middle_window
+            - cover.living_room_left_window
+        data:
+          position: 35
