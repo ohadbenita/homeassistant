@@ -51,7 +51,7 @@ automation:
 
   - alias: "Roi Room - Turn AC off when no one is in the room"
     id: roi_room_no_presence_turn_ac_off
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
@@ -71,7 +71,7 @@ automation:
 
   - alias: "Turn on Roi room light on motion"
     id: roi_room_turn_light_on_motion
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
@@ -97,7 +97,7 @@ automation:
 
   - alias: "Turn off Roi room light when no motion is detected"
     id: roi_room_turn_light_off_no_motion_detected
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
