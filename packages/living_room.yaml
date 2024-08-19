@@ -173,13 +173,13 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.shelly1_34945470bfa1 # TV light
+        entity_id: switch.shelly1_34945470bfa1  # TV light
         to: 'on'
       - platform: homeassistant
         event: start
     condition:
       - condition: state
-        entity_id: switch.shelly1_34945470bfa1 # TV light
+        entity_id: switch.shelly1_34945470bfa1  # TV light
         state: 'on'
     action:
       - action: homeassistant.turn_on
@@ -191,13 +191,13 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.shelly1_34945470bfa1 # TV light
+        entity_id: switch.shelly1_34945470bfa1  # TV light
         to: 'off'
       - platform: homeassistant
         event: start
     condition:
       - condition: state
-        entity_id: switch.shelly1_34945470bfa1 # TV light
+        entity_id: switch.shelly1_34945470bfa1  # TV light
         state: 'off'
     action:
       - action: homeassistant.turn_off
