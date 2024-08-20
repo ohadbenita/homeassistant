@@ -1,4 +1,9 @@
 ---
+input_boolean:
+  roi_sleep_mode:
+    name: Is sleep mode enabled
+    icon: mdi:sleep
+
 automation:
   - alias: "Roi Room - Set AC to night mode (summer)"
     id: roi_room_ac_night_automation
@@ -51,7 +56,7 @@ automation:
 
   - alias: "Roi Room - Turn AC off when no one is in the room"
     id: roi_room_no_presence_turn_ac_off
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
@@ -60,9 +65,12 @@ automation:
           minutes: 10
 
     condition:
-      condition: template
-      value_template: >-
-        {{ not is_state('climate.roi_ac', 'off') }}
+      - condition: template
+        value_template: >-
+          {{ not is_state('climate.roi_ac', 'off') }}
+      - condition: state
+        entity_id: input_boolean.roi_sleep_mode
+        state: 'off'
 
     action:
       - action: climate.turn_off
@@ -87,6 +95,9 @@ automation:
       - condition: time
         before: '23:00:00'
         after: '08:00:00'
+      - condition: state
+        entity_id: input_boolean.roi_sleep_mode
+        state: 'off'
 
     action:
       - action: homeassistant.turn_on
@@ -97,7 +108,7 @@ automation:
 
   - alias: "Turn off Roi room light when no motion is detected"
     id: roi_room_turn_light_off_no_motion_detected
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
@@ -121,3 +132,27 @@ automation:
         entity_id:
           - switch.shellyplus2pm_10061ccdc57c_switch_0  # light
           - switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
+
+
+  - alias: "Roi room turn off sleep mode"
+    id: roi_room_turn_off_sleep_mode
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: state_changed
+        event_data:
+          entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0
+    condition:
+      - condition: template
+        value_template: >
+          {{ not trigger.event.data.new_state.context.user_id and not trigger.event.data.new_state.context.parent_id }}
+      - condition: state
+        entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.roi_sleep_mode
+        state: 'on'
+
+    action:
+      - action: input_boolean.turn_off
+        entity_id: input_boolean.roi_sleep_mode
