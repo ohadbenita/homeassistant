@@ -287,7 +287,7 @@ automation:
     condition:
       - condition: template
         value_template: >-
-          {{ not is_state('climate.living_room_ac', 'off') }}
+          {{ not is_state('climate.master_bedroom_ac', 'off') }}
       - condition: state
         entity_id: input_boolean.master_bedroom_sleep_mode
         state: 'off'
@@ -295,7 +295,7 @@ automation:
     action:
       - action: climate.turn_off
         data_template:
-          entity_id: climate.living_room_ac
+          entity_id: climate.master_bedroom_ac
 
 
   - alias: "Turn off master bedroom light when no motion is detected"
