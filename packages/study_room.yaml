@@ -95,6 +95,9 @@ automation:
       - condition: state
         entity_id: input_boolean.away_mode
         state: 'off'
+      - condition: state
+        entity_id: person.ohad_benita
+        state: 'home'
 
     action:
       - action: cover.close_cover
@@ -112,6 +115,9 @@ automation:
       - condition: state
         entity_id: input_boolean.away_mode
         state: 'off'
+      - condition: state
+        entity_id: person.ohad_benita
+        state: 'home'
 
     action:
       - action: cover.set_cover_position
