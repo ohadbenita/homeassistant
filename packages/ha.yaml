@@ -303,3 +303,36 @@ automation:
       - action: notify.ohad_telegram
         data_template:
           message: One of the Synology disks is malfunctioning, please check it as soon as possible.
+
+
+  - alias: Perform daily backup
+    id: ha_perform_daily_backup
+    trigger:
+      - platform: time
+        at: "02:00:00"
+    action:
+      - action: auto_backup.backup_full
+        data:
+          name: "DailyBackup: {{ now().strftime('%A, %B %-d, %Y') }}"
+          keep_days: 14
+
+
+  - alias: Notify on backup failure
+    id: ha_perform_daily_backup
+    trigger:
+      platform: event
+      event_type: auto_backup.backup_failed
+    action:
+      - action: persistent_notification.create
+        data:
+          title: "HA backup Failed"
+          message: |-
+            Name: {{ trigger.event.data.name }}
+            Error: {{ trigger.event.data.error }}
+
+      - action: notify.ohad_telegram
+        data:
+          title: "HA backup Failed"
+          message: >-
+            Name: {{ trigger.event.data.name }}
+            Error: {{ trigger.event.data.error }}
