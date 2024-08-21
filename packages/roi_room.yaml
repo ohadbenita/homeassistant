@@ -1,7 +1,7 @@
 ---
 input_boolean:
   roi_sleep_mode:
-    name: Is sleep mode enabled
+    name: sleep mode
     icon: mdi:sleep
 
 automation:
