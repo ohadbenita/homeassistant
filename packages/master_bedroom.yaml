@@ -251,7 +251,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.master_bedroom_bedside_01_action
-        to: 'button_5_double'
+        to: 'button_6_double'
 
     action:
       - action: climate.turn_on
@@ -266,7 +266,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.master_bedroom_bedside_01_action
-        to: 'button_6_double'
+        to: 'button_5_double'
 
     action:
       - action: climate.turn_off
