@@ -149,8 +149,8 @@ automation:
         event: start
     condition:
       - condition: state
-        entity_id: switch.shelly1_34945470bfa1  # TV light
-        state: 'on'
+        entity_id: switch.shelly1_e8db84d27b53  # Couch light
+        state: 'off'
     action:
       - action: homeassistant.turn_on
         entity_id: switch.shelly1_e8db84d27b53
@@ -167,8 +167,8 @@ automation:
         event: start
     condition:
       - condition: state
-        entity_id: switch.shelly1_34945470bfa1  # TV light
-        state: 'off'
+        entity_id: switch.shelly1_e8db84d27b53  # Couch light
+        state: 'on'
     action:
       - action: homeassistant.turn_off
         entity_id: switch.shelly1_e8db84d27b53
