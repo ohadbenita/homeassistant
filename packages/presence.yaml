@@ -1,0 +1,35 @@
+sensor:
+  - platform: mqtt_room
+    name: "ohad_ble"
+    device_id: "ohad_s_iphone"
+    state_topic: "espresense/devices/ohad_s_iphone"
+    timeout: 5
+    away_timeout: 120
+
+  - platform: mqtt_room
+    name: "rinat_ble"
+    device_id: "rinat_iphone"
+    state_topic: "espresense/devices/rinat_iphone"
+    timeout: 5
+    away_timeout: 120
+
+  - platform: mqtt_room
+    name: "ella_ble"
+    device_id: "ella_iphone"
+    state_topic: "espresense/devices/ella_iphone"
+    timeout: 5
+    away_timeout: 120
+
+  - platform: mqtt_room
+    name: "adi_ble"
+    device_id: "roi_iphone"
+    state_topic: "espresense/devices/roi_iphone"
+    timeout: 5
+    away_timeout: 120
+
+  - platform: mqtt_room
+    name: "roi_ble"
+    device_id: "roi_s_iphone"
+    state_topic: "espresense/devices/roi_s_iphone"
+    timeout: 5
+    away_timeout: 120
