@@ -84,15 +84,31 @@ automation:
         offset: "-03:00:00"
 
     action:
+      - variables:
+          left_window_position: "{{ state_attr('cover.living_room_left_window', 'current_position') }}"
+          middle_window_position: "{{ state_attr('cover.living_room_middle_window', 'current_position') }}"
+          right_window_position: "{{ state_attr('cover.living_room_right_window', 'current_position') }}"
+
       - action: cover.set_cover_position
         target:
           entity_id:
             - cover.living_room_left_window
+        data:
+          position: "{{ [left_window_position, 35] | min }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
             - cover.living_room_middle_window
+        data:
+          position: "{{ [middle_window_position, 35] | min }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
             - cover.living_room_right_window
         data:
-          position: 35
-
+          position: "{{ [right_window_position, 35] | min }}"
 
   - alias: "Living Room - Turn AC off when no one is in the room"
     id: living_room_no_presence_turn_ac_off
