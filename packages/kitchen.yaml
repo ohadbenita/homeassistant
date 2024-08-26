@@ -59,8 +59,8 @@ automation:
     action:
       - action: homeassistant.turn_on
         entity_id:
-          - switch.shellyplus2pm_d48afc581860_switch_0
-          - switch.shellyplus2pm_d48afc581860_switch_1
+          - switch.shellyplus2pm_d48afc581860_switch_0  # indoor light
+          # - switch.shellyplus2pm_d48afc581860_switch_1  # outdoor light
 
 
   - alias: Pantry lights - turn off when no motion detected
@@ -74,8 +74,8 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shellyplus2pm_d48afc581860_switch_0
-          - switch.shellyplus2pm_d48afc581860_switch_1
+          - switch.shellyplus2pm_d48afc581860_switch_0  # indoor light
+          # - switch.shellyplus2pm_d48afc581860_switch_1  # outdoor light
 
 
   - alias: 'Turn on kitchen lights upon first movement in the morning'
