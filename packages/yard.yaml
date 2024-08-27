@@ -73,3 +73,31 @@ automation:
       - action: notify.ohad_telegram
         data:
           message: 'Irrigation Watchdog had to stop the irrigation, please check the issue with the automation'
+
+
+  - alias: "Yard - Turn off roof lights in the night"
+    id: yard_turn_off_roof_lights_in_the_night
+    initial_state: true
+    trigger:
+      - platform: time
+        at: "23:00:00"
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id:
+          - `  # roof flood light #1
+          - switch.shellyswitch25_6869e3_channel_2  # roof flood light #2
+
+
+  - alias: "Yard - Turn off path lights in the night"
+    id: yard_turn_off_path_lights_in_the_night
+    initial_state: true
+    trigger:
+      - platform: time
+        at: "01:00:00"
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id:
+          - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
+          - switch.shellyplus2pm_fcb467a557a0_switch_1  # kids bathroom outdoor light
