@@ -25,7 +25,7 @@ automation:
         from: 'on'
         to: 'off'
         for:
-          minutes: 10
+          minutes: 15
 
     action:
       - action: homeassistant.turn_off
