@@ -1,3 +1,4 @@
+---
 sensor:
   - platform: mqtt_room
     name: "ohad_ble"
