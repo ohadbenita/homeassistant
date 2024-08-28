@@ -4,12 +4,10 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id:
-        - binary_sensor.kids_hallway_01_occupancy
+      entity_id: binary_sensor.kids_hallway_01_occupancy
       to: 'on'
     - platform: state
-      entity_id:
-        - binary_sensor.kids_hallway_02_occupancy
+      entity_id: binary_sensor.kids_hallway_02_occupancy
       to: 'on'
     - platform: homeassistant
       event: start
@@ -25,10 +23,29 @@
           state: 'on'
 
   action:
-    - action: homeassistant.turn_on
-      entity_id:
-        - switch.shelly1pmminig3_dcda0cafe368_switch_0
-        - switch.shelly1pmminig3_34b7da8f8b78_switch_0
+    - choose:
+        - conditions:
+          - condition: or  # yamllint disable-line rule:indentation
+            conditions:
+              - condition: sun
+                before: sunrise
+                before_offset: "01:00:00"
+              - condition: sun
+                after: sunset
+                after_offset: "-01:00:00"
+          sequence:
+            - action: light.turn_on
+              target:
+                entity_id: light.shellydimmer2_34945478921b
+              data:
+                brightness_pct: 35
+
+      default:
+        - action: homeassistant.turn_on
+          entity_id:
+            - switch.shelly1pmminig3_dcda0cafe368_switch_0
+            - switch.shelly1pmminig3_34b7da8f8b78_switch_0
+
 
 - alias: "Turn off kids hallway light when no motion detected"
   id: kids_hallway_turn_lights_off_when_no_motion_detected
@@ -58,3 +75,4 @@
       entity_id:
         - switch.shelly1pmminig3_dcda0cafe368_switch_0
         - switch.shelly1pmminig3_34b7da8f8b78_switch_0
+        - light.shellydimmer2_34945478921b
