@@ -72,7 +72,7 @@ automation:
 
   - alias: 'Close dining room shutters at night'
     id: dining_room_shutters_close_night
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: time
         at: '21:00:00'
