@@ -86,7 +86,7 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - `  # roof flood light #1
+          - switch.shellyswitch25_6869e3_channel_1  # roof flood light #1
           - switch.shellyswitch25_6869e3_channel_2  # roof flood light #2
 
 
