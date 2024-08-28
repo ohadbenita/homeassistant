@@ -46,8 +46,7 @@ automation:
         - variables:
               right_window_position: "{{ state_attr('cover.dining_room_right_window', 'current_position') }}"
               left_window_position: "{{ state_attr('cover.dining_room_left_window', 'current_position') }}"
-              # Uncomment if needed:
-              # main_window_position: "{{ state_attr('cover.dining_room_main_window', 'current_position') }}"
+              main_window_position: "{{ state_attr('cover.dining_room_main_window', 'current_position') }}"
 
         - action: cover.set_cover_position
           target:
@@ -63,33 +62,13 @@ automation:
           data:
             position: "{{ [left_window_position, 35] | min }}"
 
+        - action: cover.set_cover_position
+          target:
+            entity_id:
+              - cover.dining_room_main_window
+          data:
+            position: "{{ [main_window_position, 35] | min }}"
 
-  - alias: Open dining room shutters on sunset
-    id: dining_room_open_shutters_on_sunset
-    initial_state: false
-    trigger:
-      platform: sun
-      event: sunset
-
-    condition:
-      - condition: state
-        entity_id: input_boolean.away_mode
-        state: 'off'
-
-    action:
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.dining_room_right_window
-            - cover.dining_room_left_window
-        data:
-          position: 70
-      # - action: cover.set_cover_position
-      #   target:
-      #     entity_id:
-      #       - cover.dining_room_main_window
-      #   data:
-      #     position: 100
 
   - alias: 'Close dining room shutters at night'
     id: dining_room_shutters_close_night
@@ -108,7 +87,7 @@ automation:
         target:
           entity_id:
             - cover.dining_room_right_window
-            # - cover.dining_room_main_window
+            - cover.dining_room_main_window
             - cover.dining_room_left_window
         data:
           position: 15
@@ -136,11 +115,11 @@ automation:
           state: 'off'
 
     action:
-      # - action: cover.set_cover_position
-      #   data_template:
-      #     entity_id: cover.dining_room_main_window
-      #     position: >-
-      #       {{ max(state_attr('cover.dining_room_main_window', 'current_position') | int, 100) }}
+      - action: cover.set_cover_position
+        data_template:
+          entity_id: cover.dining_room_main_window
+          position: >-
+            {{ max(state_attr('cover.dining_room_main_window', 'current_position') | int, 90) }}
 
       - action: cover.set_cover_position
         data_template:

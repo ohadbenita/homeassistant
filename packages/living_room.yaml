@@ -236,6 +236,7 @@ automation:
             - cover.living_room_right_window
             - cover.dining_room_right_window
             - cover.dining_room_left_window
+            - cover.dining_room_main_window
 
       - action: climate.turn_off
         entity_id: climate.living_room_ac
