@@ -135,6 +135,67 @@ automation:
     max: 10
 
 
+  - alias: Notify when core network devices are offline
+    id: ha_core_devices_availability_check
+    mode: single
+    initial_state: true
+    trigger:
+      - platform: template
+        value_template: >
+          {% set core_devices = [
+            'lock.entrance_door',
+            'lock.kitchen_door',
+            'lock.kids_bathroom_door',
+            'switch.irrigation_l1',
+            'climate.roi_room_ac',
+            'climate.living_room_ac',
+            'climate.study_room_ac',
+            'climate.master_bedroom_ac',
+            'climate.ella_ac',
+            'cover.living_room_left_window',
+            'cover.living_room_middle_window',
+            'cover.living_room_right_window',
+            'cover.dining_room_right_window',
+            'cover.dining_room_left_window',
+            'cover.dining_room_main_window',
+            'switch.shellyplus2pm_fcb4670e68e8_switch_0',
+            'switch.shellyplus2pm_fcb4670e68e8_switch_1',
+            'switch.shelly1_34945470bfa1',
+            'switch.shelly1_e8db84d27b53'
+          ] %}
+          {% from 'availability_template.jinja' import avail %}
+          {{- not (avail(core_devices) | bool) -}}
+    action:
+      - service: notify.ohad_telegram
+        data:
+          message: >
+            The following devices are offline:
+            {%- for entity_id in [
+              'lock.entrance_door',
+              'lock.kitchen_door',
+              'lock.kids_bathroom_door',
+              'switch.irrigation_l1',
+              'climate.roi_room_ac',
+              'climate.living_room_ac',
+              'climate.study_room_ac',
+              'climate.master_bedroom_ac',
+              'climate.ella_ac',
+              'cover.living_room_left_window',
+              'cover.living_room_middle_window',
+              'cover.living_room_right_window',
+              'cover.dining_room_right_window',
+              'cover.dining_room_left_window',
+              'cover.dining_room_main_window',
+              'switch.shellyplus2pm_fcb4670e68e8_switch_0',
+              'switch.shellyplus2pm_fcb4670e68e8_switch_1',
+              'switch.shelly1_34945470bfa1',
+              'switch.shelly1_e8db84d27b53'
+            ] -%}
+              {% if states(entity_id) == 'unknown' or is_state(entity_id, 'unavailable') %}
+                - {{ state_attr(entity_id, 'friendly_name') | replace("_", "\\_") }} - {{ entity_id | replace("_", "\\_") }}
+              {%- endif -%}
+              {%- endfor -%}
+
   - alias: "Weekly Battery Level Check"
     id: ha_weekly_battery_level_check
     initial_state: true
