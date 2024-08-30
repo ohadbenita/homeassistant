@@ -102,3 +102,135 @@ automation:
         entity_id:
           - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
           - switch.shellyplus2pm_fcb467a557a0_switch_1  # kids bathroom outdoor light
+
+
+  - alias: "Turn on kitchen door path light when door is opened"
+    id: yard_turn_on_kitchen_door_path_light_when_door_is_opened
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_door_contact
+        to: 'on'
+      - platform: homeassistant
+        event: start
+
+    condition:
+      condition: and
+      conditions:
+        - condition: or
+          conditions:
+            - condition: sun
+              before: sunrise
+              before_offset: "01:00:00"
+            - condition: sun
+              after: sunset
+              after_offset: "-01:00:00"
+        - condition: or
+          conditions:
+            - condition: state
+              entity_id: binary_sensor.kitchen_door_contact
+              state: 'on'
+
+    action:
+      - action: homeassistant.turn_on
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
+
+
+  - alias: "Turn off kitchen door path light when door is closed"
+    id: yard_turn_on_kitchen_door_path_light_when_door_is_closed
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_door_contact
+        to: 'off'
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.kitchen_door_contact
+        state: 'off'
+      - condition: state
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
+        state: 'on'
+
+    action:
+      - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.kitchen_door_contact
+            to: 'off'
+            for: '00:10:00'
+        continue_on_timeout: false
+
+      - delay: '00:20:00'
+
+      - action: homeassistant.turn_off
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
+
+
+  - alias: "Turn on kids bathroom door path light when door is opened"
+    id: yard_turn_on_kids_bathroom_door_path_light_when_door_is_opened
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kids_bathroom_door_contact
+        to: 'on'
+      - platform: homeassistant
+        event: start
+
+    condition:
+      condition: and
+      conditions:
+        - condition: or
+          conditions:
+            - condition: sun
+              before: sunrise
+              before_offset: "01:00:00"
+            - condition: sun
+              after: sunset
+              after_offset: "-01:00:00"
+        - condition: or
+          conditions:
+            - condition: state
+              entity_id: binary_sensor.kids_bathroom_door_contact
+              state: 'on'
+
+    action:
+      - action: homeassistant.turn_on
+        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
+
+
+  - alias: "Turn off kids bathroom door path light when door is closed"
+    id: yard_turn_on_kids_bathroom_door_path_light_when_door_is_closed
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kids_bathroom_door_contact
+        to: 'off'
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.kids_bathroom_door_contact
+        state: 'off'
+      - condition: state
+        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
+        state: 'on'
+
+    action:
+      - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.kids_bathroom_door_contact
+            to: 'off'
+            for: '00:10:00'
+        continue_on_timeout: false
+
+      - delay: '00:20:00'
+
+      - action: homeassistant.turn_off
+        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
