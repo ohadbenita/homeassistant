@@ -101,7 +101,7 @@ automation:
       - action: homeassistant.turn_off
         entity_id:
           - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
-          - switch.shellyplus2pm_fcb467a557a0_switch_1  # kids bathroom outdoor light
+          - switch.shellyplus2pm_fcb467a557a0_switch_0  # kids bathroom outdoor light
 
 
   - alias: "Turn on kitchen door path light when door is opened"
@@ -145,6 +145,8 @@ automation:
       - platform: state
         entity_id: binary_sensor.kitchen_door_contact
         to: 'off'
+        for:
+          minutes: 30
       - platform: homeassistant
         event: start
 
@@ -157,15 +159,6 @@ automation:
         state: 'on'
 
     action:
-      - wait_for_trigger:
-          - platform: state
-            entity_id: binary_sensor.kitchen_door_contact
-            to: 'off'
-            for: '00:10:00'
-        continue_on_timeout: false
-
-      - delay: '00:20:00'
-
       - action: homeassistant.turn_off
         entity_id: switch.shellyplus2pm_d48afc581860_switch_1
 
@@ -200,7 +193,7 @@ automation:
 
     action:
       - action: homeassistant.turn_on
-        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
+        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_0
 
 
   - alias: "Turn off kids bathroom door path light when door is closed"
@@ -211,6 +204,8 @@ automation:
       - platform: state
         entity_id: binary_sensor.kids_bathroom_door_contact
         to: 'off'
+        for:
+          minutes: 30
       - platform: homeassistant
         event: start
 
@@ -219,18 +214,9 @@ automation:
         entity_id: binary_sensor.kids_bathroom_door_contact
         state: 'off'
       - condition: state
-        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
+        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_0
         state: 'on'
 
     action:
-      - wait_for_trigger:
-          - platform: state
-            entity_id: binary_sensor.kids_bathroom_door_contact
-            to: 'off'
-            for: '00:10:00'
-        continue_on_timeout: false
-
-      - delay: '00:20:00'
-
       - action: homeassistant.turn_off
-        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
+        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_0
