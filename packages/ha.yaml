@@ -248,6 +248,28 @@ automation:
               message: "All devices have sufficient battery levels."
 
 
+  - alias: "Notify on low battery levels - sensor-based"
+    id: ha_battery_level_notification_sensor_based
+    initial_state: true
+    mode: queued
+    max: 5
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.entrance_door_battery_low
+          - binary_sensor.kids_bathroom_door_battery_low
+          - binary_sensor.kitchen_door_battery_low
+          - binary_sensor.kitchen_sink_battery_low
+          - binary_sensor.kitchen_ceiling_battery_low
+        to: 'on'
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Low Battery Alert"
+          message: >
+            The {{ trigger.to_state.attributes.friendly_name }} has a low battery.
+
+
   - alias: "Check for Pending Device Firmware Updates"
     id: ha_check_for_pending_firmware_updates
     description: "Send a Telegram message if there are pending updates for devices"
