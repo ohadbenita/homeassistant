@@ -121,6 +121,8 @@ automation:
   - alias: Notify when Zigbee sensors go offline
     id: ha_zigbee_sensor_offline_notification
     initial_state: true
+    mode: queued
+    max: 5
     trigger:
       - platform: mqtt
         topic: z2m-mainfloor/+/availability
@@ -131,8 +133,6 @@ automation:
         data:
           message: |
             {{ trigger.topic.split('/')[1] }} is {{ trigger.payload }}
-    mode: queued
-    max: 10
 
 
   - alias: Notify when core network devices are offline
