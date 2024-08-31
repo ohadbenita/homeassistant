@@ -42,9 +42,7 @@
 
       default:
         - action: homeassistant.turn_on
-          entity_id:
-            - switch.shelly1pmminig3_dcda0cafe368_switch_0
-            - switch.shelly1pmminig3_34b7da8f8b78_switch_0
+          entity_id: switch.shelly1pmminig3_dcda0cafe368_switch_0
 
 
 - alias: "Turn off kids hallway light when no motion detected"
@@ -74,5 +72,4 @@
     - action: homeassistant.turn_off
       entity_id:
         - switch.shelly1pmminig3_dcda0cafe368_switch_0
-        - switch.shelly1pmminig3_34b7da8f8b78_switch_0
         - light.shellydimmer2_34945478921b
