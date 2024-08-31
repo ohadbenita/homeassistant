@@ -1,0 +1,45 @@
+automation:
+  - alias: Awtrix Spotify NowPlaying 🎹
+    id: awtrix_spotify_now_playing
+    description: Awtrix now playing automation
+    trigger:
+      - platform: state
+        entity_id: media_player.spotify_ohad_benita
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: media_player.spotify_ohad_benita
+                state: playing
+              - condition: state
+                entity_id: media_player.spotify_ohad_benita
+                attribute: media_content_type
+                state: music
+            sequence:
+              - service: mqtt.publish
+                data:
+                  qos: 0
+                  retain: false
+                  payload: |-
+                    {
+                      "text": "{{ state_attr('media_player.spotify_ohad_benita', 'media_artist') }} - {{ state_attr('media_player.spotify_ohad_benita', 'media_title') }}",
+                      "icon": "18207",
+                      "rainbow": true,
+                      "repeat": 2,
+                      "pushIcon": 0,
+                      "textCase": 0,
+                      "textOffset": 15,
+                      "progress": {{ ( states.media_player.spotify_ohad_benita.attributes.media_position / states.media_player.spotify_ohad_benita.attributes.media_duration * 100 ) | round() }},
+                      "progressC": "18B04C"
+                    }
+                  topic: awtrix/custom/spotify
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ not states.media_player.spotify_ohad_benita.state == 'playing' }}
+            sequence:
+              - service: mqtt.publish
+                data:
+                  qos: 0
+                  retain: false
+                  topic: awtrix/custom/spotify
