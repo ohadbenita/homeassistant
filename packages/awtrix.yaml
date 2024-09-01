@@ -1,5 +1,5 @@
 automation:
-  - alias: Awtrix Spotify NowPlaying 🎹
+  - alias: Awtrix Spotify Now Playing
     id: awtrix_spotify_now_playing
     description: Awtrix now playing automation
     trigger:
@@ -15,6 +15,9 @@ automation:
                 entity_id: media_player.spotify_ohad_benita
                 attribute: media_content_type
                 state: music
+              - condition: state
+                entity_id: person.ohad_benita
+                state: 'home'
             sequence:
               - service: mqtt.publish
                 data:
@@ -43,3 +46,19 @@ automation:
                   qos: 0
                   retain: false
                   topic: awtrix/custom/spotify
+
+
+  - alias: AWTRIX Night Clock
+    id: awtrix_night_clock
+    use_blueprint:
+      path: RDG88/nightclock_awtrix.yaml
+      input:
+        sleep_time: '21:00:00'
+        awtrix:
+          - 225674118643627b363d074e5fc83256
+        sleep_weekday_bar: true
+        wakeup_settings_abri: true
+        wakeup_settings_calendar_color:
+          - 0
+          - 85
+          - 255
