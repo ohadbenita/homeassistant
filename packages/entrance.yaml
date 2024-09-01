@@ -26,6 +26,7 @@ automation:
         entity_id:
           - binary_sensor.entrance_door_occupancy
           - binary_sensor.entrance_indoor_occupancy
+          - binary_sensor.entrance_door_contact
         to: 'on'
       - platform: homeassistant
         event: start
@@ -49,6 +50,9 @@ automation:
             - condition: state
               entity_id: binary_sensor.entrance_indoor_occupancy
               state: 'on'
+            - condition: state
+              entity_id: binary_sensor.entrance_door_contact
+              state: 'on'
 
     action:
       - action: homeassistant.turn_on
@@ -64,15 +68,20 @@ automation:
         entity_id:
           - binary_sensor.entrance_door_occupancy
           - binary_sensor.entrance_indoor_occupancy
+          - binary_sensor.entrance_door_contact
         to: 'off'
       - platform: homeassistant
         event: start
+
     condition:
       - condition: state
         entity_id: binary_sensor.entrance_door_occupancy
         state: 'off'
       - condition: state
         entity_id: binary_sensor.entrance_indoor_occupancy
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.door_contact
         state: 'off'
     action:
       - action: homeassistant.turn_off
