@@ -388,6 +388,21 @@ automation:
           message: One of the Synology disks is malfunctioning, please check it as soon as possible.
 
 
+  - alias: Notify when Synology security status is unsafe
+    id: ha_synology_security_status_check
+    initial_state: true
+    trigger:
+      platform: state
+      entity_id: binary_sensor.benita_nas_security_status
+      to: 'on'
+
+    action:
+      - action: notify.ohad_telegram
+        data:
+          title: "Synology security status - unsafe"
+          message: "Synology's security status changed to unsafe, please check security advisor for recent findings and recommendations"
+
+
   - alias: Perform daily backup
     id: ha_perform_daily_backup
     trigger:
