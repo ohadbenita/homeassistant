@@ -6,3 +6,5 @@ rules:
   comments-indentation: disable
   comments:
     level: error
+  document-start:
+    level: error
