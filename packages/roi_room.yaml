@@ -156,3 +156,41 @@ automation:
     action:
       - action: input_boolean.turn_off
         entity_id: input_boolean.roi_sleep_mode
+
+
+  - alias: 'Roi room - Handle Bedside button actions'
+    id: roi_room_bedside_button_actions
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.roi_bedside_action
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.roi_bedside_action
+                state: 'single'
+            sequence:
+              - action: switch.toggle
+                target:
+                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_1
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.roi_bedside_action
+                state: 'double'
+            sequence:
+              - action: switch.toggle
+                target:
+                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.roi_bedside_action
+                state: 'hold'
+            sequence:
+              - action: climate.toggle
+                target:
+                  entity_id: climate.roi_room_ac
