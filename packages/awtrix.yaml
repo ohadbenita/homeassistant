@@ -1,4 +1,23 @@
 ---
+#  Awtrix documentation - https://blueforcer.github.io/awtrix3/
+input_number:
+  awtrix_transition_speed:
+    name: Awtrix Transition Speed
+    min: 500
+    max: 5000
+    step: 100
+    unit_of_measurement: milliseconds
+    icon: mdi:timer
+
+  awtrix_app_time:
+    name: Awtrix App Time
+    min: 10
+    max: 120
+    step: 1
+    unit_of_measurement: seconds
+    icon: mdi:timer
+
+
 automation:
   - alias: Awtrix Spotify Now Playing
     id: awtrix_spotify_now_playing
@@ -49,7 +68,7 @@ automation:
                   topic: awtrix/custom/spotify
 
 
-  - alias: AWTRIX Night Clock
+  - alias: Awtrix Night Clock
     id: awtrix_night_clock
     use_blueprint:
       path: RDG88/nightclock_awtrix.yaml
@@ -63,3 +82,27 @@ automation:
           - 0
           - 85
           - 255
+
+
+  - alias: "Awtrix Transition Speed"
+    id: awtrix_transition_speed
+    trigger:
+      - platform: state
+        entity_id: input_number.awtrix_transition_speed
+    action:
+      - service: mqtt.publish
+        data:
+          topic: "awtrix/settings"
+          payload: '{"TSPEED": {{ (states("input_number.awtrix_transition_speed") | int) }}}'
+
+
+  - alias: "Awtrix App time"
+    id: awtrix_app_time
+    trigger:
+      - platform: state
+        entity_id: input_number.awtrix_app_time
+    action:
+      - service: mqtt.publish
+        data:
+          topic: "awtrix/settings"
+          payload: '{"ATIME": {{ (states("input_number.awtrix_app_time") | int) }}}'
