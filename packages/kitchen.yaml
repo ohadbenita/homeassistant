@@ -48,7 +48,7 @@ automation:
           message: "Smoke is not detected, density is {{states('sensor.kitchen_ceiling_smoke_density')}}%"
 
 
-  - alias: Pantry lights - turn off when motion detected
+  - alias: Pantry lights - turn on when motion detected
     id: kitchen_pantry_lights_on_motion_detected
     initial_state: true
     trigger:
@@ -68,8 +68,9 @@ automation:
     trigger:
       - entity_id: binary_sensor.pantry_occupancy
         platform: state
-        from: 'on'
         to: 'off'
+        for:
+          minutes: 5
     action:
       - action: homeassistant.turn_off
         entity_id:
