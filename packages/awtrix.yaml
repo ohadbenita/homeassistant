@@ -68,6 +68,57 @@ automation:
                   topic: awtrix/custom/spotify
 
 
+  - alias: Awtrix ohad@lightricks.com calendar event notification
+    id: awtrix_ohad_lightricks_com_calendar_event_notification
+    initial_state: true
+    description: "Awtrix ohad@lightricks.com calendar event notification"
+    trigger:
+      - platform: calendar
+        entity_id: calendar.ohad_lightricks_com
+        offset: "-00:05:00"
+        event: start
+      - platform: calendar
+        entity_id: calendar.ohad_lightricks_com
+        event: end
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event == 'start' }}"
+              - condition: state
+                entity_id: person.ohad_benita
+                state: 'home'
+            sequence:
+              - action: mqtt.publish
+                data:
+                  qos: 0
+                  retain: false
+                  payload: |-
+                    {
+                      "text": "{{ state_attr('calendar.ohad_lightricks_com', 'message') }}",
+                      "icon": "18207",
+                      "repeat": 2,
+                      "pushIcon": 0,
+                      "textCase": 0,
+                      "textOffset": 15,
+                      "progress": "{{ ((as_timestamp(now()) - as_timestamp(state_attr('calendar.ohad_lightricks_com', 'start_time'))) / (as_timestamp(state_attr('calendar.ohad_lightricks_com', 'end_time')) - as_timestamp(state_attr('calendar.ohad_lightricks_com', 'start_time'))) * 100) | round() }}",
+                      "progressC": "18B04C",
+                      "location": "{{ state_attr('calendar.ohad_lightricks_com', 'location') }}",
+                      "description": "{{ state_attr('calendar.ohad_lightricks_com', 'description') }}"
+                    }
+                  topic: awtrix/custom/calendar-notifier
+
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event == 'end' }}"
+            sequence:
+              - service: mqtt.publish
+                data:
+                  qos: 0
+                  retain: false
+                  topic: awtrix/custom/calendar-notifier
+
+
   - alias: Awtrix Night Clock
     id: awtrix_night_clock
     use_blueprint:
@@ -84,7 +135,7 @@ automation:
           - 255
 
 
-  - alias: "Awtrix Transition Speed"
+  - alias: "Awtrix set transition Speed"
     id: awtrix_transition_speed
     trigger:
       - platform: state
@@ -96,7 +147,7 @@ automation:
           payload: '{"TSPEED": {{ (states("input_number.awtrix_transition_speed") | int) }}}'
 
 
-  - alias: "Awtrix App time"
+  - alias: "Awtrix set app time"
     id: awtrix_app_time
     trigger:
       - platform: state
@@ -106,3 +157,19 @@ automation:
         data:
           topic: "awtrix/settings"
           payload: '{"ATIME": {{ (states("input_number.awtrix_app_time") | int) }}}'
+
+
+  - alias: "Awtrix Weather and forecast"
+    initial_state: false
+    use_blueprint:
+      path: jeeftor/awtrix_weatherflow.yaml
+      input:
+        awtrix:
+          - 225674118643627b363d074e5fc83256
+        forecast_var: weather.openweathermap
+        temp_suffix: °C
+        current_temp_var: sensor.openweathermap_current_feels_like_temperature
+        moon_rise_set: sensor.ip_geo_location
+        moon: sensor.moon_phase
+        message_duration_forecast: 60
+        message_duration_riseset: 60
