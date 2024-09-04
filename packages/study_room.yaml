@@ -70,7 +70,7 @@ automation:
 
       - action: climate.set_temperature
         data:
-          temperature: 24
+          temperature: 25
           entity_id: climate.study_room_ac
 
       - action: climate.set_fan_mode
@@ -107,6 +107,8 @@ automation:
     trigger:
       - platform: time
         at: "08:00:00"
+      - platform: time
+        at: "08:30:00"
 
     condition:
       - condition: state
