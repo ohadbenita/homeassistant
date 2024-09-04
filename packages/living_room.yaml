@@ -33,7 +33,7 @@ automation:
 
     condition:
       condition: and
-      conditions: # 4 hours passed (don't run twice the same day)
+      conditions:  # 4 hours passed (don't run twice the same day)
         - condition: template
           value_template: >-
             {{ as_timestamp(now()) - as_timestamp(state_attr('automation.open_living_room_shutters_in_the_morning', 'last_triggered') or today_at('00:00')) | int > 28800 }}
