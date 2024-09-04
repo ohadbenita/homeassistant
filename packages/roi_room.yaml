@@ -175,7 +175,7 @@ automation:
             sequence:
               - action: switch.toggle
                 target:
-                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_1
+                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
 
           - conditions:
               - condition: state
@@ -184,7 +184,7 @@ automation:
             sequence:
               - action: switch.toggle
                 target:
-                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0
+                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0  # light
 
           - conditions:
               - condition: state
