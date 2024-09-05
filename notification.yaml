@@ -2,3 +2,8 @@
 - name: ohad_telegram
   platform: telegram
   chat_id: !secret telegram_homeassistant_notifications_chat_id
+
+- platform: wapi
+  name: ohad_whatsapp_api
+  session: homeassistant
+  url: http://127.0.0.1:3000/client/sendMessage
