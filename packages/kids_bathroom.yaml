@@ -1,0 +1,29 @@
+---
+binary_sensor:
+  - platform: template
+    sensors:
+      washing_machine_active:
+        value_template: "{{ states('sensor.washing_machine_energy_power') | float > 5 }}"
+
+automation:
+  - alias: Announce washing machine cycle completed
+    id: kids_bathroom_announce_washing_machine_cycle_completed
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.washing_machine_active
+        to: 'off'
+        for:
+          minutes: 5
+    condition:
+      - condition: numeric_state
+        entity_id: sensor.home_ella_benita_distance
+        below: 10000  # 10 km in meters
+    action:
+      - action: notify.ohad_whatsapp_api
+        data:
+          message: Washing machine cycle complete, please hang the clothes to dry
+          title: Chore notification
+          target: !secret ella_benita_whatsapp_user_id
+          data:
+            media_url: {}

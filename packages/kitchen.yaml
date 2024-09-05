@@ -1,4 +1,11 @@
 ---
+binary_sensor:
+  - platform: template
+    sensors:
+      dishwasher_active:
+        value_template: "{{ states('sensor.athom_01_energy_power') | float > 5 }}"
+
+
 automation:
   - alias: Water Leak detection
     id: kitchen_water_leak_detection
@@ -104,3 +111,21 @@ automation:
         entity_id:
           - switch.shellyplus2pm_fcb4670e68e8_switch_0
           - switch.shellyplus2pm_fcb4670e68e8_switch_1
+
+  - alias: Announce Dishwasher cycle completed
+    id: kitchen_announce_dishwasher_cycle_completed
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.dishwasher_active
+        to: 'off'
+        for:
+          minutes: 35
+    action:
+      - action: notify.ohad_whatsapp_api
+        data:
+          message: Diswasher cycle complete, please unload the dishes
+          title: Chore notification
+          target: !secret roi_benita_whatsapp_user_id
+          data:
+            media_url: {}
