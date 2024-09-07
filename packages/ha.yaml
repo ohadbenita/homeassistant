@@ -433,7 +433,7 @@ automation:
 
 
   - alias: Notify on backup failure
-    id: ha_perform_daily_backup
+    id: ha_notify_on_backup_failure
     trigger:
       platform: event
       event_type: auto_backup.backup_failed
