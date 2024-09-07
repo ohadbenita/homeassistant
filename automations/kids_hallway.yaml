@@ -73,3 +73,16 @@
       entity_id:
         - switch.shelly1pmminig3_dcda0cafe368_switch_0
         - light.shellydimmer2_34945478921b
+
+
+- alias: "Kids hallway - Turn off lights in the night"
+  id: kids_hallway_turn_off_light_in_the_night
+  initial_state: true
+  trigger:
+    - platform: time
+      at: "23:00:00"
+
+  action:
+    - action: homeassistant.turn_off
+      entity_id:
+        - switch.shelly1pmminig3_34b7da8f8b78_switch_0 # book shelves hallway light
