@@ -2,9 +2,21 @@
 input_text:
   hass_last_notified_available_version:
     name: hass_last_notified_available_version
-
   hass_last_notified_upgraded_version:
     name: hass_last_notified_upgraded_version
+
+  cover_dining_room_left_position:
+    name: Dining Room Left Window Position
+  cover_dining_room_right_position:
+    name: Dining Room Right Window Position
+  cover_dining_room_main_position:
+    name: Dining Room Main Window Position
+  cover_living_room_left_position:
+    name: Living Room Left Window Position
+  cover_living_room_right_position:
+    name: Living Room Right Window Position
+  cover_living_room_middle_position:
+    name: Living Room Middle Window Position
 
 
 input_number:
@@ -20,6 +32,15 @@ input_boolean:
   skip_firmware_updates:
     name: Skip firmware checks by end of week
     icon: mdi:update
+
+
+rest_command:
+  shelly_calibrate_cover:
+    url: "http://{{ shelly_ip }}/rpc"
+    method: POST
+    headers:
+      content-type: "application/json"
+    payload: '{"id":1,"method":"Cover.Calibrate","params":{"id":0}}'
 
 
 sensor:
@@ -430,3 +451,90 @@ automation:
           message: >-
             Name: {{ trigger.event.data.name }}
             Error: {{ trigger.event.data.error }}
+
+
+  - alias: "Monthly Cover Calibration"
+    trigger:
+      platform: time
+      at: "03:00:00"
+    condition:
+      - condition: template
+        value_template: "{{ now().day == 1 }}"  # Runs on the 1st of the month
+    action:
+      # Store current positions into input_text entities
+      - action: input_text.set_value
+        data_template:
+          entity_id: input_text.cover_dining_room_left_position
+          value: "{{ state_attr('cover.dining_room_left_window', 'current_position') }}"
+      - action: input_text.set_value
+        data_template:
+          entity_id: input_text.cover_dining_room_right_position
+          value: "{{ state_attr('cover.dining_room_right_window', 'current_position') }}"
+      - action: input_text.set_value
+        data_template:
+          entity_id: input_text.cover_dining_room_main_position
+          value: "{{ state_attr('cover.dining_room_main_window', 'current_position') }}"
+      - action: input_text.set_value
+        data_template:
+          entity_id: input_text.cover_living_room_left_position
+          value: "{{ state_attr('cover.living_room_left_window', 'current_position') }}"
+      - action: input_text.set_value
+        data_template:
+          entity_id: input_text.cover_living_room_right_position
+          value: "{{ state_attr('cover.living_room_right_window', 'current_position') }}"
+      - action: input_text.set_value
+        data_template:
+          entity_id: input_text.cover_living_room_middle_position
+          value: "{{ state_attr('cover.living_room_middle_window', 'current_position') }}"
+
+      - variables:
+          cover_ip_map:
+            cover.dining_room_left_window: '172.16.1.237'
+            cover.dining_room_right_window: '172.16.1.181'
+            cover.dining_room_main_window: '172.16.1.189'
+            cover.living_room_left_window: '172.16.1.68'
+            cover.living_room_right_window: '172.16.1.28'
+            cover.living_room_middle_window: '172.16.1.208'
+
+      # Calibrate covers by iterating over entity IDs and fetching IPs
+      - repeat:
+          count: "{{ cover_ip_map | length }}"
+          sequence:
+            - action: rest_command.shelly_calibrate_cover
+              data:
+                shelly_ip: "{{ cover_ip_map[(cover_ip_map.keys() | list)[repeat.index -1]] }}"
+
+      # Wait 10 minutes after calibration
+      - delay: "00:10:00"
+
+      # Restore positions from input_text entities
+      - action: cover.set_cover_position
+        target:
+          entity_id: cover.dining_room_left_window
+        data_template:
+          position: "{{ states('input_text.cover_dining_room_left_position') | int }}"
+      - action: cover.set_cover_position
+        target:
+          entity_id: cover.dining_room_right_window
+        data_template:
+          position: "{{ states('input_text.cover_dining_room_right_position') | int }}"
+      - action: cover.set_cover_position
+        target:
+          entity_id: cover.dining_room_main_window
+        data_template:
+          position: "{{ states('input_text.cover_dining_room_main_position') | int }}"
+      - action: cover.set_cover_position
+        target:
+          entity_id: cover.living_room_left_window
+        data_template:
+          position: "{{ states('input_text.cover_living_room_left_position') | int }}"
+      - action: cover.set_cover_position
+        target:
+          entity_id: cover.living_room_right_window
+        data_template:
+          position: "{{ states('input_text.cover_living_room_right_position') | int }}"
+      - action: cover.set_cover_position
+        target:
+          entity_id: cover.living_room_middle_window
+        data_template:
+          position: "{{ states('input_text.cover_living_room_middle_position') | int }}"
