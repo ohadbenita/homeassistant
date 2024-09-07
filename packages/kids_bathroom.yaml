@@ -12,6 +12,7 @@ automation:
     trigger:
       - platform: state
         entity_id: binary_sensor.washing_machine_active
+        from: 'on'
         to: 'off'
         for:
           minutes: 5
