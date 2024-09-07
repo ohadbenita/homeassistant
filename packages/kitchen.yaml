@@ -125,7 +125,7 @@ automation:
     condition:
       condition: and
       conditions:
-        - condition: template #2 hours
+        - condition: template  # 2 hours
           value_template: >-
             {{as_timestamp(now()) - as_timestamp(state_attr('automation.announce_dishwasher_cycle_completed', 'last_triggered')) | int > 7200}}
 

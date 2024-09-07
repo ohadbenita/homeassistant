@@ -85,4 +85,4 @@
   action:
     - action: homeassistant.turn_off
       entity_id:
-        - switch.shelly1pmminig3_34b7da8f8b78_switch_0 # book shelves hallway light
+        - switch.shelly1pmminig3_34b7da8f8b78_switch_0  # book shelves hallway light
