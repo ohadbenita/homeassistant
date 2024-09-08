@@ -456,7 +456,7 @@ automation:
   - alias: "Monthly Cover Calibration"
     trigger:
       platform: time
-      at: "03:00:00"
+      at: "12:00:00"
     condition:
       - condition: template
         value_template: "{{ now().day == 1 }}"  # Runs on the 1st of the month
