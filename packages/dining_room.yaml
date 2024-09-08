@@ -92,6 +92,30 @@ automation:
         data:
           position: 15
 
+
+  - alias: 'Close dining room shutters at night - complete'
+    id: dining_room_shutters_close_night_complete
+    initial_state: true
+    trigger:
+      - platform: time
+        at: '23:00:00'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.dining_room_right_window
+            - cover.dining_room_main_window
+            - cover.dining_room_left_window
+        data:
+          position: 0
+
+
   - alias: 'Open dining room shutters in the morning'
     id: dining_room_open_shutters_morning
     initial_state: true

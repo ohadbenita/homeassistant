@@ -22,6 +22,30 @@ automation:
         data:
           position: 15
 
+
+  - alias: 'Close living room shutters at 23:00'
+    id: living_room_shutters_close_at_night_complete
+    initial_state: true
+    trigger:
+      platform: time
+      at: '23:00:00'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_right_window
+            - cover.living_room_middle_window
+            - cover.living_room_left_window
+        data:
+          position: 0
+
+
   - alias: 'Open living room shutters in the morning'
     id: living_room_open_living_room_shutters_morning
     initial_state: true
@@ -224,7 +248,7 @@ automation:
 
       - action: cover.set_cover_position
         data:
-          position: 15
+          position: 0
         target:
           entity_id:
             - cover.living_room_left_window
