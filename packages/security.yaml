@@ -1,0 +1,39 @@
+---
+input_text:
+  person_detection_snapshot_filename:
+    name: Snapshot file name
+
+automation:
+  - alias: "Security - Camera snapshot on person trigger"
+    id: security_camera_snapshot_on_person_trigger
+    mode: queued
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.front_porch_and_parking_person
+          - binary_sensor.main_entrance_person
+          - binary_sensor.kitchen_path_person
+        to: 'on'
+    action:
+      - action: input_text.set_value
+        data:
+          entity_id: input_text.person_detection_snapshot_filename
+          value: >-
+            {{ '/config/www/camera_captures/' + trigger.entity_id.split('.')[1].replace('_person', '').replace('_', '/') + '/' + now().strftime('%Y_%m_%d_%H_%M') + '.jpg' }}
+      - delay:
+          seconds: 2
+      - action: camera.snapshot
+        data:
+          entity_id: >-
+            {{ 'camera.' + trigger.entity_id.split('.')[1].replace('_person', '_fluent') }}
+          filename: "{{ states('input_text.person_detection_snapshot_filename') }}"
+      - action: notify.ohad_telegram
+        data:
+          title: "Security - human presence detected"
+          message: >-
+            Presence detected @ {{ trigger.entity_id.split('.')[1].replace('_person', '').replace('_', ' ') | title }}
+          data:
+            photo:
+              - file: "{{ states('input_text.person_detection_snapshot_filename') }}"
+                caption: Snapshot taken at {{ trigger.entity_id.split('.')[1].replace('_person', '').replace('_', ' ') | title }}
