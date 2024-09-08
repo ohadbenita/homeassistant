@@ -5,12 +5,11 @@ group:
     entities:
       - switch.irrigation_l5
       - switch.irrigation_l4
-      - switch.irrigation_l2
       - switch.irrigation_l3
 
 automation:
-  - alias: Weekly Irrigation Cycle
-    id: irrigation_simple_weekly_schedule
+  - alias: Weekly Irrigation Cycle - trees and bushes
+    id: irrigation_simple_weekly_schedule_trees_bushes
     initial_state: true
     trigger:
       - platform: sun
@@ -31,10 +30,39 @@ automation:
       - action: switch.turn_on
         entity_id: group.irrigation_switches
 
-      - delay: "01:00:00"
+      - delay: "00:45:00"
 
       - action: switch.turn_off
         entity_id: group.irrigation_switches
+      - delay: "00:00:05"
+      - action: switch.turn_off
+        entity_id: switch.irrigation_l6  # master
+
+
+  - alias: Weekly Irrigation Cycle - flowers and herbs
+    id: irrigation_simple_weekly_schedule_flowers_herbs
+    initial_state: true
+    trigger:
+      - platform: sun
+        event: sunrise
+        offset: "-1:00:00"
+      - platform: sun
+        event: sunset
+        offset: "-1:00:00"
+      - platform: time
+        at: "12:00:00"
+
+    action:
+      - action: switch.turn_on
+        entity_id: switch.irrigation_l6  # master
+      - delay: "00:00:05"
+      - action: switch.turn_on
+        entity_id: switch.irrigation_l2
+
+      - delay: "00:07:00"
+
+      - action: switch.turn_off
+        entity_id: switch.irrigation_l2
       - delay: "00:00:05"
       - action: switch.turn_off
         entity_id: switch.irrigation_l6  # master
@@ -57,11 +85,19 @@ automation:
           for:
             minutes: 70
 
+        - condition: state
+          entity_id: switch.irrigation_l2
+          state: 'on'
+          for:
+            minutes: 20
+
     action:
       - action: switch.turn_off
         entity_id: switch.irrigation_l6
       - action: switch.turn_off
         entity_id: group.irrigation_switches
+      - action: switch.turn_off
+        entity_id: switch.irrigation_l2
 
       - wait_for_trigger:
           - platform: state
@@ -73,7 +109,7 @@ automation:
 
       - action: notify.ohad_telegram
         data:
-          message: 'Irrigation Watchdog had to stop the irrigation, please check the issue with the automation'
+          message: 'Irrigation Watchdog had to stop the irrigation, please check the issue with the automations'
 
 
   - alias: "Yard - Turn off roof lights in the night"
