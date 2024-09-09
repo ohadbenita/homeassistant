@@ -241,22 +241,23 @@ automation:
 
     action:
       - action: homeassistant.turn_off
-        area_id:
-          - basement
-          - living_room
-          - kitchen
-          - pantry
-          - dining_room
-          - guest_bathroom
-          - adi_room
-          - roi_room
-          - main_hallway
-          - kids_master_bathroom
-          - study_room
-          - basement_stairs
-          - upstairs_stairs
-          - master_bedroom
-          - yard
+        data:
+          area_id:
+            - basement
+            - living_room
+            - kitchen
+            - pantry
+            - dining_room
+            - guest_bathroom
+            - adi_room
+            - roi_room
+            - main_hallway
+            - kids_master_bathroom
+            - study_room
+            - basement_stairs
+            - upstairs_stairs
+            - master_bedroom
+            - yard
 
       - action: cover.set_cover_position
         data:
