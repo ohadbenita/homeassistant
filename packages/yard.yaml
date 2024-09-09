@@ -256,3 +256,30 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id: switch.shellyplus2pm_fcb467a557a0_switch_0
+
+
+  - alias: "Alert on high expected water consumption"
+    id: yard_cost_alert_on_high_expected_water_consumption
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.meter_1018_monthly_forecast
+        above: 55
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: numeric_state
+        entity_id: sensor.meter_1018_monthly_forecast
+        above: 55
+      - condition: template  # once a week
+        value_template: "{{ (now() | as_timestamp) - (state_attr('automation.alert_on_high_expected_water_consumption', 'last_triggered') | default(0) | as_timestamp) > 604800 }}"
+
+    action:
+      - action: notify.ohad_telegram
+        data:
+          title: "Alert: High water consumption forecast"
+          message: >-
+            The current forecasted monthly water consumption is {{ states('sensor.meter_1018_monthly_forecast') | int }} m³.
+            Please check whether there's a water leak.
