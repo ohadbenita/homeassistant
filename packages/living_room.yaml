@@ -212,13 +212,14 @@ automation:
                   {% set on_switches = switches | select('eq', 'on') | list %}
                   {{ on_switches | length > 2 }}
             sequence:
-              - service: switch.turn_off
+              - service: homeassistant.turn_off
                 target:
                   entity_id:
                     - switch.shellyplus2pm_fcb4670e68e8_switch_0
                     - switch.shellyplus2pm_fcb4670e68e8_switch_1
                     - switch.shelly1_34945470bfa1
                     - switch.shelly1_e8db84d27b53
+                    - climate.living_room_ac
         default:
           - service: switch.turn_on
             target:
@@ -239,12 +240,23 @@ automation:
         to: 'double'
 
     action:
-      - action: switch.turn_off
-        entity_id:
-          - switch.shellyplus2pm_fcb4670e68e8_switch_0
-          - switch.shellyplus2pm_fcb4670e68e8_switch_1
-          - switch.shelly1_34945470bfa1
-          - switch.shelly1_e8db84d27b53
+      - action: homeassistant.turn_off
+        area_id:
+          - basement
+          - living_room
+          - kitchen
+          - pantry
+          - dining_room
+          - guest_bathroom
+          - adi_room
+          - roi_room
+          - main_hallway
+          - kids_master_bathroom
+          - study_room
+          - basement_stairs
+          - upstairs_stairs
+          - master_bedroom
+          - yard
 
       - action: cover.set_cover_position
         data:
@@ -257,9 +269,6 @@ automation:
             - cover.dining_room_right_window
             - cover.dining_room_left_window
             - cover.dining_room_main_window
-
-      - action: climate.turn_off
-        entity_id: climate.living_room_ac
 
       - delay: '00:00:20'
 
