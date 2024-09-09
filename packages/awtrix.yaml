@@ -38,6 +38,9 @@ automation:
               - condition: state
                 entity_id: person.ohad_benita
                 state: 'home'
+              - condition: state
+                entity_id: sensor.ohad_ble
+                state: 'study'
             sequence:
               - service: mqtt.publish
                 data:
@@ -106,7 +109,7 @@ automation:
                       "location": "{{ state_attr('calendar.ohad_lightricks_com', 'location') }}",
                       "description": "{{ state_attr('calendar.ohad_lightricks_com', 'description') }}"
                     }
-                  topic: awtrix/custom/calendar-notifier
+                  topic: awtrix/custom/calendar
 
           - conditions:
               - condition: template
@@ -116,7 +119,7 @@ automation:
                 data:
                   qos: 0
                   retain: false
-                  topic: awtrix/custom/calendar-notifier
+                  topic: awtrix/custom/calendar
 
 
   - alias: Awtrix Night Clock
