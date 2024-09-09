@@ -143,7 +143,7 @@ automation:
         data_template:
           entity_id: cover.dining_room_main_window
           position: >-
-            {{ max(state_attr('cover.dining_room_main_window', 'current_position') | int, 90) }}
+            {{ max(state_attr('cover.dining_room_main_window', 'current_position') | int, 100) }}
 
       - action: cover.set_cover_position
         data_template:
