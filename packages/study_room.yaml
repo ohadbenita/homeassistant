@@ -8,27 +8,27 @@ automation:
         entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
         to: 'off'
         for:
-          minutes: 10
+          minutes: 2
+      - platform: state
+        entity_id: sensor.ohad_ble
+        from: 'study'
 
     condition:
-      condition: template
-      value_template: >-
-        {{ not is_state('climate.study_room_ac', 'off') }}
+      alias: "Ohad is not in the room"
+      condition: not
+      conditions:
+        - condition: state
+          entity_id: sensor.ohad_ble
+          state: 'study'
+        - condition: state
+          entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
+          state: 'on'
 
     action:
-      - action: switch.turn_on
-        entity_id: switch.study_room_ac_beeper
-
-      - action: climate.turn_off
-        data_template:
-          entity_id: climate.study_room_ac
-
-      - action: switch.turn_off
-        entity_id: switch.study_room_ac_beeper
-
       - action: homeassistant.turn_off
-        data_template:
-          entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+        entity_id:
+          - climate.study_room_ac
+          - switch.shellyplus1pm_e465b8f12024_switch_0
 
 
   - alias: "Study Room - Turn lights on immediately, AC after 5 minutes"
@@ -38,19 +38,51 @@ automation:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
         to: 'on'
+      - platform: state
+        entity_id:
+          - sensor.ohad_ble
+          - sensor.rinat_ble
+          - sensor.roi_ble
+          - sensor.ella_ble
+        to: 'study'
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
+        state: 'on'
+      - condition: state
+        entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+        state: 'off'
+      - condition: numeric_state
+        entity_id: sensor.ohad_ble
+        attribute: distance
+        below: 5.5
 
     action:
-      # Turn on the lights immediately
       - action: homeassistant.turn_on
         entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
 
-      - wait_for_trigger:
-          - platform: state
-            entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
-            to: 'on'
-            for: "00:05:00"
-        continue_on_timeout: false
+  - alias: "Study room - Turn on AC when temperature is above threshold"
+    initial_state: true
+    id: study_room_turn_ac_on
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.study_temperature_temperature
+        above: 32
 
+    condition:
+      - condition: state
+        entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
+        state: 'on'
+      - condition: state
+        entity_id: sensor.ohad_ble
+        state: 'study'
+      - condition: numeric_state
+        entity_id: sensor.ohad_ble
+        attribute: distance
+        below: 5.5
+
+    action:
       - action: switch.turn_on
         entity_id: switch.study_room_ac_beeper
 
