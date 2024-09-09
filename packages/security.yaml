@@ -7,7 +7,7 @@ automation:
   - alias: "Security - Camera snapshot on person trigger"
     id: security_camera_snapshot_on_person_trigger
     mode: queued
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id:
