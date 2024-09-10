@@ -20,13 +20,13 @@ automation:
         data:
           entity_id: input_text.person_detection_snapshot_filename
           value: >-
-            {{ '/config/www/camera_captures/' + trigger.entity_id.split('.')[1].replace('_person', '').replace('_', '/') + '/' + now().strftime('%Y_%m_%d_%H_%M') + '.jpg' }}
+            {{ '/config/www/camera_captures/' + trigger.entity_id.split('.')[1].replace('_person', '') + '/' + now().strftime('%Y_%m_%d_%H_%M') + '.jpg' }}
       - delay:
           seconds: 2
       - action: camera.snapshot
         data:
           entity_id: >-
-            {{ 'camera.' + trigger.entity_id.split('.')[1].replace('_person', '_fluent') }}
+            {{ 'camera.' + trigger.entity_id.split('.')[1].replace('_person', '_snapshots_clear') }}
           filename: "{{ states('input_text.person_detection_snapshot_filename') }}"
       - action: notify.ohad_telegram
         data:
