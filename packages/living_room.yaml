@@ -219,7 +219,6 @@ automation:
                     - switch.shellyplus2pm_fcb4670e68e8_switch_1
                     - switch.shelly1_34945470bfa1
                     - switch.shelly1_e8db84d27b53
-                    - climate.living_room_ac
         default:
           - service: switch.turn_on
             target:
