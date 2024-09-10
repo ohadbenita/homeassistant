@@ -78,3 +78,36 @@ automation:
               - action: climate.toggle
                 target:
                   entity_id: climate.ella_ac
+
+
+  - alias: 'Ella room - Send a notification when Ketem tracker is charged'
+    id: ella_room_notify_when_tracker_is_charged
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.ketem_tracker_battery
+        above: 99
+        for:
+          minutes: 5
+
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.home_ella_benita_distance
+                below: 10000  # 10 km in meters
+            sequence:
+              - action: notify.ohad_whatsapp_api
+                data:
+                  message: "Ketem's GPS tracker is charged, please re-attach it"
+                  title: Device notification
+                  target: !secret ella_benita_whatsapp_user_id
+                  data:
+                    media_url: {}
+        default:
+          - action: notify.ohad_whatsapp_api
+            data:
+              message: 'הג׳יפיאס של כתם סיים להיטען, אנא חברי לה אותו בחזרה'
+              title: Device notification
+              target: !secret adi_benita_whatsapp_user_id
