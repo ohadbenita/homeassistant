@@ -138,6 +138,7 @@ automation:
         entity_id:
           - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # kids bathroom outdoor light
+          - switch.shelly1pmminig3_54320454e6dc_switch_0 # Parking and outdoor fan
 
 
   - alias: "Turn on kitchen door path light when door is opened"
@@ -170,8 +171,9 @@ automation:
 
     action:
       - action: homeassistant.turn_on
-        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
-
+        entity_id:
+          - switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
+          - switch.shelly1pmminig3_54320454e6dc_switch_0  # Parking and fan lights
 
   - alias: "Turn off kitchen door path light when door is closed"
     id: yard_turn_on_kitchen_door_path_light_when_door_is_closed
@@ -196,7 +198,9 @@ automation:
 
     action:
       - action: homeassistant.turn_off
-        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
+        entity_id:
+          - switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
+          - switch.shelly1pmminig3_54320454e6dc_switch_0  # Parking and fan lights
 
 
   - alias: "Turn on kids bathroom door path light when door is opened"
