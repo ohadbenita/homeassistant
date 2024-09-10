@@ -138,7 +138,7 @@ automation:
         entity_id:
           - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # kids bathroom outdoor light
-          - switch.shelly1pmminig3_54320454e6dc_switch_0 # Parking and outdoor fan
+          - switch.shelly1pmminig3_54320454e6dc_switch_0  # Parking and outdoor fan
 
 
   - alias: "Turn on kitchen door path light when door is opened"
