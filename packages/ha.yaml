@@ -538,3 +538,17 @@ automation:
           entity_id: cover.living_room_middle_window
         data_template:
           position: "{{ states('input_text.cover_living_room_middle_position') | int }}"
+
+
+  - alias: "Alert on Grisha's bin being full"
+    id: ha_alert_grisha_bin_full
+    initial_state: true
+    trigger:
+      platform: state
+      entity_id: binary_sensor.grisha_bin_full
+      to: 'on'
+
+    action:
+      - action: notify.ohad_telegram
+        data:
+          message: "[Device maintenance] Grisha's bin is full."
