@@ -30,18 +30,6 @@ automation:
         event: sunset
         offset: "-03:00:00"
 
-      - platform: event
-        event_type: alexa_actionable_notification
-        event_data:
-          event_id: shutters_close_sunset
-          event_response_type: ResponseYes
-
-      - platform: event
-        event_type: alexa_actionable_notification
-        event_data:
-          event_id: shutters_close_sunset
-          event_response_type: ResponseNone
-
     action:
       - variables:
           right_window_position: "{{ state_attr('cover.dining_room_right_window', 'current_position') }}"
@@ -62,12 +50,85 @@ automation:
         data:
           position: "{{ [left_window_position, 35] | min }}"
 
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id:
+                  - binary_sensor.dining_room_main_window_01_contact
+                  - binary_sensor.dining_room_main_window_02_contact
+                state: 'off'
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: cover.dining_room_main_window
+                data:
+                  position: "{{ [main_window_position, 35] | min }}"
+        default:
+          - action: script.activate_alexa_actionable_notification
+            data:
+              text: 'I see the balcony window is open, should I close its shutter?'
+              event_id: 'actionable_notification_close_balcony_window'
+              alexa_device: 'media_player.kitchen_echo'
+
+
+  - alias: 'Announce dining room main shutter will not be closed'
+    id: dining_room_main_window_shutter_close_skipped
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_close_balcony_window
+          event_response_type: ResponseNo
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_close_balcony_window
+          event_response_type: ResponseNone
+
+    action:
+      - action: notify.alexa_media
+        data_template:
+          data:
+            type: tts
+          target:
+            - media_player.kitchen_echo
+          message: >-
+            I understand - I'll skip closing the balcony window shutter.
+
+  - alias: 'Close dining room main shutter via actionable notification'
+    id: dining_room_main_window_shutter_close_actionable_notification
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_close_balcony_window
+          event_response_type: ResponseYes
+
+    action:
+      - action: notify.alexa_media
+        data_template:
+          data:
+            type: tts
+          target:
+            - media_player.kitchen_echo
+          message: >-
+            Please close the window for me to be able to close the shutter.
+
+      - wait_template: >
+          {{ is_state('binary_sensor.dining_room_main_window_01_contact', 'off')
+            and is_state('binary_sensor.dining_room_main_window_02_contact', 'off') }}
+        timeout:
+          seconds: 30
+        continue_on_timeout: false
+
       - action: cover.set_cover_position
         target:
           entity_id:
             - cover.dining_room_main_window
         data:
-          position: "{{ [main_window_position, 35] | min }}"
+          position: "{{ [state_attr('cover.dining_room_right_window', 'current_position'), 35] | min }}"
 
 
   - alias: 'Close dining room shutters at night'
