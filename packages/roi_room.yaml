@@ -62,7 +62,7 @@ automation:
         entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
         to: 'off'
         for:
-          minutes: 10
+          minutes: 20
 
     condition:
       - condition: template
