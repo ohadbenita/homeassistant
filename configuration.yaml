@@ -23,6 +23,7 @@ recorder:
 automation: !include_dir_merge_list automations
 input_text: !include input_text.yaml
 input_boolean: !include input_boolean.yaml
+group: !include group.yaml
 notify: !include notification.yaml
 scene: !include scenes.yaml
 script: !include_dir_merge_named scripts

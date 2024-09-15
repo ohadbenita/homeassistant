@@ -1,0 +1,43 @@
+---
+all_lights:
+  entities:
+    - switch.shelly1_e8db84d27b53
+    - switch.shelly1_34945470bfa1
+    - switch.shelly1pmminig3_34b7da8da318_switch_0
+    - switch.shelly1pmminig3_34b7da8c3e68_switch_0
+    - switch.shelly1pmminig3_34b7da8eef08_switch_0
+    - switch.shelly1pmminig3_34b7da8f85bc_switch_0
+    - switch.shelly1pmminig3_34b7da8f8b78_switch_0
+    - switch.shelly1pmminig3_54320451ae98_switch_0
+    - switch.shelly1pmminig3_54320454e6dc_switch_0
+    - switch.shelly1pmminig3_dcda0cafe368_switch_0
+    - switch.shellyplus1pm_e465b8f12024_switch_0
+    - switch.shellyplus2pm_10061ccdc57c_switch_0
+    - switch.shellyplus2pm_10061ccdc57c_switch_1
+    - switch.shellyplus2pm_a0a3b3682b10_switch_0
+    - switch.shellyplus2pm_a0a3b3682b10_switch_1
+    - switch.shellyplus2pm_d48afc581860_switch_0
+    - switch.shellyplus2pm_d48afc581860_switch_1
+    - switch.shellyplus2pm_fcb4670e673c_switch_0
+    - switch.shellyplus2pm_fcb4670e673c_switch_1
+    - switch.shellyplus2pm_fcb4670e68e8_switch_0
+    - switch.shellyplus2pm_fcb4670e68e8_switch_1
+    - switch.shellyplus2pm_fcb467a557a0_switch_0
+    - switch.shellyplus2pm_fcb467a557a0_switch_1
+    - switch.shellyplus2pm_fcb467a580a8_switch_0
+    - switch.shellyplus2pm_fcb467a580a8_switch_1
+    - switch.shellyplus2pm_fcb467a684e8_switch_0
+    - switch.shellyplus2pm_fcb467a684e8_switch_1
+    - switch.shellyswitch25_6869e3_channel_1
+    - switch.shellyswitch25_6869e3_channel_2
+    - light.kitchen_path_floodlight
+    - light.shellydimmer2_ec64c9c66fdc
+    - light.shellydimmer2_34945478921b
+all_ac:
+  entities:
+    - climate.living_room_ac
+    - climate.ella_ac
+    - climate.roi_room_ac
+    - climate.adi_room_ac
+    - climate.master_bedroom_ac
+    - climate.study_room_ac
