@@ -212,7 +212,7 @@ automation:
                   {% set on_switches = switches | select('eq', 'on') | list %}
                   {{ on_switches | length > 2 }}
             sequence:
-              - service: homeassistant.turn_off
+              - action: homeassistant.turn_off
                 target:
                   entity_id:
                     - switch.shellyplus2pm_fcb4670e68e8_switch_0
@@ -220,7 +220,7 @@ automation:
                     - switch.shelly1_34945470bfa1
                     - switch.shelly1_e8db84d27b53
         default:
-          - service: switch.turn_on
+          - action: switch.turn_on
             target:
               entity_id:
                 - switch.shellyplus2pm_fcb4670e68e8_switch_0
@@ -239,25 +239,6 @@ automation:
         to: 'double'
 
     action:
-      - action: homeassistant.turn_off
-        data:
-          area_id:
-            - basement
-            - living_room
-            - kitchen
-            - pantry
-            - dining_room
-            - guest_bathroom
-            - adi_room
-            - roi_room
-            - main_hallway
-            - kids_master_bathroom
-            - study_room
-            - basement_stairs
-            - upstairs_stairs
-            - master_bedroom
-            - yard
-
       - action: cover.set_cover_position
         data:
           position: 0
@@ -276,6 +257,46 @@ automation:
         target:
           entity_id: >
             {{ states.lock | map(attribute='entity_id') | list }}
+
+      - repeat:
+          until:
+            - condition: template
+              value_template: >
+                {{ states.lock | selectattr('state', '==', 'locked') | list | count == states.lock | list | count }}
+          sequence:
+            - action: lock.lock
+              target:
+                entity_id: >
+                  {{ states.lock | selectattr('state', '!=', 'locked') | map(attribute='entity_id') | list }}
+
+            - delay: '00:00:20'  # Retry every 20 seconds
+
+      - choose:
+        - conditions:
+            - condition: template
+              value_template: >
+                {{ states.lock | selectattr('state', '!=', 'locked') | list | count == 0 }}
+          sequence:
+            - action: notify.ohad_telegram
+              data:
+                message: 'All locks have been successfully locked.'
+
+        default:
+          - action: notify.ohad_telegram
+            data:
+              message: >
+                Some locks failed to lock:
+                {{ states.lock | selectattr('state', '!=', 'locked') | map(attribute='name') | join(', ') }}
+
+      - action: homeassistant.turn_off
+        target:
+          entity_id:
+            - group.all_ac
+            - group.all_lights
+
+      - action: notify.ohad_telegram
+        data:
+          message: 'Turn everything automation succesfully executed.'
 
 
   - alias: 'Living room fireplace switch - turn on AC'
