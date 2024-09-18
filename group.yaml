@@ -41,3 +41,11 @@ all_ac:
     - climate.adi_room_ac
     - climate.master_bedroom_ac
     - climate.study_room_ac
+public_space_shutters:
+  entities:
+    - cover.living_room_middle_window
+    - cover.living_room_left_window
+    - cover.living_room_right_window
+    - cover.dining_room_left_window
+    - cover.dining_room_right_window
+    - cover.dining_room_main_window

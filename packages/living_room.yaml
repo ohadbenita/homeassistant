@@ -239,65 +239,7 @@ automation:
         to: 'double'
 
     action:
-      - action: cover.set_cover_position
-        data:
-          position: 0
-        target:
-          entity_id:
-            - cover.living_room_left_window
-            - cover.living_room_middle_window
-            - cover.living_room_right_window
-            - cover.dining_room_right_window
-            - cover.dining_room_left_window
-            - cover.dining_room_main_window
-
-      - delay: '00:00:20'
-
-      - action: lock.lock
-        target:
-          entity_id: >
-            {{ states.lock | map(attribute='entity_id') | list }}
-
-      - repeat:
-          until:
-            - condition: template
-              value_template: >
-                {{ states.lock | selectattr('state', '==', 'locked') | list | count == states.lock | list | count }}
-          sequence:
-            - action: lock.lock
-              target:
-                entity_id: >
-                  {{ states.lock | selectattr('state', '!=', 'locked') | map(attribute='entity_id') | list }}
-
-            - delay: '00:00:20'  # Retry every 20 seconds
-
-      - choose:
-        - conditions:  # yamllint disable-line rule:indentation
-            - condition: template
-              value_template: >
-                {{ states.lock | selectattr('state', '!=', 'locked') | list | count == 0 }}
-          sequence:
-            - action: notify.ohad_telegram
-              data:
-                message: 'All locks have been successfully locked.'
-
-        default:
-          - action: notify.ohad_telegram
-            data:
-              message: >
-                Some locks failed to lock:
-                {{ states.lock | selectattr('state', '!=', 'locked') | map(attribute='name') | join(', ') }}
-
-      - action: homeassistant.turn_off
-        target:
-          entity_id:
-            - group.all_ac
-            - group.all_lights
-
-      - action: notify.ohad_telegram
-        data:
-          message: 'Turn everything automation succesfully executed.'
-
+      - action: script.turn_everything_off
 
   - alias: 'Living room fireplace switch - turn on AC'
     id: living_room_fireplace_switch_turn_on_ac
@@ -363,8 +305,8 @@ automation:
           temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float - 1 }}"
 
 
-  - alias: 'Living room fireplace switch - Open shutters'
-    id: living_room_fireplace_open_shutters
+  - alias: 'Living room fireplace switch - Open living room shutters'
+    id: living_room_fireplace_open_living_shutters
     initial_state: true
     mode: single
     trigger:
@@ -382,14 +324,15 @@ automation:
         data:
           position: 80
 
-  - alias: 'Living room fireplace switch - Close shutters'
-    id: living_room_fireplace_close_shutters
+
+  - alias: 'Living room fireplace switch - Close living room shutters'
+    id: living_room_fireplace_close_living_room_shutters
     initial_state: true
     mode: single
     trigger:
       - platform: state
         entity_id: sensor.living_room_01_action
-        to: 'button_5_single'
+        to: 'button_5_double'
 
     action:
       - action: cover.set_cover_position
@@ -400,3 +343,76 @@ automation:
             - cover.living_room_left_window
         data:
           position: 35
+
+  - alias: 'Living room fireplace switch - Open dining room shutters'
+    id: living_room_fireplace_open_dining_room_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_6_double'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.dining_room_right_window
+            - cover.dining_room_main_window
+            - cover.dining_room_left_window
+        data:
+          position: 80
+
+
+  - alias: 'Living room fireplace switch - Close dining room shutters'
+    id: living_room_fireplace_close_dining_room_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_5_double'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.dining_room_right_window
+            - cover.dining_room_main_window
+            - cover.dining_room_left_window
+        data:
+          position: 35
+
+
+  - alias: 'Living room fireplace switch - Open public space shutters'
+    id: living_room_fireplace_open_public_space_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_6_triple'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id: group.public_space_shutters
+        data:
+          position: 100
+
+
+  - alias: 'Living room fireplace switch - Close public space shutters'
+    id: living_room_fireplace_close_public_space_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_5_triple'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id: group.public_space_shutters
+        data:
+          position: 15

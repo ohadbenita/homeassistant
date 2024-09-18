@@ -63,6 +63,9 @@ automation:
         platform: state
         from: 'off'
         to: 'on'
+      - platform: state
+        entity_id: binary_sensor.kitchen_door_contact
+        to: 'on'
     action:
       - action: homeassistant.turn_on
         entity_id:

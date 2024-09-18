@@ -42,7 +42,7 @@ automation:
                 entity_id: sensor.ohad_ble
                 state: 'study'
             sequence:
-              - service: mqtt.publish
+              - action: mqtt.publish
                 data:
                   qos: 0
                   retain: false
@@ -64,7 +64,7 @@ automation:
                 value_template: >-
                   {{ not states.media_player.spotify_ohad_benita.state == 'playing' }}
             sequence:
-              - service: mqtt.publish
+              - action: mqtt.publish
                 data:
                   qos: 0
                   retain: false
@@ -82,12 +82,13 @@ automation:
         event: start
       - platform: calendar
         entity_id: calendar.ohad_lightricks_com
-        event: end
+        offset: "00:10:00"
+        event: start
     action:
       - choose:
           - conditions:
               - condition: template
-                value_template: "{{ trigger.event == 'start' }}"
+                value_template: "{{ trigger.event == 'start' and trigger.offset.total_seconds() == -300 }}"
               - condition: state
                 entity_id: person.ohad_benita
                 state: 'home'
@@ -120,9 +121,9 @@ automation:
 
           - conditions:
               - condition: template
-                value_template: "{{ trigger.event == 'end' }}"
+                value_template: "{{ trigger.event == 'start' and trigger.offset.total_seconds() == 600 }}"
             sequence:
-              - service: mqtt.publish
+              - action: mqtt.publish
                 data:
                   qos: 0
                   retain: false
@@ -151,7 +152,7 @@ automation:
       - platform: state
         entity_id: input_number.awtrix_transition_speed
     action:
-      - service: mqtt.publish
+      - action: mqtt.publish
         data:
           topic: "awtrix/settings"
           payload: '{"TSPEED": {{ (states("input_number.awtrix_transition_speed") | int) }}}'
@@ -163,7 +164,7 @@ automation:
       - platform: state
         entity_id: input_number.awtrix_app_time
     action:
-      - service: mqtt.publish
+      - action: mqtt.publish
         data:
           topic: "awtrix/settings"
           payload: '{"ATIME": {{ (states("input_number.awtrix_app_time") | int) }}}'
