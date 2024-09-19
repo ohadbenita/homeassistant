@@ -358,10 +358,15 @@ automation:
         target:
           entity_id:
             - cover.dining_room_right_window
-            - cover.dining_room_main_window
             - cover.dining_room_left_window
         data:
           position: 80
+
+      - action: cover.set_cover_position
+        target:
+          entity_id: cover.dining_room_main_window
+        data:
+          position: 100
 
 
   - alias: 'Living room fireplace switch - Close dining room shutters'
