@@ -1,27 +1,5 @@
 ---
 automation:
-  # - alias: Notify shutters are about to be closed at sunset
-  #   id: dining_room_actionable_notification_shutter_close_at_sunset
-  #   initial_state: true
-  #   trigger:
-  #     platform: sun
-  #     event: sunset
-  #     offset: "-03:00:00"
-
-  #   condition:
-  #     - condition: state
-  #       entity_id: input_boolean.away_mode
-  #       state: 'off'
-
-  #   action:
-  #     - action: script.activate_alexa_actionable_notification
-  #       data_template:
-  #         text: >-
-  #           The sun is about to set, so I am going to close the dining room
-  #           shutters, can I proceed?
-  #         event_id: 'shutters_close_sunset'
-  #         alexa_device: 'media_player.kitchen_echo'
-
   - alias: 'Close dining room shutters before sunset'
     id: dining_room_shutters_close_before_sunset
     initial_state: true
@@ -95,6 +73,7 @@ automation:
             - media_player.kitchen_echo
           message: >-
             I understand - I'll skip closing the balcony window shutter.
+
 
   - alias: 'Close dining room main shutter via actionable notification'
     id: dining_room_main_window_shutter_close_actionable_notification
@@ -218,7 +197,6 @@ automation:
           position: >-
             {{ max(state_attr('cover.dining_room_left_window', 'current_position') | int, 70) }}
 
-
   # maps:
   #   - flag: 0
   #     name: Main floor
@@ -237,7 +215,7 @@ automation:
 
   - alias: Kitchen counter button - Send Yulanda to clean the dining room
     id: dining_room_clean_yulanda_button_press
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: sensor.kitchen_counter_01_action

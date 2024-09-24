@@ -173,8 +173,8 @@ automation:
           entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
 
 
-  - alias: 'Master bedroom bedside switch - open shutter'
-    id: master_bedroom_bedside_switch_open_shutter
+  - alias: 'Master bedroom bedside switch - open shutters'
+    id: master_bedroom_bedside_switch_open_shutters
     initial_state: true
     mode: single
     trigger:
@@ -185,12 +185,15 @@ automation:
     action:
       - action: cover.set_cover_position
         data:
-          position: 90
+          position: 100
         target:
-          entity_id: cover.master_bedroom_main_window
+          entity_id:
+            - cover.master_bedroom_main_window
+            - cover.shellyplus2pm_c4d8d5582a90  # right
+            - cover.shellyplus2pm_e465b8f38f54  # left
 
 
-  - alias: 'Master bedroom bedside switch - open shutter'
+  - alias: 'Master bedroom bedside switch - close shutters'
     id: master_bedroom_bedside_switch_close_shutter
     initial_state: true
     mode: single
@@ -204,7 +207,10 @@ automation:
         data:
           position: 20
         target:
-          entity_id: cover.master_bedroom_main_window
+          entity_id:
+            - cover.master_bedroom_main_window
+            - cover.shellyplus2pm_c4d8d5582a90  # right
+            - cover.shellyplus2pm_e465b8f38f54  # left
 
 
   - alias: 'Master bedroom bedside switch - turn on spots in night mode'

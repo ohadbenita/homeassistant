@@ -332,7 +332,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.living_room_01_action
-        to: 'button_5_double'
+        to: 'button_5_single'
 
     action:
       - action: cover.set_cover_position
