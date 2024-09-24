@@ -46,9 +46,6 @@ automation:
       - platform: sun
         event: sunrise
         offset: "00:00:00"
-      - platform: sun
-        event: sunset
-        offset: "-1:00:00"
       - platform: time
         at: "12:00:00"
 
