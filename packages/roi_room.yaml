@@ -21,7 +21,7 @@ automation:
           value_template: >-
             {{ not (
                 is_state_attr('climate.roi_room_ac', 'preset_mode', 'sleep') and
-                is_state_attr('climate.roi_room_ac', 'temperature', 24) and
+                is_state_attr('climate.roi_room_ac', 'temperature', 23) and
                 is_state_attr('climate.roi_room_ac', 'fan_mode', 'silent') and
                 is_state_attr('climate.roi_room_ac', 'swing_mode', 'both')
               )
@@ -40,7 +40,7 @@ automation:
           entity_id: climate.roi_room_ac
       - action: climate.set_temperature
         data:
-          temperature: 24
+          temperature: 23
           entity_id: climate.roi_room_ac
       - action: climate.set_fan_mode
         data:
