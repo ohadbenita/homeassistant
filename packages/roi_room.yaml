@@ -184,7 +184,8 @@ automation:
             sequence:
               - action: switch.toggle
                 target:
-                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0  # light
+                  entity_id: switch.shelly1pmminig3_dcda0cead100_switch_0  # light
+                  # entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0  # light
 
           - conditions:
               - condition: state

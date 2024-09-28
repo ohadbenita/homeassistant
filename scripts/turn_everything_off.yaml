@@ -38,7 +38,7 @@ turn_everything_off:
           - delay: '00:00:20'  # Retry every 20 seconds
 
     - choose:
-      - conditions:
+      - conditions:  # yamllint disable-line rule:indentation
           - condition: template
             value_template: >
               {{ states.lock | selectattr('state', '!=', 'locked') | list | count == 0 }}

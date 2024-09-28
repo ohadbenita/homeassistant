@@ -80,6 +80,7 @@ automation:
 
   - alias: 'Close master bedroom shutters at night'
     id: master_bedroom_shutters_close_night
+    initial_state: false
     trigger:
       - platform: time
         at: '23:00:00'

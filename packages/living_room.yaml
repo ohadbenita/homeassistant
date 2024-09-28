@@ -23,12 +23,12 @@ automation:
           position: 15
 
 
-  - alias: 'Close living room shutters at 23:00'
+  - alias: 'Close living room shutters at night'
     id: living_room_shutters_close_at_night_complete
     initial_state: true
     trigger:
       platform: time
-      at: '23:00:00'
+      at: '00:00:00'
 
     condition:
       - condition: state

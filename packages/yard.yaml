@@ -7,6 +7,54 @@ group:
       - switch.irrigation_l4
       - switch.irrigation_l3
 
+script:
+  turn_on_all_yard_lights:
+    sequence:
+      - action: homeassistant.turn_on
+        target:
+          entity_id:
+            - switch.shellyplus2pm_fcb467a557a0_switch_0
+            - switch.shellyplus2pm_d48afc581860_switch_1
+            - switch.shellyswitch25_6869e3_channel_1
+            - switch.shellyswitch25_6869e3_channel_2
+            - switch.shelly1pmminig3_54320454e6dc_switch_0
+      - wait_template: >-
+          {{ is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'off') }}
+        timeout:
+          minutes: 1
+        continue_on_timeout: false
+
+      - action: homeassistant.turn_on
+        target:
+          entity_id:
+            - switch.shelly1pmminig3_ecda3bc26fb4_switch_0
+
+light:
+  - platform: template
+    lights:
+      all_yard_lights:
+        value_template: >-
+          {{
+            is_state('switch.shellyplus2pm_fcb467a557a0_switch_0', 'on') and
+            is_state('switch.shellyplus2pm_d48afc581860_switch_1', 'on') and
+            is_state('switch.shellyswitch25_6869e3_channel_1', 'on') and
+            is_state('switch.shellyswitch25_6869e3_channel_2', 'on') and
+            is_state('switch.shelly1pmminig3_54320454e6dc_switch_0', 'on') and
+            is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'on')
+          }}
+        turn_on:
+          service: script.turn_on_all_yard_lights
+        turn_off:
+          service: homeassistant.turn_off
+          data:
+            entity_id:
+              - switch.shellyplus2pm_fcb467a557a0_switch_0
+              - switch.shellyplus2pm_d48afc581860_switch_1
+              - switch.shellyswitch25_6869e3_channel_1
+              - switch.shellyswitch25_6869e3_channel_2
+              - switch.shelly1pmminig3_54320454e6dc_switch_0
+              - switch.shelly1pmminig3_ecda3bc26fb4_switch_0
+
 automation:
   - alias: Weekly Irrigation Cycle - trees and bushes
     id: irrigation_simple_weekly_schedule_trees_bushes
@@ -19,8 +67,7 @@ automation:
     condition:
       condition: time
       weekday:
-        - sun
-        - tue
+        - mon
         - thu
 
     action:
@@ -46,8 +93,8 @@ automation:
       - platform: sun
         event: sunrise
         offset: "00:00:00"
-      - platform: time
-        at: "12:00:00"
+      # - platform: time
+      #   at: "12:00:00"
 
     action:
       - action: switch.turn_on
@@ -136,7 +183,6 @@ automation:
           - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # kids bathroom outdoor light
           - switch.shelly1pmminig3_54320454e6dc_switch_0  # Parking and outdoor fan
-
 
   - alias: "Turn on kitchen door path light when door is opened"
     id: yard_turn_on_kitchen_door_path_light_when_door_is_opened

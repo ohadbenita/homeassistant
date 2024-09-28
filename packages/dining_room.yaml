@@ -99,7 +99,7 @@ automation:
           {{ is_state('binary_sensor.dining_room_main_window_01_contact', 'off')
             and is_state('binary_sensor.dining_room_main_window_02_contact', 'off') }}
         timeout:
-          seconds: 30
+          minutes: 2
         continue_on_timeout: false
 
       - action: cover.set_cover_position
@@ -107,7 +107,7 @@ automation:
           entity_id:
             - cover.dining_room_main_window
         data:
-          position: "{{ [state_attr('cover.dining_room_right_window', 'current_position'), 35] | min }}"
+          position: "{{ [state_attr('cover.dining_room_main_window', 'current_position'), 15] | min }}"
 
 
   - alias: 'Close dining room shutters at night'
@@ -123,14 +123,28 @@ automation:
         state: 'off'
 
     action:
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.dining_room_right_window
-            - cover.dining_room_main_window
-            - cover.dining_room_left_window
-        data:
-          position: 15
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id:
+                  - binary_sensor.dining_room_main_window_01_contact
+                  - binary_sensor.dining_room_main_window_02_contact
+                state: 'off'
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id:
+                    - cover.dining_room_right_window
+                    - cover.dining_room_main_window
+                    - cover.dining_room_left_window
+                data:
+                  position: 15
+        default:
+          - action: script.activate_alexa_actionable_notification
+            data:
+              text: 'I see the balcony window is open, should I close its shutter?'
+              event_id: 'actionable_notification_close_balcony_window'
+              alexa_device: 'media_player.kitchen_echo'
 
 
   - alias: 'Close dining room shutters at night - complete'
@@ -138,7 +152,7 @@ automation:
     initial_state: true
     trigger:
       - platform: time
-        at: '23:00:00'
+        at: '00:00:00'
 
     condition:
       - condition: state
@@ -219,7 +233,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.kitchen_counter_01_action
-        to: 'single'
+        to: 'double'
 
     action:
       - action: vacuum.send_command
@@ -248,7 +262,7 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.kitchen_counter_01_action
-        to: 'double'
+        to: 'single'
 
     action:
       - action: vacuum.return_to_base
