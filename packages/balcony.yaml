@@ -1,0 +1,193 @@
+---
+input_number:
+  balcony_fan_percentage:
+    name: Balcony fan percentage
+    min: 0
+    max: 100
+    step: 5
+    unit_of_measurement: '%'
+
+
+script:
+  turn_balcony_fan_on:
+    alias: 'Turn balcony fan on'
+    sequence:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: switch.shelly1pmminig3_54320454e6dc_switch_0
+                state: 'off'
+            sequence:
+              - action: homeassistant.turn_on
+                entity_id: switch.shelly1pmminig3_54320454e6dc_switch_0
+              - delay: '00:00:05'
+        default:
+          - action: homeassistant.turn_on
+            entity_id: switch.shelly1pmminig3_54320454e6dc_switch_0
+      - action: remote.send_command
+        target:
+          entity_id: remote.living_room_broadlink
+        data:
+          device: balcony_fan
+          command: fan_speed_1
+
+  turn_balcony_fan_off:
+    alias: "Turn balcony fan off"
+    sequence:
+      - action: remote.send_command
+        target:
+          entity_id: remote.living_room_broadlink
+        data:
+          device: balcony_fan
+          command: fan_off
+
+  balcony_fan_set_speed:
+    alias: "Set balcony fan speed"
+    sequence:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.balcony_fan_percentage
+        data:
+          value: "{{ percentage }}"
+
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ percentage | int == 0 }}"
+            sequence:
+              - service: remote.send_command
+                target:
+                  entity_id: remote.living_room_broadlink
+                data:
+                  device: balcony_fan
+                  command: fan_off
+
+          - conditions:
+              - condition: template
+                value_template: "{{ percentage | int < 16 and percentage | int > 0 }}"
+            sequence:
+              - service: remote.send_command
+                target:
+                  entity_id: remote.living_room_broadlink
+                data:
+                  device: balcony_fan
+                  command: fan_speed_1
+
+          - conditions:
+              - condition: template
+                value_template: "{{ percentage | int >= 16 and percentage | int < 33 }}"
+            sequence:
+              - service: remote.send_command
+                target:
+                  entity_id: remote.living_room_broadlink
+                data:
+                  device: balcony_fan
+                  command: fan_speed_2
+
+          - conditions:
+              - condition: template
+                value_template: "{{ percentage | int >= 33 and percentage | int < 50 }}"
+            sequence:
+              - service: remote.send_command
+                target:
+                  entity_id: remote.living_room_broadlink
+                data:
+                  device: balcony_fan
+                  command: fan_speed_3
+
+          - conditions:
+              - condition: template
+                value_template: "{{ percentage | int >= 50 and percentage | int < 66 }}"
+            sequence:
+              - service: remote.send_command
+                target:
+                  entity_id: remote.living_room_broadlink
+                data:
+                  device: balcony_fan
+                  command: fan_speed_4
+
+          - conditions:
+              - condition: template
+                value_template: "{{ percentage | int >= 66 and percentage | int < 83 }}"
+            sequence:
+              - service: remote.send_command
+                target:
+                  entity_id: remote.living_room_broadlink
+                data:
+                  device: balcony_fan
+                  command: fan_speed_5
+
+          - conditions:
+              - condition: template
+                value_template: "{{ percentage | int >= 83 }}"
+            sequence:
+              - service: remote.send_command
+                target:
+                  entity_id: remote.living_room_broadlink
+                data:
+                  device: balcony_fan
+                  command: fan_speed_6
+
+  turn_balcony_fan_light_on:
+    alias: 'Turn balcony fan light on'
+    sequence:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: switch.shelly1pmminig3_54320454e6dc_switch_0
+                state: 'off'
+            sequence:
+              - action: homeassistant.turn_on
+                entity_id: switch.shelly1pmminig3_54320454e6dc_switch_0
+              - delay: '00:00:05'
+        default:
+          - action: homeassistant.turn_on
+            entity_id: switch.shelly1pmminig3_54320454e6dc_switch_0
+      - action: remote.send_command
+        target:
+          entity_id: remote.living_room_broadlink
+        data:
+          device: balcony_fan
+          command: light_toggle
+
+
+fan:
+  - platform: template
+    fans:
+      balcony:
+        friendly_name: "Balcony fan"
+        value_template: >-
+          {{
+            states('sensor.shelly1pmminig3_54320454e6dc_switch_0_power') | float > 5 and
+            (
+              states('sensor.shelly1pmminig3_54320454e6dc_switch_0_power') | float < 23 or
+              states('sensor.shelly1pmminig3_54320454e6dc_switch_0_power') | float > 25
+            )
+          }}
+        speed_count: 6
+        turn_on:
+          action: script.turn_balcony_fan_on
+        turn_off:
+          action: script.turn_balcony_fan_off
+        set_percentage:
+          action: script.balcony_fan_set_speed
+          data:
+            percentage: "{{ percentage }}"
+        percentage_template: "{{ states('input_number.balcony_fan_percentage') }}"
+
+light:
+  - platform: template
+    lights:
+      balcony_fan_light:
+        friendly_name: "Balcony Fan Light"
+        turn_on:
+          action: script.turn_balcony_fan_light_on
+        turn_off:
+          service: remote.send_command
+          target:
+            entity_id: remote.living_room_broadlink
+          data:
+            device: balcony_fan
+            command: light_toggle
+        value_template: >-
+          {{ states('sensor.shelly1pmminig3_54320454e6dc_switch_0_power') | float > 20 }}
