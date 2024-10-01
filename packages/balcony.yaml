@@ -150,6 +150,18 @@ script:
           device: balcony_fan
           command: light_toggle
 
+  turn_parking_flood_light_on:
+    alias: 'Turn parking flood light on'
+    sequence:
+      - service: switch.turn_on
+        entity_id: switch.shelly1pmminig3_54320454e6dc_switch_0
+
+      - wait_template: "{{ is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'off') }}"
+        timeout: '00:01:00'
+        continue_on_timeout: false
+
+      - service: switch.turn_on
+        entity_id: switch.shelly1pmminig3_ecda3bc26fb4_switch_0
 
 fan:
   - platform: template
@@ -157,13 +169,8 @@ fan:
       balcony:
         friendly_name: "Balcony fan"
         value_template: >-
-          {{
-            states('sensor.shelly1pmminig3_54320454e6dc_switch_0_power') | float > 5 and
-            (
-              states('sensor.shelly1pmminig3_54320454e6dc_switch_0_power') | float < 23 or
-              states('sensor.shelly1pmminig3_54320454e6dc_switch_0_power') | float > 25
-            )
-          }}
+          {%- set power_difference = (states('sensor.shelly1pmminig3_ecda3bc26fb4_switch_0_power') | float(default=0) - states('sensor.shelly1pmminig3_54320454e6dc_switch_0_power') | float) | abs -%}
+          {{ power_difference > 7 and (power_difference < 23 or power_difference > 27) }}
         speed_count: 6
         turn_on:
           action: script.turn_balcony_fan_on
@@ -191,3 +198,53 @@ light:
             command: light_toggle
         value_template: >-
           {{ states('sensor.shelly1pmminig3_54320454e6dc_switch_0_power') | float > 20 }}
+
+      parking_flood_light:
+        friendly_name: "Parking flood light"
+        turn_on:
+          action: script.turn_parking_flood_light_on
+        turn_off:
+          service: switch.turn_off
+          target:
+            entity_id: switch.shelly1pmminig3_ecda3bc26fb4_switch_0
+        value_template: >-
+          {{ is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'on') and is_state('switch.shelly1pmminig3_54320454e6dc_switch_0', 'on') }}
+
+
+automation:
+  - alias: 'Balcony - Handle button actions'
+    id: balcony_pergola_button_actions
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.pergola_01_action
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.pergola_01_action
+                state: 'single'
+            sequence:
+              - action: light.toggle
+                target:
+                  entity_id: light.parking_flood_light
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.pergola_01_action
+                state: 'double'
+            sequence:
+              - action: fan.toggle
+                target:
+                  entity_id: fan.balcony
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.pergola_01_action
+                state: 'hold'
+            sequence:
+              - action: light.toggle
+                target:
+                  entity_id: light.balcony_fan_light
