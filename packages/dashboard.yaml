@@ -1,0 +1,16 @@
+---
+sensor:
+  - platform: template
+    sensors:
+      time_of_day:
+        value_template: >
+          {% if now().hour >= 6 and now().hour < 12 %}
+            Morning
+          {% elif now().hour >= 12 and now().hour < 15 %}
+            Noon
+          {% elif now().hour >= 15 and now().hour <= 18 %}
+            Afternoon
+          {% else %}
+            Evening
+          {% endif %}
+        friendly_name: "Time of Day"
