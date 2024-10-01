@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tool: [yamllint, jsonlint]
+        tool: [yamllint, jsonlint, markdownlint]
 
     steps:
       - name: Checkout repository
@@ -29,16 +29,19 @@ jobs:
         run: |
           if [ "${{ matrix.tool }}" == "yamllint" ]; then
             pip install yamllint
-          else
+          elif [ "${{ matrix.tool }}" == "jsonlint" ]; then
             npm install -g jsonlint
+          else
+            npm install -g markdownlint-cli
           fi
-
       - name: Run linter
         run: |
           if [ "${{ matrix.tool }}" == "yamllint" ]; then
             yamllint .
-          else
+          elif [ "${{ matrix.tool }}" == "jsonlint" ]; then
             find . -name "*.json" -exec jsonlint -q {} \;
+          else
+            markdownlint **/*.md
           fi
 
   validate:
