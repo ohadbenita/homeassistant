@@ -454,6 +454,7 @@ automation:
 
 
   - alias: "Monthly Cover Calibration"
+    initial_state: false
     trigger:
       platform: time
       at: "12:00:00"
