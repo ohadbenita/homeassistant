@@ -260,3 +260,37 @@ automation:
             {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
           message: >-
             I just sent Yulanda to clean the entire floor
+
+  - alias: Tami4 button - Send Yulanda to clean the public space
+    id: kitchen_yulanda_clean_public_space
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.kitchen_tami4_action
+        to: '5_single'
+
+    action:
+      - action: vacuum.send_command
+        data:
+          command: app_segment_clean
+          params:
+            - segments:
+                - 16
+                - 17
+                - 18
+                - 20
+                - 21
+                - 23
+                - 24
+              repeat: 2
+        target:
+          entity_id: vacuum.yulanda
+
+      - action: script.alexa_notification
+        data:
+          alexa_device: media_player.kitchen_echo
+          notification_type: announce
+          current_volume: >-
+            {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
+          message: >-
+            I just sent Yulanda to clean the living room, dining room, kitchen & hallway
