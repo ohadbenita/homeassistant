@@ -294,3 +294,91 @@ automation:
             {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
           message: >-
             I just sent Yulanda to clean the living room, dining room, kitchen & hallway
+
+
+  - alias: Tami4 button - Toggle vacuum intensity
+    id: kitchen_yulanda_toggle_vacuum_intensity
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.kitchen_tami4_action
+        to: '6_single'
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: vacuum.yulanda
+                attribute: fan_speed
+                state: quiet
+            sequence:
+              - repeat:
+                  while:
+                    - condition: template
+                      value_template: "{{ state_attr('vacuum.yulanda', 'fan_speed') != 'balanced' }}"
+                  sequence:
+                    - action: vacuum.set_fan_speed
+                      target:
+                        entity_id: vacuum.yulanda
+                      data:
+                        fan_speed: balanced
+                    - delay: 00:00:02  # Small delay before checking again
+
+          - conditions:
+              - condition: state
+                entity_id: vacuum.yulanda
+                attribute: fan_speed
+                state: balanced
+            sequence:
+              - repeat:
+                  while:
+                    - condition: template
+                      value_template: "{{ state_attr('vacuum.yulanda', 'fan_speed') != 'max' }}"
+                  sequence:
+                    - action: vacuum.set_fan_speed
+                      target:
+                        entity_id: vacuum.yulanda
+                      data:
+                        fan_speed: max
+                    - delay: 00:00:02  # Small delay before checking again
+
+          - conditions:
+              - condition: state
+                entity_id: vacuum.yulanda
+                attribute: fan_speed
+                state: max
+            sequence:
+              - repeat:
+                  while:
+                    - condition: template
+                      value_template: "{{ state_attr('vacuum.yulanda', 'fan_speed') != 'quiet' }}"
+                  sequence:
+                    - action: vacuum.set_fan_speed
+                      target:
+                        entity_id: vacuum.yulanda
+                      data:
+                        fan_speed: quiet
+
+        default:
+          - repeat:
+              while:
+                - condition: template
+                  value_template: "{{ state_attr('vacuum.yulanda', 'fan_speed') != 'balanced' }}"
+              sequence:
+                - action: vacuum.set_fan_speed
+                  target:
+                    entity_id: vacuum.yulanda
+                  data:
+                    fan_speed: balanced
+                - delay: 00:00:02  # Small delay before checking again
+
+      - delay: 00:00:05
+
+      - action: script.alexa_notification
+        data:
+          alexa_device: media_player.kitchen_echo
+          notification_type: tts
+          current_volume: >-
+            {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
+          message: >-
+            Yulanda's fan speed is set to {{ state_attr('vacuum.yulanda', 'fan_speed') }}
