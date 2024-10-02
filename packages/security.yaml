@@ -3,6 +3,30 @@ input_text:
   person_detection_snapshot_filename:
     name: Snapshot file name
 
+
+lock:
+  - platform: template
+    name: "All doors"
+    value_template: >
+      {{ is_state('lock.entrance_door', 'locked') and
+         is_state('lock.kids_bathroom_door', 'locked') and
+         is_state('lock.kitchen_door', 'locked') }}
+    lock:
+      action: lock.lock
+      target:
+        entity_id:
+          - lock.entrance_door
+          - lock.kids_bathroom_door
+          - lock.kitchen_door
+    unlock:
+      action: lock.unlock
+      target:
+        entity_id:
+          - lock.entrance_door
+          - lock.kids_bathroom_door
+          - lock.kitchen_door
+
+
 automation:
   - alias: "Security - Camera snapshot on person trigger"
     id: security_camera_snapshot_on_person_trigger
