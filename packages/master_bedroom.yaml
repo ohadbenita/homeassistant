@@ -144,8 +144,8 @@ automation:
           # - switch.shellyplus2pm_fcb4670e673c_switch_1
 
 
-  - alias: 'Master bedroom bedside switch - turn on main light'
-    id: master_bedroom_bedside_switch_turn_on_main_light
+  - alias: 'Master bedroom bedside switch 01 - turn on main light'
+    id: master_bedroom_bedside_switch_01_turn_on_main_light
     initial_state: true
     mode: single
     trigger:
@@ -159,8 +159,8 @@ automation:
           entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
 
 
-  - alias: 'Master bedroom bedside switch - turn off main light'
-    id: master_bedroom_bedside_switch_turn_off_main_light
+  - alias: 'Master bedroom bedside switch 01 - turn off main light'
+    id: master_bedroom_bedside_switch_01_turn_off_main_light
     initial_state: true
     mode: single
     trigger:
@@ -174,8 +174,8 @@ automation:
           entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
 
 
-  - alias: 'Master bedroom bedside switch - open shutters'
-    id: master_bedroom_bedside_switch_open_shutters
+  - alias: 'Master bedroom bedside switch 01 - open shutters'
+    id: master_bedroom_bedside_switch_01_open_shutters
     initial_state: true
     mode: single
     trigger:
@@ -194,8 +194,8 @@ automation:
             - cover.shellyplus2pm_e465b8f38f54  # left
 
 
-  - alias: 'Master bedroom bedside switch - close shutters'
-    id: master_bedroom_bedside_switch_close_shutter
+  - alias: 'Master bedroom bedside switch 01 - close shutters'
+    id: master_bedroom_bedside_switch_01_close_shutter
     initial_state: true
     mode: single
     trigger:
@@ -214,8 +214,8 @@ automation:
             - cover.shellyplus2pm_e465b8f38f54  # left
 
 
-  - alias: 'Master bedroom bedside switch - turn on spots in night mode'
-    id: master_bedroom_bedside_switch_turn_on_spots_night_mode
+  - alias: 'Master bedroom bedside switch 01 - turn on spots in night mode'
+    id: master_bedroom_bedside_switch_01_turn_on_spots_night_mode
     initial_state: true
     mode: single
     trigger:
@@ -236,8 +236,8 @@ automation:
           brightness_pct: 1
 
 
-  - alias: 'Master bedroom bedside switch - turn off spots'
-    id: master_bedroom_bedside_switch_turn_off_spots
+  - alias: 'Master bedroom bedside switch 01 - turn off spots'
+    id: master_bedroom_bedside_switch_01_turn_off_spots
     initial_state: true
     mode: single
     trigger:
@@ -251,8 +251,8 @@ automation:
           entity_id: light.shellydimmer2_ec64c9c66fdc
 
 
-  - alias: 'Master bedroom bedside switch - turn on AC'
-    id: master_bedroom_bedside_switch_turn_on_ac
+  - alias: 'Master bedroom bedside switch 01 - turn on AC'
+    id: master_bedroom_bedside_switch_01_turn_on_ac
     initial_state: true
     mode: single
     trigger:
@@ -266,8 +266,8 @@ automation:
           entity_id: climate.master_bedroom_ac
 
 
-  - alias: 'Master bedroom bedside switch - turn off AC'
-    id: master_bedroom_bedside_switch_turn_off_ac
+  - alias: 'Master bedroom bedside switch 01 - turn off AC'
+    id: master_bedroom_bedside_switch_01_turn_off_ac
     initial_state: true
     mode: single
     trigger:
@@ -279,6 +279,112 @@ automation:
       - action: climate.turn_off
         target:
           entity_id: climate.master_bedroom_ac
+
+
+  - alias: 'Master bedroom bedside switch 02 - toggle main light'
+    id: master_bedroom_bedside_switch_02_toggle_main_light
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_bedside_02_action
+        to: '1_single'
+
+    action:
+      - action: switch.toggle
+        target:
+          entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+
+
+  - alias: 'Master bedroom bedside switch 02 - toggle AC'
+    id: master_bedroom_bedside_switch_02_toggle_ac
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_bedside_02_action
+        to: '2_single'
+
+    action:
+      - action: climate.toggle
+        target:
+          entity_id: climate.master_bedroom_ac
+
+
+  - alias: 'Master bedroom bedside switch 02 - open shutters lights in'
+    id: master_bedroom_bedside_switch_02_open_shutters_lights_in
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_bedside_02_action
+        to: '3_single'
+
+    action:
+      - action: cover.set_cover_position
+        data:
+          position: 70
+        target:
+          entity_id:
+            - cover.master_bedroom_main_window
+            - cover.shellyplus2pm_c4d8d5582a90  # right
+            - cover.shellyplus2pm_e465b8f38f54  # left
+
+
+  - alias: 'Master bedroom bedside switch 02 - open shutters complete'
+    id: master_bedroom_bedside_switch_02_open_shutters_complete
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_bedside_02_action
+        to: '3_double'
+
+    action:
+      - action: cover.set_cover_position
+        data:
+          position: 100
+        target:
+          entity_id:
+            - cover.master_bedroom_main_window
+            - cover.shellyplus2pm_c4d8d5582a90  # right
+            - cover.shellyplus2pm_e465b8f38f54  # left
+
+
+  - alias: 'Master bedroom bedside switch 02 - control spots'
+    id: master_bedroom_bedside_switch_02_control_spots
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_bedside_02_action
+        to:
+          - '4_single'
+          - '4_double'
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.master_bedroom_bedside_02_action
+                state: '4_single'
+            sequence:
+              - action: switch.turn_off
+                entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+              - delay: '00:00:02'
+              - action: light.turn_on
+                target:
+                  entity_id: light.shellydimmer2_ec64c9c66fdc
+                data:
+                  brightness_pct: 1
+          - conditions:
+              - condition: state
+                entity_id: sensor.master_bedroom_bedside_02_action
+                state: '4_double'
+            sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: light.shellydimmer2_ec64c9c66fdc
 
 
   - alias: "Master bedroom - Turn AC off when no one is in the room"

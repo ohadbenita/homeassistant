@@ -33,11 +33,14 @@ http:
   trusted_proxies:
     - !secret nginx_docker_ip
     - !secret nginx_alternate_docker_ip
+    - !secret cloudflare_tunnel_ip
   ip_ban_enabled: true
   login_attempts_threshold: 10
 
 logger:
   default: info
+  logs:
+    reolink_aio.api: warning
 
 telegram_bot:
   - platform: polling

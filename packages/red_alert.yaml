@@ -8,6 +8,13 @@ binary_sensor:
     value_template: >-
       {{ bool(value_json.exists) }}
 
+mqtt:
+  sensor:
+    name: "Red Alert"
+    state_topic: "/redalert/"
+    value_template: "{{ value_json }}"
+    qos: 1
+
 automation:
   - alias: Lehavim red alert
     id: red_alert_lehavim

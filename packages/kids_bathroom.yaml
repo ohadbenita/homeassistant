@@ -3,7 +3,7 @@ binary_sensor:
   - platform: template
     sensors:
       washing_machine_active:
-        value_template: "{{ states('sensor.washing_machine_energy_power') | float > 5 }}"
+        value_template: "{{ states('sensor.washing_machine_energy_power') | default(0) | float > 5 }}"
 
 automation:
   - alias: Announce washing machine cycle completed
