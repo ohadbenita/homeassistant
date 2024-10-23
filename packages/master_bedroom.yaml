@@ -386,6 +386,20 @@ automation:
                 target:
                   entity_id: light.shellydimmer2_ec64c9c66fdc
 
+  - alias: 'Master bedroom bedside switch 02 - control night light'
+    id: master_bedroom_bedside_switch_02_night_light
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_bedside_02_action
+        to: '5_single'
+
+    action:
+      - action: switch.toggle
+        target:
+          entity_id: switch.sonoff_s20_02
+
 
   - alias: "Master bedroom - Turn AC off when no one is in the room"
     id: master_bedroom_no_presence_turn_ac_off

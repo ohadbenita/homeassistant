@@ -45,6 +45,18 @@
             entity_id: lock.kids_bathroom_door
             state: locked
 
+    - alias: "Lock bathroom door with retry"
+      repeat:
+        sequence:
+          - action: lock.lock
+            target:
+              entity_id: lock.clinic_door
+          - delay: "00:00:05"
+        until:
+          - condition: state
+            entity_id: lock.clinic_door
+            state: locked
+
 
 - alias: Close everything when away mode is turned on
   id: security_set_all_covers_to_5_on_away_mode

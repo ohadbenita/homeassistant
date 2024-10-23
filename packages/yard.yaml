@@ -1,12 +1,4 @@
 ---
-group:
-  irrigation_switches:
-    name: Irrigation switches
-    entities:
-      - switch.irrigation_l5
-      - switch.irrigation_l4
-      - switch.irrigation_l3
-
 script:
   turn_on_all_yard_lights:
     sequence:
@@ -18,6 +10,7 @@ script:
             - switch.shellyswitch25_6869e3_channel_1
             - switch.shellyswitch25_6869e3_channel_2
             - switch.shelly1pmminig3_54320454e6dc_switch_0
+            - switch.shellyplus2pm_c4d8d557f404_switch_1
       - wait_template: >-
           {{ is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'off') }}
         timeout:
@@ -40,7 +33,8 @@ light:
             is_state('switch.shellyswitch25_6869e3_channel_1', 'on') and
             is_state('switch.shellyswitch25_6869e3_channel_2', 'on') and
             is_state('switch.shelly1pmminig3_54320454e6dc_switch_0', 'on') and
-            is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'on')
+            is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'on') and
+            is_state('switch.shellyplus2pm_c4d8d557f404_switch_1', 'on')
           }}
         turn_on:
           service: script.turn_on_all_yard_lights
@@ -54,108 +48,9 @@ light:
               - switch.shellyswitch25_6869e3_channel_2
               - switch.shelly1pmminig3_54320454e6dc_switch_0
               - switch.shelly1pmminig3_ecda3bc26fb4_switch_0
+              - switch.shellyplus2pm_c4d8d557f404_switch_1
 
 automation:
-  - alias: Weekly Irrigation Cycle - trees and bushes
-    id: irrigation_simple_weekly_schedule_trees_bushes
-    initial_state: true
-    trigger:
-      - platform: sun
-        event: sunrise
-        offset: "-1:00:00"
-
-    condition:
-      condition: time
-      weekday:
-        - mon
-        - thu
-
-    action:
-      - action: switch.turn_on
-        entity_id: switch.irrigation_l6  # master
-      - delay: "00:00:05"
-      - action: switch.turn_on
-        entity_id: group.irrigation_switches
-
-      - delay: "00:45:00"
-
-      - action: switch.turn_off
-        entity_id: group.irrigation_switches
-      - delay: "00:00:05"
-      - action: switch.turn_off
-        entity_id: switch.irrigation_l6  # master
-
-
-  - alias: Weekly Irrigation Cycle - flowers and herbs
-    id: irrigation_simple_weekly_schedule_flowers_herbs
-    initial_state: true
-    trigger:
-      - platform: sun
-        event: sunrise
-        offset: "00:00:00"
-      # - platform: time
-      #   at: "12:00:00"
-
-    action:
-      - action: switch.turn_on
-        entity_id: switch.irrigation_l6  # master
-      - delay: "00:00:07"
-      - action: switch.turn_on
-        entity_id: switch.irrigation_l2
-
-      - delay: "00:07:00"
-
-      - action: switch.turn_off
-        entity_id: switch.irrigation_l2
-      - delay: "00:00:05"
-      - action: switch.turn_off
-        entity_id: switch.irrigation_l6  # master
-
-
-  - alias: Irrigation Watchdog
-    id: irrigation_watchdog_shutdown
-    initial_state: true
-    trigger:
-      - platform: time_pattern
-        minutes: "/30"
-        seconds: "*"
-
-    condition:
-      condition: and
-      conditions:
-        - condition: state
-          entity_id: switch.irrigation_l6
-          state: 'on'
-          for:
-            minutes: 70
-
-        - condition: state
-          entity_id: switch.irrigation_l2
-          state: 'on'
-          for:
-            minutes: 20
-
-    action:
-      - action: switch.turn_off
-        entity_id: switch.irrigation_l6
-      - action: switch.turn_off
-        entity_id: group.irrigation_switches
-      - action: switch.turn_off
-        entity_id: switch.irrigation_l2
-
-      - wait_for_trigger:
-          - platform: state
-            entity_id: switch.irrigation_l6
-            to: 'off'
-        timeout:
-          minutes: 2
-        continue_on_timeout: false
-
-      - action: notify.ohad_telegram
-        data:
-          message: 'Irrigation Watchdog had to stop the irrigation, please check the issue with the automations'
-
-
   - alias: "Yard - Turn off roof lights in the night"
     id: yard_turn_off_roof_lights_in_the_night
     initial_state: true
@@ -180,9 +75,11 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
+          - switch.shellyplus2pm_c4d8d557f404_switch_1  # clinic door
           - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # kids bathroom outdoor light
           - switch.shelly1pmminig3_54320454e6dc_switch_0  # Parking and outdoor fan
+
 
   - alias: "Turn on kitchen door path light when door is opened"
     id: yard_turn_on_kitchen_door_path_light_when_door_is_opened
@@ -246,7 +143,7 @@ automation:
           - switch.shelly1pmminig3_54320454e6dc_switch_0  # Parking and fan lights
 
 
-  - alias: "Turn on kids bathroom door path light when door is opened"
+  - alias: "Turn on kids bathroom door and clinic light when door is opened"
     id: yard_turn_on_kids_bathroom_door_path_light_when_door_is_opened
     initial_state: true
     mode: single
@@ -276,7 +173,9 @@ automation:
 
     action:
       - action: homeassistant.turn_on
-        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_0
+        entity_id:
+          - switch.shellyplus2pm_fcb467a557a0_switch_0
+          - switch.shellyplus2pm_c4d8d557f404_switch_1
 
 
   - alias: "Turn off kids bathroom door path light when door is closed"
@@ -302,7 +201,9 @@ automation:
 
     action:
       - action: homeassistant.turn_off
-        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_0
+        entity_id:
+          - switch.shellyplus2pm_fcb467a557a0_switch_0
+          - switch.shellyplus2pm_c4d8d557f404_switch_1
 
 
   - alias: "Alert on high expected water consumption"
@@ -330,3 +231,54 @@ automation:
           message: >-
             The current forecasted monthly water consumption is {{ states('sensor.meter_1018_monthly_forecast') | int }} m³.
             Please check whether there's a water leak.
+
+
+  - alias: 'Clnic door entrance - Handle button actions'
+    id: clinic_entrance_button_actions
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.clinic_door_entrance_action
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.clinic_door_entrance_action
+                state: 'button_1_single'
+            sequence:
+              - action: homeassistant.turn_on
+                target:
+                  entity_id: switch.shellyplus2pm_c4d8d557f404_switch_1
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.clinic_door_entrance_action
+                state: 'button_2_single'
+            sequence:
+              - action: homeassistant.turn_off
+                target:
+                  entity_id: switch.shellyplus2pm_c4d8d557f404_switch_1
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.clinic_door_entrance_action
+                state: 'button_1_double'
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id:
+                    - switch.shellyplus2pm_c4d8d557f404_switch_1
+                    - switch.shellyplus2pm_fcb467a557a0_switch_0
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.clinic_door_entrance_action
+                state: 'button_2_double'
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id:
+                    - switch.shellyplus2pm_c4d8d557f404_switch_1
+                    - switch.shellyplus2pm_fcb467a557a0_switch_0

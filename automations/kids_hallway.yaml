@@ -32,7 +32,7 @@
                 before_offset: "01:00:00"
               - condition: sun
                 after: sunset
-                after_offset: "-01:00:00"
+                after_offset: "03:00:00"
           sequence:
             - action: light.turn_on
               target:
@@ -42,7 +42,14 @@
 
       default:
         - action: homeassistant.turn_on
-          entity_id: switch.shelly1pmminig3_dcda0cafe368_switch_0
+          entity_id:
+            - switch.shelly1pmminig3_dcda0cafe368_switch_0  # kids rooms spots
+            - switch.shelly1pmminig3_dcda0cead100_switch_0  # master bathroom spots
+        - action: light.turn_on
+          target:
+            entity_id: light.shellydimmer2_34945478921b  # basement spots
+          data:
+            brightness_pct: 35
 
 
 - alias: "Turn off kids hallway light when no motion detected"
@@ -52,9 +59,6 @@
     - platform: state
       entity_id:
         - binary_sensor.kids_hallway_01_occupancy
-      to: 'off'
-    - platform: state
-      entity_id:
         - binary_sensor.kids_hallway_02_occupancy
       to: 'off'
     - platform: homeassistant
@@ -73,6 +77,7 @@
       entity_id:
         - switch.shelly1pmminig3_dcda0cafe368_switch_0
         - light.shellydimmer2_34945478921b
+        - switch.shelly1pmminig3_dcda0cead100_switch_0
 
 
 - alias: "Kids hallway - Turn off lights in the night"

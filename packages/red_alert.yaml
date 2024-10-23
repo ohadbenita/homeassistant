@@ -1,27 +1,11 @@
 ---
-binary_sensor:
-  - platform: rest
-    name: lehavim_red_alert
-    unique_id: lehavim_red_alert
-    resource: !secret red_alert_lehavim_url
-    scan_interval: 2
-    value_template: >-
-      {{ bool(value_json.exists) }}
-
-mqtt:
-  sensor:
-    name: "Red Alert"
-    state_topic: "/redalert/"
-    value_template: "{{ value_json }}"
-    qos: 1
-
 automation:
   - alias: Lehavim red alert
     id: red_alert_lehavim
     initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.lehavim_red_alert
+        entity_id: binary_sensor.oref_alert
         to: 'on'
 
     action:
@@ -29,6 +13,11 @@ automation:
         data_template:
           message: >-
             Red alert in Lehavim, you got 45 seconds to get to a shelter
+
+      - action: homeassistant.turn_on
+        entity_id:
+          - switch.shelly1pmminig3_34b7da8b78c4_switch_0
+          - switch.shelly1pmminig3_34b7da8a0338_switch_0
 
       - action: script.alexa_notification
         data:

@@ -160,7 +160,7 @@ automation:
 
   - alias: Tami4 button - dock Yulanda
     id: kitchen_yulanda_dock_button_press
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
         entity_id: sensor.kitchen_tami4_action
