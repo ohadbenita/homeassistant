@@ -70,21 +70,32 @@ automation:
           - binary_sensor.entrance_indoor_occupancy
           - binary_sensor.entrance_door_contact
         to: 'off'
-        for:
-          minutes: 10
       - platform: homeassistant
         event: start
 
-    condition:
-      - condition: state
-        entity_id: binary_sensor.entrance_door_occupancy
-        state: 'off'
-      - condition: state
-        entity_id: binary_sensor.entrance_indoor_occupancy
-        state: 'off'
-      - condition: state
-        entity_id: binary_sensor.entrance_door_contact
-        state: 'off'
     action:
-      - action: homeassistant.turn_off
-        entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1
+      - choose:
+          - conditions:
+              - condition: or
+                conditions:
+                  - condition: time
+                    after: '07:00:00'
+                  - condition: time
+                    before: '22:00:00'
+            sequence:
+              - wait_for_trigger:
+                  - platform: state
+                    entity_id:
+                      - binary_sensor.entrance_door_occupancy
+                      - binary_sensor.entrance_indoor_occupancy
+                      - binary_sensor.entrance_door_contact
+                    to: 'off'
+                    for:
+                      minutes: 10
+              - service: homeassistant.turn_off
+                target:
+                  entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1
+        default:
+          - service: homeassistant.turn_off
+            target:
+              entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1
