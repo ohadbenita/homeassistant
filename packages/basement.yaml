@@ -1,4 +1,33 @@
 ---
+light:
+  - platform: template
+    lights:
+      all_basement_lights:
+        value_template: >-
+          {{
+            is_state('switch.shelly1pmminig3_34b7da8a0338_switch_0', 'on') and
+            is_state('switch.shelly1pmminig3_34b7da8b78c4_switch_0', 'on') and
+            is_state('switch.shellyplus2pm_a0a3b3682b10_switch_1', 'on') and
+            is_state('switch.shellyplus2pm_a0a3b3682b10_switch_0', 'on')
+          }}
+        turn_on:
+          action: homeassistant.turn_on
+          data:
+            entity_id:
+              - switch.shellyplus2pm_a0a3b3682b10_switch_0
+              - switch.shellyplus2pm_a0a3b3682b10_switch_1
+              - switch.shelly1pmminig3_34b7da8a0338_switch_0
+              - switch.shelly1pmminig3_34b7da8b78c4_switch_0
+        turn_off:
+          action: homeassistant.turn_off
+          data:
+            entity_id:
+              - switch.shellyplus2pm_a0a3b3682b10_switch_0
+              - switch.shellyplus2pm_a0a3b3682b10_switch_1
+              - switch.shelly1pmminig3_34b7da8a0338_switch_0
+              - switch.shelly1pmminig3_34b7da8b78c4_switch_0
+
+
 automation:
   - alias: 'Restart Xiaomi Basement TV'
     id: basement_xiaomi_tv_restart

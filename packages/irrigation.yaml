@@ -1,0 +1,202 @@
+---
+############################
+#  6 - שנאי                #
+#  2 - מסטר ארון השקייה    #
+############################
+#  3 - עשבי תיבול          #
+#  4 - עצים צד דרום, מערב  #
+#  5 - גדר חיה (צד מזרח)   #
+############################
+sensor:
+  - platform: history_stats
+    name: Irrigation L3 On Time Last Week
+    entity_id: switch.irrigation_l3
+    state: "on"
+    type: time
+    start: "{{ now().replace(hour=0, minute=0, second=0) - timedelta(days=7) }}"
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Irrigation L3 On Time Last Month
+    entity_id: switch.irrigation_l3
+    state: "on"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0) - timedelta(days=30) }}"
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Irrigation L4 On Time Last Week
+    entity_id: switch.irrigation_l4
+    state: "on"
+    type: time
+    start: "{{ now().replace(hour=0, minute=0, second=0) - timedelta(days=7) }}"
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Irrigation L4 On Time Last Month
+    entity_id: switch.irrigation_l4
+    state: "on"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0) - timedelta(days=30) }}"
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Irrigation L5 On Time Last Week
+    entity_id: switch.irrigation_l5
+    state: "on"
+    type: time
+    start: "{{ now().replace(hour=0, minute=0, second=0) - timedelta(days=7) }}"
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Irrigation L5 On Time Last Month
+    entity_id: switch.irrigation_l5
+    state: "on"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0) - timedelta(days=30) }}"
+    end: "{{ now() }}"
+
+
+script:
+  irrigation_cycle:
+    alias: "Irrigation cycle"
+    mode: parallel
+    fields:
+      additional_switches:
+        description: "List of additional switches to control (YAML list format)"
+        example: |
+          - switch.irrigation_l5
+          - switch.irrigation_l4
+        required: true
+        selector:
+          object:
+      irrigation_duration_minutes:
+        description: "Time in minutes to wait between turning on the switches"
+        example: 10  # 10 minutes
+        required: true
+        selector:
+          number:
+            min: 1
+            max: 60
+            unit_of_measurement: minutes
+            step: 1
+    sequence:
+      # Turn on switch.irrigation_l6 (main AC adapter)
+      - action: switch.turn_on
+        target:
+          entity_id: switch.irrigation_l6
+
+      # Wait 5 seconds before proceeding
+      - delay: "00:00:05"
+
+      # Turn on switch.irrigation_l2 (master in the watering cabinet)
+      - action: switch.turn_on
+        target:
+          entity_id: switch.irrigation_l2
+
+      # Wait 5 seconds before proceeding
+      - delay: "00:00:02"
+
+      # Turn on each of the additional switches provided as a YAML list
+      - action: switch.turn_on
+        target:
+          entity_id: "{{ additional_switches }}"
+
+      # Wait for the irrigation duration (converted to minutes)
+      - delay:
+          minutes: "{{ irrigation_duration_minutes }}"
+
+      # Reverse the process: Turn off additional switches first
+      - action: switch.turn_off
+        target:
+          entity_id: "{{ additional_switches }}"
+
+      # Turn off switch.irrigation_l2 (master in the watering cabinet)
+      - action: switch.turn_off
+        target:
+          entity_id: switch.irrigation_l2
+
+      # Wait 5 seconds before proceeding
+      - delay: "00:00:05"
+
+      # Turn off switch.irrigation_l6 (main AC adapter)
+      - action: switch.turn_off
+        target:
+          entity_id: switch.irrigation_l6
+
+automation:
+  - alias: Weekly Irrigation Cycle - trees and bushes
+    id: irrigation_simple_weekly_schedule_trees_bushes
+    initial_state: true
+    trigger:
+      - platform: sun
+        event: sunrise
+        offset: "-1:00:00"
+
+    condition:
+      condition: time
+      weekday:
+        - mon
+        - thu
+
+    action:
+      - action: script.irrigation_cycle
+        data:
+          additional_switches:
+            - switch.irrigation_l4
+            - switch.irrigation_l5
+          irrigation_duration_minutes: 45
+
+
+  - alias: Weekly Irrigation Cycle - flowers and herbs
+    id: irrigation_simple_weekly_schedule_flowers_herbs
+    initial_state: true
+    trigger:
+      - platform: sun
+        event: sunrise
+        offset: "00:00:00"
+
+    action:
+      - action: script.irrigation_cycle
+        data:
+          additional_switches:
+            - switch.irrigation_l3
+          irrigation_duration_minutes: 7
+
+
+  - alias: Irrigation Watchdog
+    id: irrigation_watchdog_shutdown
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/30"
+        seconds: "*"
+
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: switch.irrigation_l6
+          state: 'on'
+          for:
+            minutes: 70
+
+    action:
+      - action: switch.turn_off
+        entity_id: switch.irrigation_l6
+      - action: switch.turn_off
+        entity_id: group.irrigation_switches
+      - action: switch.turn_off
+        entity_id: switch.irrigation_l2
+
+      - wait_for_trigger:
+          - platform: state
+            entity_id: switch.irrigation_l6
+            to: 'off'
+        timeout:
+          minutes: 2
+        continue_on_timeout: false
+
+      - action: notify.ohad_telegram
+        data:
+          message: 'Irrigation Watchdog had to stop the irrigation, please check the issue with the automations'

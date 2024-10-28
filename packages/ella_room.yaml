@@ -1,4 +1,21 @@
 ---
+template:
+  - sensor:
+      - name: "Ella Room AC Temperature"
+        unit_of_measurement: "°C"
+        state: "{{ state_attr('climate.ella_ac', 'current_temperature') }}"
+        availability: "{{ state_attr('climate.ella_ac', 'current_temperature') is not none }}"
+        device_class: temperature
+        icon: mdi:thermometer
+
+      - name: "Ella Room AC humidity"
+        unit_of_measurement: "%"
+        state: "{{ state_attr('climate.ella_ac', 'current_humidity') }}"
+        availability: "{{ state_attr('climate.ella_ac', 'current_humidity') is not none }}"
+        device_class: humidity
+        icon: mdi:water-percent
+
+
 automation:
   - alias: "Ella Room - Set AC to night mode (summer)"
     id: ella_room_ac_night_automation

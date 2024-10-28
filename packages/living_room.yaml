@@ -1,4 +1,50 @@
 ---
+template:
+  - sensor:
+      - name: "Living room AC Temperature"
+        unit_of_measurement: "°C"
+        state: "{{ state_attr('climate.living_room_ac', 'current_temperature') }}"
+        availability: "{{ state_attr('climate.living_room_ac', 'current_temperature') is not none }}"
+        device_class: temperature
+        icon: mdi:thermometer
+
+      - name: "Living room AC humidity"
+        unit_of_measurement: "%"
+        state: "{{ state_attr('climate.living_room_ac', 'current_humidity') }}"
+        availability: "{{ state_attr('climate.living_room_ac', 'current_humidity') is not none }}"
+        device_class: humidity
+        icon: mdi:water-percent
+
+
+light:
+  - platform: template
+    lights:
+      public_space_lights:
+        value_template: >-
+          {{
+            is_state('switch.shellyplus2pm_fcb4670e68e8_switch_0', 'on') and
+            is_state('switch.shellyplus2pm_fcb4670e68e8_switch_1', 'on') and
+            is_state('switch.shelly1_34945470bfa1', 'on') and
+            is_state('switch.shelly1_e8db84d27b53', 'on')
+          }}
+        turn_on:
+          action: homeassistant.turn_on
+          data:
+            entity_id:
+              - switch.shelly1_e8db84d27b53
+              - switch.shelly1_34945470bfa1
+              - switch.shellyplus2pm_fcb4670e68e8_switch_0
+              - switch.shellyplus2pm_fcb4670e68e8_switch_1
+        turn_off:
+          action: homeassistant.turn_off
+          data:
+            entity_id:
+              - switch.shelly1_e8db84d27b53
+              - switch.shelly1_34945470bfa1
+              - switch.shellyplus2pm_fcb4670e68e8_switch_0
+              - switch.shellyplus2pm_fcb4670e68e8_switch_1
+
+
 automation:
   - alias: 'Close living room shutters at 21:00'
     id: living_room_shutters_close_at_night
@@ -51,7 +97,9 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.entrance_to_living_room_01_occupancy
+        entity_id:
+          - binary_sensor.entrance_to_living_room_01_occupancy
+          - binary_sensor.entrance_indoor_occupancy
         from: 'off'
         to: 'on'
 

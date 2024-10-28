@@ -99,6 +99,8 @@ automation:
                   - "tue"
                   - "wed"
                   - "thu"
+              - condition: template
+                value_template: "{{ 'no interviews' not in state_attr('calendar.ohad_lightricks_com', 'message') | lower }}"
             sequence:
               - action: mqtt.publish
                 data:

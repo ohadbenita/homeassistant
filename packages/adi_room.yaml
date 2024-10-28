@@ -1,4 +1,14 @@
 ---
+template:
+  - sensor:
+      - name: "Adi Room AC Temperature"
+        unit_of_measurement: "°C"
+        state: "{{ state_attr('climate.adi_room_ac', 'current_temperature') }}"
+        availability: "{{ state_attr('climate.adi_room_ac', 'current_temperature') is not none }}"
+        device_class: temperature
+        icon: mdi:thermometer
+
+
 automation:
   - alias: "Adi Room - Set AC to night mode (summer)"
     id: adi_room_ac_night_automation

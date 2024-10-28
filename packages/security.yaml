@@ -4,6 +4,50 @@ input_text:
     name: Snapshot file name
 
 
+binary_sensor:
+  - platform: template
+    sensors:
+      dining_room_main_window_contact:
+        friendly_name: "Dining room main window"
+        device_class: opening
+        value_template: >
+          {{ is_state('binary_sensor.dining_room_main_window_01_contact', 'on') or is_state('binary_sensor.dining_room_main_window_02_contact', 'on') }}
+
+      living_room_middle_window_contact:
+        friendly_name: "Living room middle window"
+        device_class: opening
+        value_template: >
+          {{ is_state('binary_sensor.living_room_middle_window_01_contact', 'on') or is_state('binary_sensor.living_room_middle_window_02_contact', 'on') }}
+
+      living_room_right_window_contact:
+        friendly_name: "Living room right window"
+        device_class: opening
+        value_template: >
+          {{ is_state('binary_sensor.living_room_right_window_01_contact', 'on') or is_state('binary_sensor.living_room_right_window_02_contact', 'on') }}
+
+      living_room_left_window_contact:
+        friendly_name: "Living room left window"
+        device_class: opening
+        value_template: >
+          {{ is_state('binary_sensor.living_room_left_window_01_contact', 'on') or is_state('binary_sensor.living_room_left_window_02_contact', 'on') }}
+
+      all_doors_and_windows:
+        friendly_name: "All Doors and Windows"
+        device_class: opening
+        value_template: >
+          {{ is_state('binary_sensor.kitchen_door_contact', 'on') or
+             is_state('binary_sensor.entrance_door_contact', 'on') or
+             is_state('binary_sensor.kids_bathroom_door_contact', 'on') or
+             is_state('binary_sensor.kitchen_window_01_contact', 'on') or
+             is_state('binary_sensor.dining_room_left_window_01_contact', 'on') or
+             is_state('binary_sensor.dining_room_right_window_01_contact', 'on') or
+             is_state('binary_sensor.dining_room_main_window_contact', 'on') or
+             is_state('binary_sensor.living_room_middle_window_contact', 'on') or
+             is_state('binary_sensor.living_room_right_window_contact', 'on') or
+             is_state('binary_sensor.living_room_left_window_contact', 'on') or
+             is_state('binary_sensor.study_window_contact', 'on') }}
+
+
 lock:
   - platform: template
     name: "All doors"

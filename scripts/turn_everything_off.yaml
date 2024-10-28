@@ -17,7 +17,23 @@ turn_everything_off:
       target:
         entity_id: group.public_space_shutters
 
-    - delay: '00:00:20'
+    - action: homeassistant.turn_off
+      target:
+        entity_id:
+          - group.all_ac
+          - group.all_lights
+
+    - wait_for_trigger:
+      - platform: state
+        entity_id: binary_sensor.entrance_door_contact
+        to: 'on'
+
+    - wait_for_trigger:
+      - platform: state
+        entity_id: binary_sensor.entrance_door_contact
+        to: 'off'
+        for:
+          seconds: 30
 
     - action: lock.lock
       target:
@@ -53,12 +69,6 @@ turn_everything_off:
             message: >
               Some locks failed to lock:
               {{ states.lock | selectattr('state', '!=', 'locked') | map(attribute='name') | join(', ') }}
-
-    - action: homeassistant.turn_off
-      target:
-        entity_id:
-          - group.all_ac
-          - group.all_lights
 
     - action: notify.ohad_telegram
       data:

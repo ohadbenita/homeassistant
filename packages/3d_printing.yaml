@@ -1,0 +1,24 @@
+---
+automation:
+  - alias: "Send picture once printing is done"
+    id: 3d_printer_send_snapshot_when_done
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.creality_ender_v3_ke_current_print_state
+        from: printing
+        to: complete
+
+    action:
+      - action: camera.snapshot
+        data:
+          entity_id: camera.creality_ender_v3_ke
+          filename: "/config/www/snapshots/3d_printer_snapshot.jpg"
+      - delay: '00:00:02'
+      - service: notify.ohad_telegram
+        data:
+          message: "The 3D print has completed. Here's a snapshot"
+          data:
+            photo:
+              - file: "/config/www/snapshots/3d_printer_snapshot.jpg"
+                caption: 3D print completed

@@ -4,6 +4,17 @@ input_boolean:
     name: sleep mode
     icon: mdi:sleep
 
+
+template:
+  - sensor:
+      - name: "Roi Room AC Temperature"
+        unit_of_measurement: "°C"
+        state: "{{ state_attr('climate.roi_room_ac', 'current_temperature') }}"
+        availability: "{{ state_attr('climate.roi_room_ac', 'current_temperature') is not none }}"
+        device_class: temperature
+        icon: mdi:thermometer
+
+
 automation:
   - alias: "Roi Room - Set AC to night mode (summer)"
     id: roi_room_ac_night_automation
