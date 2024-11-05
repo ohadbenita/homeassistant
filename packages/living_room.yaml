@@ -155,6 +155,11 @@ automation:
         event: sunset
         offset: "-03:00:00"
 
+    condition:
+      - condition: state
+        entity_id: binary_sensor.dst
+        state: 'on'
+
     action:
       - variables:
           left_window_position: "{{ state_attr('cover.living_room_left_window', 'current_position') }}"

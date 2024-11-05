@@ -93,7 +93,7 @@ automation:
     initial_state: false
     trigger:
       - platform: state
-        entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
+        entity_id: binary_sensor.occupancy_sensor_71bf_occupancy
         to: 'on'
 
       - platform: homeassistant
@@ -101,7 +101,7 @@ automation:
 
     condition:
       - condition: state
-        entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
+        entity_id: binary_sensor.occupancy_sensor_71bf_occupancy
         state: 'on'
       - condition: time
         before: '23:00:00'
@@ -119,20 +119,18 @@ automation:
 
   - alias: "Turn off Roi room light when no motion is detected"
     id: roi_room_turn_light_off_no_motion_detected
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
+        entity_id: binary_sensor.occupancy_sensor_71bf_occupancy
         to: 'off'
-        for:
-          minutes: 5
 
       - platform: homeassistant
         event: start
 
     condition:
       - condition: state
-        entity_id: binary_sensor.apollo_msr_1_cd44f0_radar_target
+        entity_id: binary_sensor.occupancy_sensor_71bf_occupancy
         state: 'off'
       - condition: time
         before: '23:00:00'

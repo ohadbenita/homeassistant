@@ -33,6 +33,15 @@ input_boolean:
     name: Skip firmware checks by end of week
     icon: mdi:update
 
+template:
+  - binary_sensor:
+      - name: "DST"
+        unique_id: "is_dst_active"
+        state: >
+          {% from 'easy_time.jinja' import next_dst %}
+          {%- set datetime_obj = next_dst() | as_datetime %}
+          {%- set month = datetime_obj.month %}
+          {{ month != 3 }}
 
 rest_command:
   shelly_calibrate_cover:
@@ -553,3 +562,23 @@ automation:
       - action: notify.ohad_telegram
         data:
           message: "[Device maintenance] Grisha's bin is full."
+
+
+  - alias: DST Warning
+    initial_state: true
+    trigger:
+      - platform: time
+        at: '10:00:00'
+      - platform: time
+        at: '19:00:00'
+    condition:
+      - condition: template
+        value_template: >
+          {{ state_attr('sensor.dst', 'next').days_to_event in [7,1] }}
+    action:
+      - service: notify.ohad_telegram
+        data:
+          message: >
+            {%- set next = state_attr('sensor.dst', 'next') %}
+            {%- set plural = 's' if next.days_to_event > 1 else '' %}
+            "Daylight savings in {{ next.days_to_event }} day{{plural}}, you will {{ next.phrase }}!"

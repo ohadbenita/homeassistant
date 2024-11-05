@@ -1,4 +1,32 @@
 ---
+sensor:
+  - platform: history_stats
+    name: "3D Print Active Time"
+    entity_id: sensor.creality_ender_v3_ke_current_print_state
+    state: "printing"
+    type: time
+    start: >-
+          {% if is_state('sensor.creality_ender_v3_ke_current_print_state', 'printing') %}
+            {{ states.sensor.creality_ender_v3_ke_current_print_state.last_changed }}
+          {% else %}
+            {{ now().replace(hour=0, minute=0, second=0) }}
+          {% endif %}
+    end: "{{ now() }}"
+
+
+template:
+  - sensor:
+      - name: "3D Print Estimated Completion Time"
+        unit_of_measurement: "hours"
+        state: >
+          {% set current_progress = states('sensor.creality_ender_v3_ke_progress') | float %}
+          {% set active_time = states('sensor.3d_print_active_time') | float %}
+          {% if current_progress > 0 and active_time > 0 %}
+            {{ (100 - current_progress) / (current_progress / active_time) }}
+          {% else %}
+            unknown
+          {% endif %}
+
 automation:
   - alias: "Send picture once printing is done"
     id: 3d_printer_send_snapshot_when_done

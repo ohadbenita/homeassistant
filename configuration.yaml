@@ -47,3 +47,12 @@ telegram_bot:
     api_key: !secret telegram_chat_bot_api_key
     allowed_chat_ids:
       - !secret telegram_homeassistant_notifications_chat_id
+
+sensor:
+  - platform: school_holidays
+    elementary_school: True
+    high_school: True
+    resources:
+      - is_high_vacation
+      - is_elementary_vacation
+      - summary

@@ -26,11 +26,6 @@ turn_everything_off:
     - wait_for_trigger:
       - platform: state
         entity_id: binary_sensor.entrance_door_contact
-        to: 'on'
-
-    - wait_for_trigger:
-      - platform: state
-        entity_id: binary_sensor.entrance_door_contact
         to: 'off'
         for:
           seconds: 30

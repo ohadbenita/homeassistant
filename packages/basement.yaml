@@ -48,10 +48,10 @@ automation:
 
   - alias: "Turn on basement lights on motion"
     id: basement_turn_lights_on_motion
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.apollo_msr_2_3318a4_radar_target
+        entity_id: binary_sensor.occupancy_sensor_fe31_occupancy
         to: 'on'
 
       - platform: homeassistant
@@ -59,7 +59,7 @@ automation:
 
     condition:
       - condition: state
-        entity_id: binary_sensor.apollo_msr_2_3318a4_radar_target
+        entity_id: binary_sensor.occupancy_sensor_fe31_occupancy
         state: 'on'
 
     action:
@@ -74,17 +74,16 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.apollo_msr_2_3318a4_radar_target
+        entity_id: binary_sensor.occupancy_sensor_fe31_occupancy
         to: 'off'
-        for:
-          minutes: 5
 
       - platform: homeassistant
         event: start
 
     condition:
       - condition: state
-        entity_id: binary_sensor.apollo_msr_2_3318a4_radar_target
+        # entity_id: binary_sensor.apollo_msr_2_3318a4_radar_target
+        entity_id: binary_sensor.occupancy_sensor_fe31_occupancy
         state: 'off'
 
     action:
