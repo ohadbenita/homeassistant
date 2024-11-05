@@ -32,7 +32,7 @@ automation:
         data_template:
           message: "Water leak has been detected @ {{ trigger.from_state.attributes.friendly_name }} !!!"
 
-  - alias: Smnoke detection on
+  - alias: Kitchen smoke detection on
     id: kitchen_smoke_detection_on
     initial_state: true
     trigger:
@@ -43,13 +43,13 @@ automation:
     action:
       - action: notify.ohad_telegram
         data_template:
-          message: "Smoke has been detected"
+          message: "Smoke has been detected in the kitchen"
       - action: notify.mobile_app_ohadbenita
         data_template:
           title: "Hazards"
-          message: "Smoke has been detected, density is {{states('sensor.kitchen_ceiling_smoke_density')}}%"
+          message: "Smoke has been detected in the kitchen, density is {{states('sensor.kitchen_ceiling_smoke_density')}}%"
 
-  - alias: Smnoke detection off
+  - alias: Kitchen smoke detection off
     id: kitchen_smoke_detection_off
     initial_state: true
     trigger:
@@ -60,11 +60,11 @@ automation:
     action:
       - action: notify.ohad_telegram
         data_template:
-          message: "Smoke is not detected anymore"
+          message: "Smoke in the kitchen is not detected anymore"
       - action: notify.mobile_app_ohadbenita
         data_template:
           title: "Hazards"
-          message: "Smoke is not detected, density is {{states('sensor.kitchen_ceiling_smoke_density')}}%"
+          message: "Smoke in the kitchen is not detected, density is {{states('sensor.kitchen_ceiling_smoke_density')}}%"
 
 
   - alias: Pantry lights - turn on when motion detected

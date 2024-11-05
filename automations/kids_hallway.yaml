@@ -91,3 +91,38 @@
     - action: homeassistant.turn_off
       entity_id:
         - switch.shelly1pmminig3_34b7da8f8b78_switch_0  # book shelves hallway light
+
+
+- alias: Hallway smoke detection on
+  id: hallway_smoke_detection_on
+  initial_state: true
+  trigger:
+    - entity_id: binary_sensor.hallway_ceiling_smoke
+      platform: state
+      from: 'off'
+      to: 'on'
+  action:
+    - action: notify.ohad_telegram
+      data_template:
+        message: "Smoke has been detected in the hallway"
+    - action: notify.mobile_app_ohadbenita
+      data_template:
+        title: "Hazards"
+        message: "Smoke has been detected in the hallway, density is {{states('sensor.hallway_ceiling_smoke_density')}}%"
+
+- alias: Hallway smoke detection off
+  id: hallway_smoke_detection_off
+  initial_state: true
+  trigger:
+    - entity_id: binary_sensor.hallway_ceiling_smoke
+      platform: state
+      from: 'on'
+      to: 'off'
+  action:
+    - action: notify.ohad_telegram
+      data_template:
+        message: "Smoke in the hallway is not detected anymore"
+    - action: notify.mobile_app_ohadbenita
+      data_template:
+        title: "Hazards"
+        message: "Smoke is not detected in the hallway, density is {{states('sensor.hallway_ceiling_smoke_density')}}%"
