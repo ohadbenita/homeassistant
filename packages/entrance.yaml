@@ -76,7 +76,7 @@ automation:
     action:
       - choose:
           - conditions:
-              - condition: or
+              - condition: and
                 conditions:
                   - condition: time
                     after: '07:00:00'

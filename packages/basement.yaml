@@ -82,9 +82,10 @@ automation:
 
     condition:
       - condition: state
-        # entity_id: binary_sensor.apollo_msr_2_3318a4_radar_target
         entity_id: binary_sensor.occupancy_sensor_fe31_occupancy
         state: 'off'
+        for:
+          minutes: 10
 
     action:
       - action: homeassistant.turn_off

@@ -22,6 +22,17 @@ script:
           entity_id:
             - switch.shelly1pmminig3_ecda3bc26fb4_switch_0
 
+      - wait_template: >-
+          {{ is_state('switch.shelly1pmminig3_34b7da9342c4_switch_0', 'off') }}
+        timeout:
+          minutes: 1
+        continue_on_timeout: false
+
+      - action: homeassistant.turn_on
+        target:
+          entity_id: switch.shelly1pmminig3_34b7da9342c4_switch_0
+
+
 light:
   - platform: template
     lights:
@@ -124,13 +135,26 @@ automation:
         entity_id: binary_sensor.kitchen_door_contact
         to: 'off'
         for:
-          minutes: 30
+          minutes: 5
+
+      - platform: state
+        entity_id: binary_sensor.kitchen_path_person
+        to: 'off'
+        for:
+          minutes: 10
+
       - platform: homeassistant
         event: start
 
     condition:
       - condition: state
         entity_id: binary_sensor.kitchen_door_contact
+        state: 'off'
+      - condition: state
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.kitchen_path_person
         state: 'off'
       - condition: state
         entity_id: switch.shellyplus2pm_d48afc581860_switch_1

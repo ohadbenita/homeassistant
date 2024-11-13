@@ -90,6 +90,8 @@ automation:
       - platform: state
         entity_id: binary_sensor.occupancy_sensor_3012_occupancy
         to: 'off'
+        for:
+          minutes: 15
 
       - platform: homeassistant
         event: start

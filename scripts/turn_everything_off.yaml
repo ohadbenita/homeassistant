@@ -30,10 +30,16 @@ turn_everything_off:
         for:
           seconds: 30
 
+      timeout: "00:03:00"
+      continue_on_timeout: true
+
     - action: lock.lock
       target:
-        entity_id: >
-          {{ states.lock | map(attribute='entity_id') | list }}
+        entity_id:
+          - lock.entrance_door
+          - lock.kitchen_door
+          - lock.kids_bathroom_door
+          - lock.clinic_door
 
     - repeat:
         until:

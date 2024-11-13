@@ -111,6 +111,8 @@ automation:
         target:
           entity_id:
             - cover.dining_room_main_window
+            - cover.dining_room_left_window
+            - cover.dining_room_right_window
         data:
           position: "{{ [state_attr('cover.dining_room_main_window', 'current_position'), 15] | min }}"
 
@@ -191,7 +193,7 @@ automation:
       conditions:
         - condition: template
           value_template: >-
-            {{ as_timestamp(now()) - as_timestamp(state_attr('automation.open_dining_room_shutters_in_the_morning', 'last_triggered') or today_at('00:00')) | int > 7200 }}
+            {{ as_timestamp(now()) - as_timestamp(state_attr('automation.open_dining_room_shutters_in_the_morning', 'last_triggered') or today_at('00:00')) | int > 28800 }}
         - condition: time
           after: '06:30:00'
           before: '10:00:00'

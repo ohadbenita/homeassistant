@@ -474,3 +474,50 @@ automation:
           entity_id: group.public_space_shutters
         data:
           position: 15
+
+
+  - alias: Notify TV is playing for turning the lights off
+    id: kitchen_notify_tv_is_playing_before_turning_lights_off
+    initial_state: true
+    trigger:
+      platform: state
+      entity_id: media_player.livingroom_tv
+      to: 'playing'
+      for:
+        minutes: 1
+    condition:
+      condition: and
+      conditions:
+          # 1 hour since last execution
+        - condition: template
+          value_template: >-
+            {{ as_timestamp(now()) - as_timestamp(state_attr('automation.notify_tv_is_playing_for_turning_the_lights_off', 'last_triggered') or today_at('00:00:00')) > 3600}}
+        - condition: time
+          after: '21:00:00'
+
+    action:
+      - action: script.activate_alexa_actionable_notification
+        data_template:
+          text: 'So you are watching TV, should I turn off the lights ?'
+          event_id: 'actionable_notification_lights_tv_playing'
+          alexa_device: 'media_player.kitchen_echo'
+
+  - alias: Turn off the lights via actionable notification
+    id: living_room_turn_off_lights_via_actionable_notification
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_lights_tv_playing
+          event_response_type: ResponseYes
+
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_lights_tv_playing
+          event_response_type: ResponseNone
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id: light.public_space_lights

@@ -1,6 +1,6 @@
 ---
 automation:
-  - alias: "Study Room - Turn AC and lights off when no one is in the room"
+  - alias: "Study Room - Turn lights off when no one is in the room"
     id: study_room_turn_ac_and_lights_off
     initial_state: true
     trigger:
@@ -9,31 +9,26 @@ automation:
         to: 'off'
         for:
           minutes: 2
-      - platform: state
-        entity_id: sensor.ohad_ble
-        from: 'study'
+
+      - platform: homeassistant
+        event: start
 
     condition:
-      alias: "Ohad is not in the room"
-      condition: not
-      conditions:
-        - condition: state
-          entity_id: sensor.ohad_ble
-          state: 'study'
-        - condition: state
-          entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
-          state: 'on'
+      - condition: state
+        entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
+        state: 'off'
 
     action:
       - action: homeassistant.turn_off
-        entity_id:
-          - climate.study_room_ac
-          - switch.shellyplus1pm_e465b8f12024_switch_0
+        entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
 
 
-  - alias: "Study Room - Turn lights on immediately, AC after 5 minutes"
+  - alias: "Study Room - Turn on the lights when motion is detected"
     initial_state: true
-    id: study_room_turn_lights_on_ac_delay
+    id: study_room_turn_lights_on_motion_detected
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target

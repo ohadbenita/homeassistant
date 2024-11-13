@@ -51,6 +51,12 @@ rest_command:
       content-type: "application/json"
     payload: '{"id":1,"method":"Cover.Calibrate","params":{"id":0}}'
 
+  shelly_reboot_device:
+    url: "http://{{ shelly_ip }}/rpc"
+    method: POST
+    headers:
+      content-type: "application/json"
+    payload: '{"id":1,"method":"Shelly.Reboot"}'
 
 sensor:
   - platform: rest
@@ -582,3 +588,23 @@ automation:
             {%- set next = state_attr('sensor.dst', 'next') %}
             {%- set plural = 's' if next.days_to_event > 1 else '' %}
             "Daylight savings in {{ next.days_to_event }} day{{plural}}, you will {{ next.phrase }}!"
+
+
+  - alias: Reboot Shelly devices
+    id: ha_reboot_shelly_devices
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: time
+        at: "12:00:00"
+    action:
+      - variables:
+          shelly_ips:
+            - "172.16.1.63"   # Master bedroom fan light
+            - "172.16.1.243"  # Master bedroom wall lights
+      - repeat:
+          for_each: "{{ shelly_ips }}"
+          sequence:
+            - action: rest_command.shelly_reboot_device
+              data:
+                shelly_ip: "{{ repeat.item }}"

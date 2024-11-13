@@ -145,7 +145,7 @@ automation:
           additional_switches:
             - switch.irrigation_l4
             - switch.irrigation_l5
-          irrigation_duration_minutes: 45
+          irrigation_duration_minutes: 30
 
 
   - alias: Weekly Irrigation Cycle - flowers and herbs

@@ -5,12 +5,7 @@ sensor:
     entity_id: sensor.creality_ender_v3_ke_current_print_state
     state: "printing"
     type: time
-    start: >-
-          {% if is_state('sensor.creality_ender_v3_ke_current_print_state', 'printing') %}
-            {{ states.sensor.creality_ender_v3_ke_current_print_state.last_changed }}
-          {% else %}
-            {{ now().replace(hour=0, minute=0, second=0) }}
-          {% endif %}
+    start: "{{ now().replace(hour=0, minute=0, second=0) }}"
     end: "{{ now() }}"
 
 

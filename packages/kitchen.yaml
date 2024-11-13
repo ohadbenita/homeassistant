@@ -143,7 +143,7 @@ automation:
     condition:
       condition: template  # Ensure 2 hours since last triggered
       value_template: >-
-        {{ as_timestamp(now()) - as_timestamp(state_attr('automation.announce_dishwasher_cycle_completion', 'last_triggered')) | int > 7200 }}
+        {{ as_timestamp(now()) - as_timestamp(state_attr('automation.set_dishwasher_announcement_time', 'last_triggered')) | int > 7200 }}
     action:
       - choose:
           - conditions:
@@ -487,7 +487,7 @@ automation:
                         entity_id: vacuum.yulanda
                       data:
                         fan_speed: balanced
-                    - delay: 00:00:02  # Small delay before checking again
+                    - delay: 00:00:30  # Small delay before checking again
 
           - conditions:
               - condition: state
@@ -505,7 +505,7 @@ automation:
                         entity_id: vacuum.yulanda
                       data:
                         fan_speed: max
-                    - delay: 00:00:02  # Small delay before checking again
+                    - delay: 00:00:30
 
           - conditions:
               - condition: state
