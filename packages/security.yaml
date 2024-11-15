@@ -109,3 +109,22 @@ automation:
             photo:
               - file: "{{ states('input_text.person_detection_snapshot_filename') }}"
                 caption: Snapshot taken at {{ trigger.entity_id.split('.')[1].replace('_person', '').replace('_', ' ') | title }}
+
+
+  - alias: "Security - Lock all doors in the night"
+    id: security_lock_all_doors_in_the_night
+    mode: single
+    initial_state: true
+    trigger:
+      - platform: time
+        at: '23:00:00'
+      - platform: time
+        at: '00:00:00'
+
+    action:
+      - action: lock.lock
+        entity_id:
+          - lock.entrance_door
+          - lock.kids_bathroom_door
+          - lock.kitchen_door
+          - lock.clinic_door

@@ -39,20 +39,19 @@ turn_everything_off:
           - lock.entrance_door
           - lock.kitchen_door
           - lock.kids_bathroom_door
-          - lock.clinic_door
 
-    - repeat:
-        until:
-          - condition: template
-            value_template: >
-              {{ states.lock | selectattr('state', '==', 'locked') | list | count == states.lock | list | count }}
-        sequence:
-          - action: lock.lock
-            target:
-              entity_id: >
-                {{ states.lock | selectattr('state', '!=', 'locked') | map(attribute='entity_id') | list }}
+    # - repeat:
+    #     until:
+    #       - condition: template
+    #         value_template: >
+    #           {{ states.lock | selectattr('state', '==', 'locked') | list | count == states.lock | list | count }}
+    #     sequence:
+    #       - action: lock.lock
+    #         target:
+    #           entity_id: >
+    #             {{ states.lock | selectattr('state', '!=', 'locked') | map(attribute='entity_id') | list }}
 
-          - delay: '00:00:20'  # Retry every 20 seconds
+    #       - delay: '00:00:20'  # Retry every 20 seconds
 
     - choose:
       - conditions:  # yamllint disable-line rule:indentation

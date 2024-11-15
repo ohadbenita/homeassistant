@@ -117,13 +117,15 @@ automation:
           - switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
 
 
-  - alias: "Turn off Roi room light when no motion is detected"
+  - alias: "Turn off Roi room fan when no motion is detected"
     id: roi_room_turn_light_off_no_motion_detected
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.occupancy_sensor_71bf_occupancy
         to: 'off'
+        for:
+          minutes: 15
 
       - platform: homeassistant
         event: start
@@ -139,7 +141,7 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shellyplus2pm_10061ccdc57c_switch_0  # light
+          # - switch.shellyplus2pm_10061ccdc57c_switch_0  # light
           - switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
 
 

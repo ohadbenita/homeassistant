@@ -1,4 +1,16 @@
 ---
+binary_sensor:
+  - platform: template
+    sensors:
+      entrance_sensors_off_for_10_minutes:
+        friendly_name: "Entrance sensors off for 10 Minutes"
+        delay_on: "00:10:00"
+        value_template: >
+          {{ is_state('binary_sensor.entrance_door_occupancy', 'off') and
+             is_state('binary_sensor.entrance_indoor_occupancy', 'off') and
+             is_state('binary_sensor.entrance_door_contact', 'off') }}
+
+
 automation:
   - alias: Alert on Nuki low battery
     id: entrance_nuki_low_battery_alert
@@ -65,6 +77,9 @@ automation:
     mode: single
     trigger:
       - platform: state
+        entity_id: binary_sensor.entrance_sensors_off_for_10_minutes
+        to: 'on'
+      - platform: state
         entity_id:
           - binary_sensor.entrance_door_occupancy
           - binary_sensor.entrance_indoor_occupancy
@@ -75,27 +90,25 @@ automation:
 
     action:
       - choose:
+          # Daytime Action: Turns off the light if all sensors are off for 10 minutes
           - conditions:
-              - condition: and
-                conditions:
-                  - condition: time
-                    after: '07:00:00'
-                  - condition: time
-                    before: '22:00:00'
+              - condition: time
+                after: '07:00:00'
+                before: '22:00:00'
+              - condition: state
+                entity_id: binary_sensor.entrance_sensors_off_for_10_minutes
+                state: 'on'
             sequence:
-              - wait_for_trigger:
-                  - platform: state
-                    entity_id:
-                      - binary_sensor.entrance_door_occupancy
-                      - binary_sensor.entrance_indoor_occupancy
-                      - binary_sensor.entrance_door_contact
-                    to: 'off'
-                    for:
-                      minutes: 10
               - service: homeassistant.turn_off
                 target:
                   entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1
+
+        # Nighttime Action: Turns off the light immediately when all sensors are off
         default:
+          - wait_template: >
+              {{ is_state('binary_sensor.entrance_door_occupancy', 'off') and
+                is_state('binary_sensor.entrance_indoor_occupancy', 'off') and
+                is_state('binary_sensor.entrance_door_contact', 'off') }}
           - service: homeassistant.turn_off
             target:
               entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1

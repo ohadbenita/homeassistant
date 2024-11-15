@@ -204,10 +204,15 @@ automation:
         from: 'Full'
         to: 'Not Charging'
         id: battery_state
+
     condition:
       - condition: state
         entity_id: binary_sensor.dishwasher_active
         state: 'off'
+      - condition: template  # Ensure 2 hours since last triggered
+        value_template: >-
+          {{ as_timestamp(now()) - as_timestamp(state_attr('automation.announce_dishwasher_cycle_completion', 'last_triggered')) | int > 7200 }}
+
     action:
       - choose:
           - conditions:  # If triggered by battery state change (school vacation case)

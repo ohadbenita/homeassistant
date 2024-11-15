@@ -92,13 +92,72 @@ automation:
           - switch.shelly1pmminig3_54320454e6dc_switch_0  # Parking and outdoor fan
 
 
-  - alias: "Turn on kitchen door path light when door is opened"
-    id: yard_turn_on_kitchen_door_path_light_when_door_is_opened
+  - alias: "Turn on kitchen door path and clinic lights when a person is detected"
+    id: yard_turn_on_kitchen_door_path_and_clinic_lights_when_person_detected
     initial_state: true
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.kitchen_door_contact
+        entity_id: binary_sensor.kitchen_path_person
+        to: 'on'
+
+    condition:
+      condition: and
+      conditions:
+        - condition: or
+          conditions:
+            - condition: sun
+              before: sunrise
+              before_offset: "01:00:00"
+            - condition: sun
+              after: sunset
+              after_offset: "-01:00:00"
+
+    action:
+      - action: homeassistant.turn_on
+        entity_id:
+          - switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
+          - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
+          - switch.shellyplus2pm_c4d8d557f404_switch_1  # Clinic door
+
+
+  - alias: "Turn off kitchen door path and bathroom door lights when no person is detected"
+    id: yard_turn_off_kitchen_door_path_and_bathroom_door_lights_when_no_person_detected
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kitchen_path_person
+        to: 'off'
+        for:
+          minutes: 15
+
+    condition:
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: switch.shellyplus2pm_d48afc581860_switch_1
+            state: 'on'
+          - condition: state
+            entity_id: switch.shellyplus2pm_fcb467a557a0_switch_0
+            state: 'on'
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id:
+          - switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
+          - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
+
+
+  - alias: "Turn on path lights when either door is opened"
+    id: yard_turn_on_path_lights_when_either_door_is_opened
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.kitchen_door_contact
+          - binary_sensor.kids_bathroom_door_contact
         to: 'on'
       - platform: homeassistant
         event: start
@@ -119,12 +178,16 @@ automation:
             - condition: state
               entity_id: binary_sensor.kitchen_door_contact
               state: 'on'
+            - condition: state
+              entity_id: binary_sensor.kids_bathroom_door_contact
+              state: 'on'
 
     action:
       - action: homeassistant.turn_on
         entity_id:
           - switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
-          - switch.shelly1pmminig3_54320454e6dc_switch_0  # Parking and fan lights
+          - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
+
 
   - alias: "Turn off kitchen door path light when door is closed"
     id: yard_turn_on_kitchen_door_path_light_when_door_is_closed
@@ -162,9 +225,7 @@ automation:
 
     action:
       - action: homeassistant.turn_off
-        entity_id:
-          - switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
-          - switch.shelly1pmminig3_54320454e6dc_switch_0  # Parking and fan lights
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
 
 
   - alias: "Turn on kids bathroom door and clinic light when door is opened"
