@@ -24,9 +24,6 @@ automation:
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
           - switch.shellyplus2pm_c4d8d557f404_switch_1  # Clinic door
           - switch.shelly1pmminig3_34b7da8f8b78_switch_0  # Main hallway
-
-      - action: homeassistant.turn_on
-        entity_id:
           - switch.shelly1pmminig3_34b7da8b78c4_switch_0  # Shelter entrance
           - switch.shelly1pmminig3_34b7da8a0338_switch_0  # Shelter main
           - switch.shellyplus2pm_a0a3b3682b10_switch_0  # Basement main

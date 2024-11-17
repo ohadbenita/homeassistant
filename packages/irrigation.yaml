@@ -124,7 +124,42 @@ script:
         target:
           entity_id: switch.irrigation_l6
 
+input_boolean:
+  rain_expected_next_12_hours:
+    name: Rain Expected in Next 12 Hours
+    initial: false
+
 automation:
+  - alias: Check rain expected in next 12 hours
+    trigger:
+      - platform: time_pattern
+        hours: "/1"
+    action:
+      - action: weather.get_forecasts
+        response_variable: forecasts
+        data:
+          type: hourly
+        target:
+          entity_id: weather.openweathermap
+
+      - if:
+        - condition: template  # yamllint disable-line rule:indentation
+          value_template: >
+            {{ forecasts['weather.openweathermap']['forecast']
+              | selectattr('precipitation_probability', 'gt', 75)
+              | selectattr('precipitation', 'gt', 5)
+              | list | length > 0
+            }}
+
+        then:
+          - service: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.rain_expected_next_12_hours
+        else:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.rain_expected_next_12_hours
+
   - alias: Weekly Irrigation Cycle - trees and bushes
     id: irrigation_simple_weekly_schedule_trees_bushes
     initial_state: true
@@ -134,18 +169,28 @@ automation:
         offset: "-1:00:00"
 
     condition:
-      condition: time
-      weekday:
-        - mon
-        - thu
+      - condition: time
+        weekday:
+          - mon
+          - thu
 
     action:
-      - action: script.irrigation_cycle
-        data:
-          additional_switches:
-            - switch.irrigation_l4
-            - switch.irrigation_l5
-          irrigation_duration_minutes: 30
+      - if:
+        - condition: state  # yamllint disable-line rule:indentation
+          entity_id: input_boolean.rain_expected_next_12_hours
+          state: 'off'
+        then:
+          - action: script.irrigation_cycle
+            data:
+              additional_switches:
+                - switch.irrigation_l4
+                - switch.irrigation_l5
+              irrigation_duration_minutes: 30
+        else:
+          - action: notify.ohad_telegram
+            data:
+              title: "Irrigation"
+              message: "[Trees] Irrigation cycle skipped as it's probably going to rain soon"
 
 
   - alias: Weekly Irrigation Cycle - flowers and herbs
@@ -157,11 +202,21 @@ automation:
         offset: "00:00:00"
 
     action:
-      - action: script.irrigation_cycle
-        data:
-          additional_switches:
-            - switch.irrigation_l3
-          irrigation_duration_minutes: 7
+      - if:
+        - condition: state  # yamllint disable-line rule:indentation
+          entity_id: input_boolean.rain_expected_next_12_hours
+          state: 'off'
+        then:
+          - action: script.irrigation_cycle
+            data:
+              additional_switches:
+                - switch.irrigation_l3
+              irrigation_duration_minutes: 7
+        else:
+          - action: notify.ohad_telegram
+            data:
+              title: "Irrigation"
+              message: "[Flowers & herbs] Irrigation cycle skipped as it's probably going to rain soon"
 
 
   - alias: Irrigation Watchdog

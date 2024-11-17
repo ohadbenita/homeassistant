@@ -119,7 +119,7 @@ automation:
 
   - alias: "Turn off Roi room fan when no motion is detected"
     id: roi_room_turn_light_off_no_motion_detected
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
         entity_id: binary_sensor.occupancy_sensor_71bf_occupancy
@@ -136,7 +136,7 @@ automation:
         state: 'off'
       - condition: time
         before: '23:00:00'
-        after: '08:00:00'
+        after: '07:00:00'
 
     action:
       - action: homeassistant.turn_off

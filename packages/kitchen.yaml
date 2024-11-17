@@ -145,6 +145,10 @@ automation:
       value_template: >-
         {{ as_timestamp(now()) - as_timestamp(state_attr('automation.set_dishwasher_announcement_time', 'last_triggered')) | int > 7200 }}
     action:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.dishwasher_message_scheduled
+
       - choose:
           - conditions:
               - condition: time  # Check if cycle completed after midnight
@@ -157,19 +161,11 @@ automation:
                         entity_id: sensor.school_is_high_vacation
                         state: 'True'
                     sequence:
-                      - action: input_boolean.turn_on
-                        target:
-                          entity_id: input_boolean.dishwasher_message_scheduled
-                  - conditions:
-                      - condition: state
-                        entity_id: sensor.school_is_high_vacation
-                        state: 'False'
-                    sequence:
                       - action: input_datetime.set_datetime
                         target:
                           entity_id: input_datetime.dishwasher_announcement_time
                         data:
-                          datetime: "{{ now().replace(hour=8, minute=0, second=0) }}"  # Morning time if not a vacation
+                          datetime: "{{ now().replace(hour=8, minute=0, second=0) }}"  # Morning time if vacation
           - conditions:
               - condition: state
                 entity_id: person.roi_benita
@@ -200,10 +196,9 @@ automation:
         at: input_datetime.dishwasher_announcement_time
         id: input_datetime
       - platform: state
-        entity_id: sensor.rois_iphone_battery_state
-        from: 'Full'
-        to: 'Not Charging'
-        id: battery_state
+        entity_id: person.roi_benita
+        to: 'home'
+        id: person_arrival
 
     condition:
       - condition: state
@@ -212,105 +207,21 @@ automation:
       - condition: template  # Ensure 2 hours since last triggered
         value_template: >-
           {{ as_timestamp(now()) - as_timestamp(state_attr('automation.announce_dishwasher_cycle_completion', 'last_triggered')) | int > 7200 }}
+      - condition: state
+        entity_id: input_boolean.dishwasher_message_scheduled
+        state: 'on'
 
     action:
-      - choose:
-          - conditions:  # If triggered by battery state change (school vacation case)
-              - condition: template
-                value_template: "{{ trigger.id == 'battery_state' }}"
-              - condition: state
-                entity_id: input_boolean.dishwasher_message_scheduled
-                state: 'on'
-            sequence:
-              - action: notify.ohad_whatsapp_api
-                data:
-                  title: Chore notification
-                  message: Dishwasher cycle complete, please unload the dishes
-                  target: !secret roi_benita_whatsapp_user_id
-                  data:
-                    media_url: {}
-              - action: input_boolean.turn_off
-                target:
-                  entity_id: input_boolean.dishwasher_message_scheduled
-          - conditions:  # If triggered by input datetime (non-vacation case)
-              - condition: template
-                value_template: "{{ trigger.id == 'input_datetime' }}"
-            sequence:
-              - action: notify.ohad_whatsapp_api
-                data:
-                  title: Chore notification
-                  message: Dishwasher cycle complete, please unload the dishes
-                  target: !secret roi_benita_whatsapp_user_id
-                  data:
-                    media_url: {}
-
-
-  # - alias: Announce Dishwasher cycle completed
-  #   id: kitchen_announce_dishwasher_cycle_completed
-  #   initial_state: true
-  #   trigger:
-  #     - platform: state
-  #       entity_id: binary_sensor.dishwasher_active
-  #       from: 'on'
-  #       to: 'off'
-  #       for:
-  #         minutes: 33
-  #   condition:
-  #     condition: and
-  #     conditions:
-  #       - condition: template  # Ensure 2 hours since last triggered
-  #         value_template: >-
-  #           {{ as_timestamp(now()) - as_timestamp(state_attr('automation.announce_dishwasher_cycle_completed', 'last_triggered')) | int > 7200 }}
-
-  #   action:
-  #     - choose:
-  #         - conditions:
-  #             - condition: state
-  #               entity_id: person.roi_benita
-  #               state: 'home'
-  #           sequence:
-  #             - service: notify.ohad_whatsapp_api
-  #               data:
-  #                 message: Dishwasher cycle complete, please unload the dishes
-  #                 title: Chore notification
-  #                 target: !secret roi_benita_whatsapp_user_id
-  #                 data:
-  #                   media_url: {}
-  #         - conditions:
-  #             - condition: template
-  #               value_template: >-
-  #                 {{ not is_state('person.roi_benita', 'home') }}
-  #           sequence:
-  #             - service: input_boolean.turn_on
-  #               target:
-  #                 entity_id: input_boolean.dishwasher_message_scheduled
-
-
-  # - alias: Send Dishwasher Message when Roi arrives home
-  #   id: kitchen_send_dishwasher_message_on_arrival
-  #   initial_state: true
-  #   trigger:
-  #     - platform: state
-  #       entity_id: person.roi_benita
-  #       to: 'home'
-  #   condition:
-  #     - condition: state
-  #       entity_id: input_boolean.dishwasher_message_scheduled
-  #       state: 'on'
-  #     - condition: state
-  #       entity_id: binary_sensor.dishwasher_active
-  #       state: 'off'
-  #   action:
-  #     - service: notify.ohad_whatsapp_api
-  #       data:
-  #         title: Chore notification
-  #         message: Dishwasher cycle complete, please unload the dishes
-  #         target: !secret roi_benita_whatsapp_user_id
-  #         data:
-  #           media_url: {}
-  #     - service: input_boolean.turn_off
-  #       target:
-  #         entity_id: input_boolean.dishwasher_message_scheduled
+      - action: notify.ohad_whatsapp_api
+        data:
+          title: Chore notification
+          message: Dishwasher cycle completed, please unload the dishes
+          target: !secret roi_benita_whatsapp_user_id
+          data:
+            media_url: {}
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.dishwasher_message_scheduled
 
   # maps:
   #   - flag: 0
