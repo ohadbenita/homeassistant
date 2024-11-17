@@ -50,8 +50,8 @@ telegram_bot:
 
 sensor:
   - platform: school_holidays
-    elementary_school: True
-    high_school: True
+    elementary_school: "True"
+    high_school: "True"
     resources:
       - is_high_vacation
       - is_elementary_vacation

@@ -143,13 +143,18 @@ automation:
           entity_id: weather.openweathermap
 
       - if:
-        - condition: template  # yamllint disable-line rule:indentation
-          value_template: >
-            {{ forecasts['weather.openweathermap']['forecast']
-              | selectattr('precipitation_probability', 'gt', 75)
-              | selectattr('precipitation', 'gt', 5)
-              | list | length > 0
-            }}
+        - condition: or  # yamllint disable-line rule:indentation
+          conditions:
+            - condition: template
+              value_template: >
+                {{ forecasts['weather.openweathermap']['forecast']
+                  | selectattr('precipitation_probability', 'gt', 75)
+                  | selectattr('precipitation', 'gt', 5)
+                  | list | length > 0
+                }}
+            - condition: state
+              entity_id: weather.openweathermap
+              state: rainy
 
         then:
           - service: input_boolean.turn_on
