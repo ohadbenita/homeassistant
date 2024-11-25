@@ -33,15 +33,24 @@ input_boolean:
     name: Skip firmware checks by end of week
     icon: mdi:update
 
+
+binary_sensor:
+  - platform: rest
+    name: Whatsapp API Availability
+    unique_id: whatsapp_api_availability
+    resource: http://127.0.0.1:3000/client/getContacts/homeassistant
+    method: GET
+    value_template: "{{ value_json.success | default(false) }}"
+    device_class: connectivity
+
+
 template:
   - binary_sensor:
       - name: "DST"
         unique_id: "is_dst_active"
         state: >
-          {% from 'easy_time.jinja' import next_dst %}
-          {%- set datetime_obj = next_dst() | as_datetime %}
-          {%- set month = datetime_obj.month %}
-          {{ month != 3 }}
+          {{now().timetuple().tm_isdst == 1}}
+        device_class: running
 
 rest_command:
   shelly_calibrate_cover:
@@ -602,9 +611,50 @@ automation:
           shelly_ips:
             - "172.16.1.63"   # Master bedroom fan light
             - "172.16.1.243"  # Master bedroom wall lights
+            - "172.16.1.180"  # Hallway bookshelf light
       - repeat:
           for_each: "{{ shelly_ips }}"
           sequence:
             - action: rest_command.shelly_reboot_device
               data:
                 shelly_ip: "{{ repeat.item }}"
+
+  - alias: Notify Whatsapp API is down
+    id: ha_notify_whatsapp_api_is_down
+    description: Notify via Telegram when the API is down
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.whatsapp_api_availability
+        to: "off"
+    action:
+      - service: notify.ohad_telegram
+        data:
+          title: "API Monitoring Alert"
+          message: >
+            🚨 The API at `http://172.16.0.9:3000/client/getContacts/homeassistant` is down!
+            Check https://github.com/t0mer/wapi-custom-notifier for instructions to re-setup
+
+
+  - alias: Dismiss OCPP integration notifications
+    id: ha_dismiss_ocpp_integration_notifications
+    trigger:
+      - platform: persistent_notification
+        update_type:
+          - added
+        notification_id: ""
+
+    condition:
+      - condition: template
+        value_template: "{{ trigger.notification.title | lower == \"ocpp integration\" }}"
+
+    action:
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 10
+          milliseconds: 0
+      - service: persistent_notification.dismiss
+        data:
+          notification_id: "{{ trigger.notification.notification_id }}"
+    mode: parallel
+    max: 10

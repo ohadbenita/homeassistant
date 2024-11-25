@@ -81,7 +81,7 @@ automation:
     initial_state: true
     trigger:
       - platform: time
-        at: "01:00:00"
+        at: "22:00:00"
 
     action:
       - action: homeassistant.turn_off
@@ -367,3 +367,76 @@ automation:
                   entity_id:
                     - switch.shellyplus2pm_c4d8d557f404_switch_1
                     - switch.shellyplus2pm_fcb467a557a0_switch_0
+
+  - alias: "Turn on parking flood lights when motion is detected"
+    id: yard_turn_on_parking_flood_light_when_motion_detected
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.parking_stairs_01_occupancy
+        to: 'on'
+
+    condition:
+      condition: and
+      conditions:
+        - condition: or
+          conditions:
+            - condition: sun
+              before: sunrise
+              before_offset: "01:00:00"
+            - condition: sun
+              after: sunset
+              after_offset: "-01:00:00"
+
+    action:
+      - action: homeassistant.turn_on
+        entity_id: light.parking_flood_light
+
+  - alias: "Turn off parking flood lights when no motion is detected"
+    id: yard_turn_off_parking_flood_light_when_no_motion_detected
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.parking_stairs_01_occupancy
+        to: 'off'
+
+    condition:
+      condition: and
+      conditions:
+        - condition: or
+          conditions:
+            - condition: sun
+              before: sunrise
+              before_offset: "01:00:00"
+            - condition: sun
+              after: sunset
+              after_offset: "-01:00:00"
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id: light.parking_flood_light
+
+
+  - alias: "Turn off clinic door flood light when the door is locked"
+    id: yard_turn_off_clinic_door_flight_light_when_door_locked
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: lock.clinic_door
+        to: 'locked'
+        for:
+          minutes: 5
+
+    condition:
+      - condition: state
+        entity_id: switch.shellyplus2pm_c4d8d557f404_switch_1  # clinic door
+        state: 'on'
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id:
+          - switch.shellyplus2pm_c4d8d557f404_switch_0  # Clinic inside closet
+          - switch.shellyplus2pm_c4d8d557f404_switch_1  # Clinic door

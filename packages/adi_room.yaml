@@ -98,7 +98,9 @@ automation:
 
     condition:
       - condition: state
-        entity_id: binary_sensor.occupancy_sensor_3012_occupancy
+        entity_id:
+          - binary_sensor.occupancy_sensor_3012_occupancy
+          - binary_sensor.apollo_msr_1_cb6db4_radar_target
         state: 'off'
 
     action:

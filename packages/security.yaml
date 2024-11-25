@@ -35,17 +35,37 @@ binary_sensor:
         friendly_name: "All Doors and Windows"
         device_class: opening
         value_template: >
-          {{ is_state('binary_sensor.kitchen_door_contact', 'on') or
-             is_state('binary_sensor.entrance_door_contact', 'on') or
-             is_state('binary_sensor.kids_bathroom_door_contact', 'on') or
-             is_state('binary_sensor.kitchen_window_01_contact', 'on') or
-             is_state('binary_sensor.dining_room_left_window_01_contact', 'on') or
-             is_state('binary_sensor.dining_room_right_window_01_contact', 'on') or
-             is_state('binary_sensor.dining_room_main_window_contact', 'on') or
-             is_state('binary_sensor.living_room_middle_window_contact', 'on') or
-             is_state('binary_sensor.living_room_right_window_contact', 'on') or
-             is_state('binary_sensor.living_room_left_window_contact', 'on') or
-             is_state('binary_sensor.study_window_contact', 'on') }}
+          {{
+            is_state('binary_sensor.kitchen_door_contact', 'on') or
+            is_state('binary_sensor.entrance_door_contact', 'on') or
+            is_state('binary_sensor.kids_bathroom_door_contact', 'on') or
+            is_state('binary_sensor.kitchen_window_01_contact', 'on') or
+            is_state('binary_sensor.dining_room_left_window_01_contact', 'on') or
+            is_state('binary_sensor.dining_room_right_window_01_contact', 'on') or
+            is_state('binary_sensor.dining_room_main_window_contact', 'on') or
+            is_state('binary_sensor.living_room_middle_window_contact', 'on') or
+            is_state('binary_sensor.living_room_right_window_contact', 'on') or
+            is_state('binary_sensor.living_room_left_window_contact', 'on') or
+            is_state('binary_sensor.study_window_contact', 'on') or
+            is_state('binary_sensor.roi_window_contact', 'on') or
+            is_state('binary_sensor.adi_window_contact', 'on')
+          }}
+
+      all_windows:
+        friendly_name: "All Windows"
+        device_class: opening
+        value_template: >
+          {{
+            is_state('binary_sensor.dining_room_left_window_01_contact', 'on') or
+            is_state('binary_sensor.dining_room_right_window_01_contact', 'on') or
+            is_state('binary_sensor.dining_room_main_window_contact', 'on') or
+            is_state('binary_sensor.living_room_middle_window_contact', 'on') or
+            is_state('binary_sensor.living_room_right_window_contact', 'on') or
+            is_state('binary_sensor.living_room_left_window_contact', 'on') or
+            is_state('binary_sensor.study_window_contact', 'on') or
+            is_state('binary_sensor.roi_window_contact', 'on') or
+            is_state('binary_sensor.adi_window_contact', 'on')
+          }}
 
 
 lock:
@@ -82,24 +102,27 @@ automation:
     initial_state: false
     trigger:
       - platform: state
-        entity_id:
-          - binary_sensor.front_porch_and_parking_person
-          - binary_sensor.main_entrance_person
-          - binary_sensor.kitchen_path_person
+        entity_id: binary_sensor.main_entrance_person
         to: 'on'
+
+    condition:
+      - condition: state
+        entity_id: alarm_control_panel.alarmo
+        state: "armed_away"
+
     action:
       - action: input_text.set_value
         data:
           entity_id: input_text.person_detection_snapshot_filename
           value: >-
             {{ '/config/www/camera_captures/' + trigger.entity_id.split('.')[1].replace('_person', '') + '/' + now().strftime('%Y_%m_%d_%H_%M') + '.jpg' }}
-      - delay:
-          seconds: 2
       - action: camera.snapshot
         data:
           entity_id: >-
             {{ 'camera.' + trigger.entity_id.split('.')[1].replace('_person', '_snapshots_clear') }}
           filename: "{{ states('input_text.person_detection_snapshot_filename') }}"
+      - delay:
+          seconds: 1
       - action: notify.ohad_telegram
         data:
           title: "Security - human presence detected"
@@ -128,3 +151,23 @@ automation:
           - lock.kids_bathroom_door
           - lock.kitchen_door
           - lock.clinic_door
+
+  - alias: Disarm alarm when we are back
+    id: security_disarm_alarm_when_entrance_door_is_unlocked
+    mode: single
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: lock.entrance_door
+        to: unlocked
+
+    condition:
+      - condition: state
+        entity_id: alarm_control_panel.alarmo
+        state: armed_away
+
+    action:
+      - action: alarmo.disarm
+        data:
+          entity_id: alarm_control_panel.alarmo
+          code: !secret alarmo_ohad_code

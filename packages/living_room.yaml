@@ -494,6 +494,9 @@ automation:
             {{ as_timestamp(now()) - as_timestamp(state_attr('automation.notify_tv_is_playing_for_turning_the_lights_off', 'last_triggered') or today_at('00:00:00')) > 3600}}
         - condition: time
           after: '21:00:00'
+        - condition: state
+          entity_id: light.public_space_lights
+          state: 'on'
 
     action:
       - action: script.activate_alexa_actionable_notification

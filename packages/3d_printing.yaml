@@ -37,11 +37,39 @@ automation:
         data:
           entity_id: camera.creality_ender_v3_ke
           filename: "/config/www/snapshots/3d_printer_snapshot.jpg"
+
       - delay: '00:00:02'
-      - service: notify.ohad_telegram
+
+      - action: homeassistant.turn_off
+        entity_id: switch.creality_printer
+
+      - action: notify.ohad_telegram
         data:
-          message: "The 3D print has completed. Here's a snapshot"
+          message: "The 3D print has completed & the printer has been turned off"
           data:
             photo:
               - file: "/config/www/snapshots/3d_printer_snapshot.jpg"
-                caption: 3D print completed
+                caption: "The 3D print has completed & the printer has been turned off"
+
+  - alias: "Send picture once printing is in error"
+    id: 3d_printer_send_snapshot_when_in_error
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.creality_ender_v3_ke_current_print_state
+        to: error
+
+    action:
+      - action: camera.snapshot
+        data:
+          entity_id: camera.creality_ender_v3_ke
+          filename: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
+      - delay: '00:00:02'
+
+      - action: notify.ohad_telegram
+        data:
+          message: "The 3D print has come to an error. Here's a snapshot"
+          data:
+            photo:
+              - file: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
+                caption: "The 3D print has come to an error. Here's a snapshot"
