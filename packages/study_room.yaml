@@ -161,5 +161,30 @@ automation:
         to: 'close'
 
     action:
+      - if:
+          - condition: state
+            entity_id: climate.study_room_ac
+            state: 'off'
+        then:
+          - choose:
+              - conditions:
+                  - condition: state
+                    entity_id: binary_sensor.dst
+                    state: 'on'
+                sequence:
+                  - action: climate.set_hvac_mode
+                    data:
+                      entity_id: climate.study_room_ac
+                      hvac_mode: 'cool'
+              - conditions:
+                  - condition: state
+                    entity_id: binary_sensor.dst
+                    state: 'off'
+                sequence:
+                  - action: climate.set_hvac_mode
+                    data:
+                      entity_id: climate.study_room_ac
+                      hvac_mode: 'heat'
+
       - action: climate.toggle
         entity_id: climate.study_room_ac

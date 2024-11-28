@@ -38,7 +38,7 @@ binary_sensor:
   - platform: rest
     name: Whatsapp API Availability
     unique_id: whatsapp_api_availability
-    resource: http://127.0.0.1:3000/client/getContacts/homeassistant
+    resource: http://127.0.0.1:3000/client/getContacts/ha
     method: GET
     value_template: "{{ value_json.success | default(false) }}"
     device_class: connectivity
@@ -631,7 +631,7 @@ automation:
         data:
           title: "API Monitoring Alert"
           message: >
-            🚨 The API at `http://172.16.0.9:3000/client/getContacts/homeassistant` is down!
+            🚨 The API at `http://172.16.0.9:3000/client/getContacts/ha` is down!
             Check https://github.com/t0mer/wapi-custom-notifier for instructions to re-setup
 
 

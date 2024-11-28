@@ -5,5 +5,5 @@
 
 - platform: wapi
   name: ohad_whatsapp_api
-  session: homeassistant
+  session: ha
   url: http://localhost:3000/client/sendMessage

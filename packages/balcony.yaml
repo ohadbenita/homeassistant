@@ -55,7 +55,7 @@ script:
               - condition: template
                 value_template: "{{ percentage | int == 0 }}"
             sequence:
-              - service: remote.send_command
+              - action: remote.send_command
                 target:
                   entity_id: remote.living_room_broadlink
                 data:
@@ -66,7 +66,7 @@ script:
               - condition: template
                 value_template: "{{ percentage | int < 16 and percentage | int > 0 }}"
             sequence:
-              - service: remote.send_command
+              - action: remote.send_command
                 target:
                   entity_id: remote.living_room_broadlink
                 data:
@@ -77,7 +77,7 @@ script:
               - condition: template
                 value_template: "{{ percentage | int >= 16 and percentage | int < 33 }}"
             sequence:
-              - service: remote.send_command
+              - action: remote.send_command
                 target:
                   entity_id: remote.living_room_broadlink
                 data:
@@ -88,7 +88,7 @@ script:
               - condition: template
                 value_template: "{{ percentage | int >= 33 and percentage | int < 50 }}"
             sequence:
-              - service: remote.send_command
+              - action: remote.send_command
                 target:
                   entity_id: remote.living_room_broadlink
                 data:
@@ -99,7 +99,7 @@ script:
               - condition: template
                 value_template: "{{ percentage | int >= 50 and percentage | int < 66 }}"
             sequence:
-              - service: remote.send_command
+              - action: remote.send_command
                 target:
                   entity_id: remote.living_room_broadlink
                 data:
@@ -110,7 +110,7 @@ script:
               - condition: template
                 value_template: "{{ percentage | int >= 66 and percentage | int < 83 }}"
             sequence:
-              - service: remote.send_command
+              - action: remote.send_command
                 target:
                   entity_id: remote.living_room_broadlink
                 data:
@@ -121,7 +121,7 @@ script:
               - condition: template
                 value_template: "{{ percentage | int >= 83 }}"
             sequence:
-              - service: remote.send_command
+              - action: remote.send_command
                 target:
                   entity_id: remote.living_room_broadlink
                 data:
@@ -153,14 +153,14 @@ script:
   turn_parking_flood_light_on:
     alias: 'Turn parking flood light on'
     sequence:
-      - service: switch.turn_on
+      - action: switch.turn_on
         entity_id: switch.shelly1pmminig3_54320454e6dc_switch_0
 
       - wait_template: "{{ is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'off') }}"
         timeout: '00:01:00'
         continue_on_timeout: false
 
-      - service: switch.turn_on
+      - action: switch.turn_on
         entity_id: switch.shelly1pmminig3_ecda3bc26fb4_switch_0
 
 fan:
@@ -190,7 +190,7 @@ light:
         turn_on:
           action: script.turn_balcony_fan_light_on
         turn_off:
-          service: remote.send_command
+          action: remote.send_command
           target:
             entity_id: remote.living_room_broadlink
           data:
@@ -204,9 +204,9 @@ light:
         turn_on:
           action: script.turn_parking_flood_light_on
         turn_off:
-          service: switch.turn_off
+          action: switch.turn_off
           target:
-            entity_id: switch.shelly1pmminig3_ecda3bc26fb4_switch_0
+            entity_id: switch.shelly1pmminig3_54320454e6dc_switch_0  # main switch
         value_template: >-
           {{ is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'on') and is_state('switch.shelly1pmminig3_54320454e6dc_switch_0', 'on') }}
 
