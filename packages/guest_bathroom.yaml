@@ -8,6 +8,7 @@ automation:
         entity_id:
           - binary_sensor.guest_bathroom_occupancy
           - binary_sensor.guest_bathroom_door_contact
+          - binary_sensor.occupancy_sensor_e2bc_occupancy
         from: 'off'
         to: 'on'
 
@@ -21,11 +22,21 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.guest_bathroom_occupancy
+        entity_id:
+          - binary_sensor.guest_bathroom_occupancy
+          - binary_sensor.occupancy_sensor_e2bc_occupancy
         from: 'on'
         to: 'off'
         for:
-          minutes: 15
+          minutes: 2
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.guest_bathroom_occupancy
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.occupancy_sensor_e2bc_occupancy
+        state: 'off'
 
     action:
       - action: homeassistant.turn_off

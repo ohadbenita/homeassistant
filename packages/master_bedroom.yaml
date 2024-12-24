@@ -57,6 +57,22 @@ template:
         device_class: humidity
         icon: mdi:water-percent
 
+      - name: "Master bedroom AC room temperature difference"
+        unit_of_measurement: "°C"
+        state: "{{ (state_attr('climate.master_bedroom_ac', 'current_temperature') - state_attr('climate.master_bedroom_ac', 'temperature')) | abs }}"
+        availability: "{{ state_attr('climate.master_bedroom_ac', 'current_temperature') is not none }}"
+        device_class: temperature
+        icon: mdi:thermometer
+
+
+sensor:
+  - platform: derivative
+    source: sensor.master_bedroom_ac_room_temperature_difference
+    name: Master bedroom temp difference change per 10 minutes
+    round: 1
+    unit_time: min
+    time_window: 10
+
 
 automation:
   - alias: "Turn on master bedroom wardrobe light on motion"
@@ -404,33 +420,30 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.master_bedroom_bedside_02_action
-        to:
-          - '4_single'
-          - '4_double'
+        to: '4_single'
 
     action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: sensor.master_bedroom_bedside_02_action
-                state: '4_single'
-            sequence:
-              - action: switch.turn_off
-                entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-              - delay: '00:00:02'
-              - action: light.turn_on
-                target:
-                  entity_id: light.shellydimmer2_ec64c9c66fdc
-                data:
-                  brightness_pct: 1
-          - conditions:
-              - condition: state
-                entity_id: sensor.master_bedroom_bedside_02_action
-                state: '4_double'
-            sequence:
-              - action: light.turn_off
-                target:
-                  entity_id: light.shellydimmer2_ec64c9c66fdc
+      - if:
+          - condition: state
+            entity_id: light.shellydimmer2_ec64c9c66fdc
+            state: 'off'
+        then:
+          - service: switch.turn_off
+            target:
+              entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+
+          - delay: '00:00:02'
+
+          - service: light.turn_on
+            target:
+              entity_id: light.shellydimmer2_ec64c9c66fdc
+            data:
+              brightness_pct: 1
+        else:
+          - service: light.turn_off
+            target:
+              entity_id: light.shellydimmer2_ec64c9c66fdc
+
 
   - alias: 'Master bedroom bedside switch 02 - control night light'
     id: master_bedroom_bedside_switch_02_night_light
@@ -519,3 +532,49 @@ automation:
     action:
       - action: input_boolean.turn_off
         entity_id: input_boolean.master_bedroom_sleep_mode
+
+  - alias: Toggle master bedroom fan light by entrance button
+    id: master_bedroom_toggle_master_bedroom_entrance_light
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_entrance_01_action
+        to: 'single'
+
+    action:
+      - action: switch.toggle
+        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+
+
+  - alias: Shutdown AC 1 hour after target temperature has been reached
+    id: master_bedroom_shutdown_ac_target_temp_reached
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.master_bedroom_temp_difference_change_per_10_minutes
+        above: -1
+        below: 1
+        for:
+          hours: 1
+      - platform: template
+        value_template: >-
+          {{
+            states('climate.master_bedroom_ac') != 'off' and
+            (now() - states.climate.master_bedroom_ac.last_changed).total_seconds() > 3600
+          }}
+
+    condition:
+      - condition: template
+        value_template: >
+          {{
+            states('climate.master_bedroom_ac') != 'off' and
+            (now() - states.climate.master_bedroom_ac.last_changed).total_seconds() > 3600
+          }}
+      - condition: numeric_state
+        entity_id: sensor.master_bedroom_temp_difference_change_per_10_minutes
+        above: -1
+        below: 1
+
+    action:
+      - action: climate.turn_off
+        entity_id: climate.master_bedroom_ac

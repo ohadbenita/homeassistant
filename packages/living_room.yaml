@@ -59,14 +59,32 @@ automation:
         state: 'off'
 
     action:
+      - variables:
+          left_window_position: "{{ state_attr('cover.living_room_left_window', 'current_position') }}"
+          middle_window_position: "{{ state_attr('cover.living_room_middle_window', 'current_position') }}"
+          right_window_position: "{{ state_attr('cover.living_room_right_window', 'current_position') }}"
+
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_left_window
+        data:
+          position: "{{ [left_window_position, 15] | min }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_middle_window
+        data:
+          position: "{{ [middle_window_position, 15] | min }}"
+
       - action: cover.set_cover_position
         target:
           entity_id:
             - cover.living_room_right_window
-            - cover.living_room_middle_window
-            - cover.living_room_left_window
         data:
-          position: 15
+          position: "{{ [right_window_position, 15] | min }}"
 
 
   - alias: 'Close living room shutters at night'
@@ -524,3 +542,27 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id: light.public_space_lights
+
+
+  - alias: Turn on the AC when Ohad start brushing
+    id: living_room_turn_on_ac_school_morning_toothbrush_running
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.io_series_4_f7ec
+        to: running
+
+    conditions:
+      - condition: time
+        after: "06:00:00"
+        before: "08:00:00"
+      - condition: state
+        entity_id: sensor.school_is_high_vacation
+        state: 'False'
+      - condition: numeric_state
+        entity_id: sensor.living_room_ac_temperature
+        below: 20
+
+    action:
+      - action: climate.turn_on
+        entity_id: climate.living_room_ac

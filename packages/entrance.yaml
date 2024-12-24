@@ -79,36 +79,8 @@ automation:
       - platform: state
         entity_id: binary_sensor.entrance_sensors_off_for_10_minutes
         to: 'on'
-      - platform: state
-        entity_id:
-          - binary_sensor.entrance_door_occupancy
-          - binary_sensor.entrance_indoor_occupancy
-          - binary_sensor.entrance_door_contact
-        to: 'off'
-      - platform: homeassistant
-        event: start
 
     action:
-      - choose:
-          # Daytime Action: Turns off the light if all sensors are off for 10 minutes
-          - conditions:
-              - condition: time
-                after: '07:00:00'
-                before: '22:00:00'
-              - condition: state
-                entity_id: binary_sensor.entrance_sensors_off_for_10_minutes
-                state: 'on'
-            sequence:
-              - service: homeassistant.turn_off
-                target:
-                  entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1
-
-        # Nighttime Action: Turns off the light immediately when all sensors are off
-        default:
-          - wait_template: >
-              {{ is_state('binary_sensor.entrance_door_occupancy', 'off') and
-                is_state('binary_sensor.entrance_indoor_occupancy', 'off') and
-                is_state('binary_sensor.entrance_door_contact', 'off') }}
-          - service: homeassistant.turn_off
-            target:
-              entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1
+      - action: homeassistant.turn_off
+        target:
+          entity_id: switch.shellyplus2pm_fcb467a684e8_switch_1

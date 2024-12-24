@@ -33,6 +33,23 @@ script:
           entity_id: switch.shelly1pmminig3_34b7da9342c4_switch_0
 
 
+  turn_on_backyard_light:
+    sequence:
+      - action: homeassistant.turn_on
+        target:
+          entity_id: switch.shellyplus2pm_c4d8d557f404_switch_1
+      - wait_template: >-
+          {{ is_state('switch.shelly1pmminig3_34b7da9342c4_switch_0', 'off') }}
+        timeout:
+          minutes: 1
+        continue_on_timeout: false
+
+      - delay: '00:00:05'
+
+      - action: homeassistant.turn_on
+        target:
+          entity_id: switch.shelly1pmminig3_34b7da9342c4_switch_0
+
 light:
   - platform: template
     lights:
@@ -60,6 +77,22 @@ light:
               - switch.shelly1pmminig3_54320454e6dc_switch_0
               - switch.shelly1pmminig3_ecda3bc26fb4_switch_0
               - switch.shellyplus2pm_c4d8d557f404_switch_1
+
+      backyard:
+        value_template: >-
+          {{
+            is_state('switch.shellyplus2pm_c4d8d557f404_switch_1', 'on') and
+            is_state('switch.shelly1pmminig3_34b7da9342c4_switch_0', 'on')
+          }}
+        turn_on:
+          service: script.turn_on_backyard_light
+        turn_off:
+          service: homeassistant.turn_off
+          data:
+            entity_id:
+              - switch.shelly1pmminig3_34b7da9342c4_switch_0
+              - switch.shellyplus2pm_c4d8d557f404_switch_1
+
 
 automation:
   - alias: "Yard - Turn off roof lights in the night"
@@ -108,10 +141,10 @@ automation:
           conditions:
             - condition: sun
               before: sunrise
-              before_offset: "01:00:00"
+              before_offset: "00:15:00"
             - condition: sun
               after: sunset
-              after_offset: "-01:00:00"
+              after_offset: "-00:15:00"
 
     action:
       - action: homeassistant.turn_on
@@ -169,10 +202,10 @@ automation:
           conditions:
             - condition: sun
               before: sunrise
-              before_offset: "01:00:00"
+              before_offset: "00:15:00"
             - condition: sun
               after: sunset
-              after_offset: "-01:00:00"
+              after_offset: "-00:15:00"
         - condition: or
           conditions:
             - condition: state
@@ -195,33 +228,26 @@ automation:
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.kitchen_door_contact
+        entity_id:
+          - binary_sensor.kitchen_door_contact
+          - binary_sensor.kitchen_path_person
         to: 'off'
         for:
           minutes: 5
-
-      - platform: state
-        entity_id: binary_sensor.kitchen_path_person
-        to: 'off'
-        for:
-          minutes: 10
 
       - platform: homeassistant
         event: start
 
     condition:
       - condition: state
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
+        state: 'on'
+      - condition: state
         entity_id: binary_sensor.kitchen_door_contact
         state: 'off'
       - condition: state
-        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
-        state: 'on'
-      - condition: state
         entity_id: binary_sensor.kitchen_path_person
         state: 'off'
-      - condition: state
-        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
-        state: 'on'
 
     action:
       - action: homeassistant.turn_off
@@ -246,10 +272,10 @@ automation:
           conditions:
             - condition: sun
               before: sunrise
-              before_offset: "01:00:00"
+              before_offset: "00:15:00"
             - condition: sun
               after: sunset
-              after_offset: "-01:00:00"
+              after_offset: "-00:15:00"
         - condition: or
           conditions:
             - condition: state
@@ -368,56 +394,6 @@ automation:
                     - switch.shellyplus2pm_c4d8d557f404_switch_1
                     - switch.shellyplus2pm_fcb467a557a0_switch_0
 
-  - alias: "Turn on parking flood lights when motion is detected"
-    id: yard_turn_on_parking_flood_light_when_motion_detected
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.parking_stairs_01_occupancy
-        to: 'on'
-
-    condition:
-      condition: and
-      conditions:
-        - condition: or
-          conditions:
-            - condition: sun
-              before: sunrise
-              before_offset: "01:00:00"
-            - condition: sun
-              after: sunset
-              after_offset: "-01:00:00"
-
-    action:
-      - action: homeassistant.turn_on
-        entity_id: light.parking_flood_light
-
-  - alias: "Turn off parking flood lights when no motion is detected"
-    id: yard_turn_off_parking_flood_light_when_no_motion_detected
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.parking_stairs_01_occupancy
-        to: 'off'
-
-    condition:
-      condition: and
-      conditions:
-        - condition: or
-          conditions:
-            - condition: sun
-              before: sunrise
-              before_offset: "01:00:00"
-            - condition: sun
-              after: sunset
-              after_offset: "-01:00:00"
-
-    action:
-      - action: homeassistant.turn_off
-        entity_id: light.parking_flood_light
-
 
   - alias: "Turn off clinic door flood light when the door is locked"
     id: yard_turn_off_clinic_door_flight_light_when_door_locked
@@ -440,3 +416,52 @@ automation:
         entity_id:
           - switch.shellyplus2pm_c4d8d557f404_switch_0  # Clinic inside closet
           - switch.shellyplus2pm_c4d8d557f404_switch_1  # Clinic door
+
+  - alias: Turn off clinic floodlight during daylight hours
+    id: yard_turn_off_clinic_door_light_during_daylight_hours
+    trigger:
+      - platform: state
+        entity_id: switch.shellyplus2pm_c4d8d557f404_switch_1
+        to: 'on'
+        for:
+          minutes: 5
+
+    condition:
+      - condition: sun
+        after: sunrise
+        after_offset: "00:15:00"
+        before: sunset
+        before_offset: "-00:15:00"
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id:
+          - switch.shellyplus2pm_c4d8d557f404_switch_0  # Clinic inside closet
+          - switch.shellyplus2pm_c4d8d557f404_switch_1  # Clinic door
+
+
+  - alias: Sunset and Sunrise house sign control
+    id: yard_house_sign_control
+    description: Control house sign on sunset and sunrise
+    mode: single
+    trigger:
+      - platform: sun
+        event: sunset
+      - platform: sun
+        event: sunrise
+    action:
+      - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event == 'sunset' }}"
+          sequence:
+            - service: switch.turn_on
+              target:
+                entity_id: switch.shelly1pmminig3_34b7da8f8b78_switch_0
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event == 'sunrise' }}"
+          sequence:
+            - service: switch.turn_off
+              target:
+                entity_id: switch.shelly1pmminig3_34b7da8f8b78_switch_0

@@ -256,6 +256,9 @@ automation:
               - sensor.ohadbenita_battery_level
               - sensor.rinats_iphone_battery_level
               - sensor.rois_iphone_battery_level
+              - sensor.ohadbenita_watch_battery
+              - sensor.roi_room_entrance_battery
+              - sensor.clinic_door_entrance_battery
           low_battery_devices: >
             {% set threshold = states('input_number.battery_low_level_threshold') | int %}
             {% set exclude = exclude %}

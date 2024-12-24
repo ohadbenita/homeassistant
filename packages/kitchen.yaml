@@ -141,9 +141,19 @@ automation:
         for:
           minutes: 33
     condition:
-      condition: template  # Ensure 2 hours since last triggered
-      value_template: >-
-        {{ as_timestamp(now()) - as_timestamp(state_attr('automation.set_dishwasher_announcement_time', 'last_triggered')) | int > 7200 }}
+      - condition: template  # Ensure 2 hours since last triggered
+        value_template: >-
+          {{ as_timestamp(now()) - as_timestamp(state_attr('automation.set_dishwasher_announcement_time', 'last_triggered')) | int > 7200 }}
+      - condition: template
+        value_template: >-
+          {{
+            distance(
+              state_attr('zone.home', 'latitude'),
+              state_attr('zone.home', 'longitude'),
+              state_attr('person.roi_benita', 'latitude'),
+              state_attr('person.roi_benita', 'longitude')
+            ) | int < 120
+          }}
     action:
       - action: input_boolean.turn_on
         target:
@@ -463,3 +473,25 @@ automation:
             {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
           message: >-
             Yulanda's fan speed is set to {{ state_attr('vacuum.yulanda', 'fan_speed') }}
+
+  - alias: Pantry freezer open detection
+    id: kitchen_pantry_freezer_open
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.pantry_freezer_01_contact
+        platform: state
+        to: 'on'
+        for:
+          minutes: 5
+    action:
+      - action: notify.ohad_telegram
+        data_template:
+          message: "The pantry freezer door is open, close it as soon as possible"
+
+      - action: notify.ohad_whatsapp_api
+        data:
+          message: "Pantry freezer door is open, please close it"
+          title: Appliance alert
+          target: !secret rinat_benita_whatsapp_user_id
+          data:
+            media_url: {}

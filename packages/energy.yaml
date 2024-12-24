@@ -1,0 +1,19 @@
+---
+sensor:
+  - platform: integration
+    source: sensor.adi_room_ac_power_usage
+    name: Adi room AC Energy Consumption
+    unit_prefix: k
+    round: 2
+
+  - platform: integration
+    source: sensor.roi_room_ac_power_usage
+    name: Roi room AC Energy Consumption
+    unit_prefix: k
+    round: 2
+
+  - platform: integration
+    source: sensor.study_room_ac_power_usage
+    name: Study room AC Energy Consumption
+    unit_prefix: k
+    round: 2

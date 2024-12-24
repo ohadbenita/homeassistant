@@ -2,6 +2,9 @@
 turn_everything_off:
   alias: 'Turn Everything Off Script'
   sequence:
+    - action: input_boolean.turn_on
+      entity_id: input_boolean.turn_everything_off_failed
+
     - action: script.alexa_notification
       data:
         alexa_device: media_player.kitchen_echo
@@ -40,12 +43,5 @@ turn_everything_off:
           - lock.kitchen_door
           - lock.kids_bathroom_door
 
-    - action: alarmo.arm
-      data:
-        entity_id: alarm_control_panel.alarmo
-        code: !secret alarmo_ohad_code
-        mode: away
-
-    - action: notify.ohad_telegram
-      data:
-        message: 'Turn everything off automation successfully executed.'
+    - action: input_boolean.turn_off
+      entity_id: input_boolean.turn_everything_off_failed

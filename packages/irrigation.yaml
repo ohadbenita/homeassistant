@@ -124,10 +124,16 @@ script:
         target:
           entity_id: switch.irrigation_l6
 
+
 input_boolean:
   rain_expected_next_12_hours:
     name: Rain Expected in Next 12 Hours
     initial: false
+
+
+timer:
+  irrigation_disable_timer:
+    restore: true
 
 automation:
   - alias: Check rain expected in next 12 hours
@@ -178,6 +184,9 @@ automation:
         weekday:
           - mon
           - thu
+      - condition: state
+        entity_id: timer.irrigation_disable_timer
+        state: "idle"
 
     action:
       - if:
@@ -205,6 +214,11 @@ automation:
       - platform: sun
         event: sunrise
         offset: "00:00:00"
+
+    condition:
+      - condition: state
+        entity_id: timer.irrigation_disable_timer
+        state: "idle"
 
     action:
       - if:

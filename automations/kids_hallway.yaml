@@ -4,15 +4,26 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.kids_hallway_01_occupancy
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.kids_hallway_02_occupancy
+      entity_id:
+        - binary_sensor.kids_hallway_01_occupancy
+        - binary_sensor.kids_hallway_02_occupancy
+        - binary_sensor.occupancy_sensor_a206_occupancy
       to: 'on'
     - platform: homeassistant
       event: start
 
+  # Only allow this automation to proceed if we are:
+  #   BEFORE sunrise OR AFTER sunset
   condition:
+    - condition: or
+      conditions:
+        - condition: sun
+          before: sunrise
+        - condition: sun
+          after: sunset
+          after_offset: "-01:00:00"
+
+    # Also require that at least one sensor is on
     - condition: or
       conditions:
         - condition: state
@@ -21,36 +32,44 @@
         - condition: state
           entity_id: binary_sensor.kids_hallway_02_occupancy
           state: 'on'
+        - condition: state
+          entity_id: binary_sensor.occupancy_sensor_a206_occupancy
+          state: 'on'
 
   action:
     - choose:
+        # CASE 1: After midnight but before sunrise => Dimmer only
         - conditions:
-          - condition: or  # yamllint disable-line rule:indentation
-            conditions:
-              - condition: sun
-                before: sunrise
-                before_offset: "01:00:00"
-              - condition: sun
-                after: sunset
-                after_offset: "03:00:00"
+            - condition: sun
+              before: sunrise
+            - condition: time
+              after: '00:00:00'
           sequence:
-            - action: light.turn_on
+            - service: light.turn_on
               target:
                 entity_id: light.shellydimmer2_34945478921b
               data:
                 brightness_pct: 35
 
-      default:
-        - action: homeassistant.turn_on
-          entity_id:
-            - switch.shelly1pmminig3_dcda0cafe368_switch_0  # kids rooms spots
-            - switch.shelly1pmminig3_dcda0cead100_switch_0  # master bathroom spots
-        - action: light.turn_on
-          target:
-            entity_id: light.shellydimmer2_34945478921b  # basement spots
-          data:
-            brightness_pct: 35
+        # CASE 2: After sunset but before midnight => All three switches + Dimmer
+        - conditions:
+            - condition: sun
+              after: sunset
+            - condition: time
+              before: '00:00:00'
+          sequence:
+            - service: homeassistant.turn_on
+              target:
+                entity_id:
+                  - switch.shelly1pmminig3_dcda0cafe368_switch_0  # kids rooms spots
+                  - switch.shelly1pmminig3_dcda0cead100_switch_0  # master bathroom spots
+            - service: light.turn_on
+              target:
+                entity_id: light.shellydimmer2_34945478921b
+              data:
+                brightness_pct: 35
 
+      default: []
 
 - alias: "Turn off kids hallway light when no motion detected"
   id: kids_hallway_turn_lights_off_when_no_motion_detected
@@ -60,6 +79,7 @@
       entity_id:
         - binary_sensor.kids_hallway_01_occupancy
         - binary_sensor.kids_hallway_02_occupancy
+        - binary_sensor.occupancy_sensor_a206_occupancy
       to: 'off'
     - platform: homeassistant
       event: start
@@ -70,6 +90,9 @@
       state: 'off'
     - condition: state
       entity_id: binary_sensor.kids_hallway_02_occupancy
+      state: 'off'
+    - condition: state
+      entity_id: binary_sensor.occupancy_sensor_a206_occupancy
       state: 'off'
 
   action:
@@ -90,7 +113,7 @@
   action:
     - action: homeassistant.turn_off
       entity_id:
-        - switch.shelly1pmminig3_34b7da8f8b78_switch_0  # book shelves hallway light
+        - switch.shelly1pmminig3_34b7da92c7a4_switch_0  # book shelves hallway light
 
 
 - alias: Hallway smoke detection on
@@ -126,3 +149,16 @@
       data_template:
         title: "Hazards"
         message: "Smoke is not detected in the hallway, density is {{states('sensor.hallway_ceiling_smoke_density')}}%"
+
+
+- alias: Toggle book shelf light by entrance button
+  id: hallway_toggle_bookshelf_light_by_button
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: sensor.main_hallway_book_shelf_01_action
+      to: 'single'
+
+  action:
+    - action: switch.toggle
+      entity_id: switch.shelly1pmminig3_34b7da92c7a4_switch_0

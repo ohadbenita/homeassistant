@@ -90,7 +90,7 @@ automation:
 
   - alias: "Turn on Roi room light on motion"
     id: roi_room_turn_light_on_motion
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
         entity_id: binary_sensor.occupancy_sensor_71bf_occupancy
@@ -114,7 +114,7 @@ automation:
       - action: homeassistant.turn_on
         entity_id:
           - switch.shellyplus2pm_10061ccdc57c_switch_0  # light
-          - switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
+          # - switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
 
 
   - alias: "Turn off Roi room fan when no motion is detected"
@@ -125,7 +125,7 @@ automation:
         entity_id: binary_sensor.occupancy_sensor_71bf_occupancy
         to: 'off'
         for:
-          minutes: 15
+          minutes: 5
 
       - platform: homeassistant
         event: start
@@ -141,7 +141,7 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          # - switch.shellyplus2pm_10061ccdc57c_switch_0  # light
+          - switch.shellyplus2pm_10061ccdc57c_switch_0  # light
           - switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
 
 
@@ -186,7 +186,7 @@ automation:
             sequence:
               - action: switch.toggle
                 target:
-                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
+                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0  # light
 
           - conditions:
               - condition: state
@@ -195,8 +195,7 @@ automation:
             sequence:
               - action: switch.toggle
                 target:
-                  entity_id: switch.shelly1pmminig3_dcda0cead100_switch_0  # light
-                  # entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0  # light
+                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_1  # fan
 
           - conditions:
               - condition: state
@@ -206,3 +205,50 @@ automation:
               - action: climate.toggle
                 target:
                   entity_id: climate.roi_room_ac
+
+
+  - alias: 'Roi room entrance - Handle button actions'
+    id: roi_room_entrance_button_actions
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.roi_room_entrance_action
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.roi_room_entrance_action
+                state: 'button_1_single'
+            sequence:
+              - action: homeassistant.turn_on
+                target:
+                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.roi_room_entrance_action
+                state: 'button_2_single'
+            sequence:
+              - action: homeassistant.turn_off
+                target:
+                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_0
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.roi_room_entrance_action
+                state: 'button_1_double'
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_1
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.roi_room_entrance_action
+                state: 'button_2_double'
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.shellyplus2pm_10061ccdc57c_switch_1

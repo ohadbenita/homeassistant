@@ -3,6 +3,10 @@ input_text:
   person_detection_snapshot_filename:
     name: Snapshot file name
 
+input_boolean:
+  turn_everything_off_failed:
+    name: Turn everything off failed
+
 
 binary_sensor:
   - platform: template
@@ -171,3 +175,51 @@ automation:
         data:
           entity_id: alarm_control_panel.alarmo
           code: !secret alarmo_ohad_code
+
+
+  - alias: Alert on entrance door open during nighttime
+    id: security_alert_on_entrance_door_open_during_nighttime
+    mode: single
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.entrance_door_contact
+        to: 'on'
+        for:
+          minutes: 10
+
+    condition:
+      - condition: time
+        after: '23:00:00'
+        before: '07:00:00'
+
+    action:
+      - action: notify.ohad_telegram
+        data:
+          title: "Security - entrance door is open"
+          message: >-
+            The entrance door has been open for the past 10 minutes, please close it as soon as possible.
+      - action: script.alexa_notification
+        data:
+          alexa_device: media_player.master_bedroom_echo
+          notification_type: announce
+          current_volume: >-
+            {{ state_attr('media_player.master_bedroom_echo', 'volume_level') }}
+          message: >-
+            The entrance door is open for 10 minutes, please close it.
+
+  - alias: Turn everything off script execution failed
+    id: security_turn_everything_off_script_failed
+    mode: single
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: input_boolean.turn_everything_off_failed
+        to: 'on'
+        for:
+          minutes: 3
+
+    action:
+      - action: notify.ohad_telegram
+        data:
+          message: 'Turn everything off automation failed to execute.'

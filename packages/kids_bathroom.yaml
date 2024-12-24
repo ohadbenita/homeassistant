@@ -28,3 +28,17 @@ automation:
           target: !secret ella_benita_whatsapp_user_id
           data:
             media_url: {}
+
+
+  - alias: Kids bathroom water Leak detection
+    id: kids_bathroom_water_leak_detection
+    initial_state: true
+    trigger:
+      - entity_id:
+          - binary_sensor.kids_bathroom_sink_water_leak
+        platform: state
+        to: 'on'
+    action:
+      - action: notify.ohad_telegram
+        data_template:
+          message: "Water leak has been detected @ {{ trigger.from_state.attributes.friendly_name }} !!!"
