@@ -163,11 +163,11 @@ automation:
               state: rainy
 
         then:
-          - service: input_boolean.turn_on
+          - action: input_boolean.turn_on
             target:
               entity_id: input_boolean.rain_expected_next_12_hours
         else:
-          - service: input_boolean.turn_off
+          - action: input_boolean.turn_off
             target:
               entity_id: input_boolean.rain_expected_next_12_hours
 
@@ -183,7 +183,6 @@ automation:
       - condition: time
         weekday:
           - mon
-          - thu
       - condition: state
         entity_id: timer.irrigation_disable_timer
         state: "idle"
@@ -199,7 +198,7 @@ automation:
               additional_switches:
                 - switch.irrigation_l4
                 - switch.irrigation_l5
-              irrigation_duration_minutes: 30
+              irrigation_duration_minutes: 15
         else:
           - action: notify.ohad_telegram
             data:

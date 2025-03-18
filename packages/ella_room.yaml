@@ -15,8 +15,57 @@ template:
         device_class: humidity
         icon: mdi:water-percent
 
+      - name: "Ella room AC temperature difference"
+        unit_of_measurement: "°C"
+        state: "{{ (state_attr('climate.ella_ac', 'current_temperature') - state_attr('climate.ella_ac', 'temperature')) | abs }}"
+        availability: "{{ state_attr('climate.ella_ac', 'current_temperature') is not none }}"
+        device_class: temperature
+        icon: mdi:thermometer
+
+
+sensor:
+  - platform: derivative
+    source: sensor.ella_room_ac_temperature_difference
+    name: Ella room temp difference change per 10 minutes
+    round: 1
+    unit_time: min
+    time_window: 10
 
 automation:
+  - alias: Ella room shutdown AC 1 hour after target temperature has been reached
+    id: ella_room_shutdown_ac_target_temp_reached
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.ella_room_temp_difference_change_per_10_minutes
+        above: -1
+        below: 1
+        for:
+          hours: 1
+      - platform: template
+        value_template: >-
+          {{
+            states('climate.ella_ac') != 'off' and
+            (now() - states.climate.ella_ac.last_changed).total_seconds() > 3600
+          }}
+
+    condition:
+      - condition: template
+        value_template: >
+          {{
+            states('climate.ella_ac') != 'off' and
+            (now() - states.climate.ella_ac.last_changed).total_seconds() > 3600
+          }}
+      - condition: numeric_state
+        entity_id: sensor.ella_room_temp_difference_change_per_10_minutes
+        above: -1
+        below: 1
+
+    action:
+      - action: climate.turn_off
+        entity_id: climate.ella_ac
+
+
   - alias: "Ella Room - Set AC to night mode (summer)"
     id: ella_room_ac_night_automation
     initial_state: true
@@ -92,6 +141,17 @@ automation:
                 entity_id: sensor.ella_bedside_action
                 state: 'single'
             sequence:
+              - action: switch.toggle
+                target:
+                  entity_id:
+                    - switch.shelly2pmg3_8cbfea9f54b0_switch_0
+                    - switch.shelly2pmg3_8cbfea9f54b0_switch_1
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_bedside_action
+                state: 'double'
+            sequence:
               - action: climate.toggle
                 target:
                   entity_id: climate.ella_ac
@@ -126,5 +186,38 @@ automation:
           - action: notify.ohad_whatsapp_api
             data:
               message: 'הג׳יפיאס של כתם סיים להיטען, אנא חברי לה אותו בחזרה'
+              title: Device notification
+              target: !secret adi_benita_whatsapp_user_id
+
+
+  - alias: 'Ella room - Send a notification when Ketem tracker needs to be charged'
+    id: ella_room_notify_when_tracker_needs_to_be_charged
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.ketem_tracker_battery
+        below: 15
+        for:
+          minutes: 5
+
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.home_ella_benita_distance
+                below: 10000  # 10 km in meters
+            sequence:
+              - action: notify.ohad_whatsapp_api
+                data:
+                  message: "Ketem's GPS tracker needs to be charged"
+                  title: Device notification
+                  target: !secret ella_benita_whatsapp_user_id
+                  data:
+                    media_url: {}
+        default:
+          - action: notify.ohad_whatsapp_api
+            data:
+              message: 'הסוללה בג׳יפיאס של כתם חלשה, אנא הטעיני אותו בהקדם'
               title: Device notification
               target: !secret adi_benita_whatsapp_user_id

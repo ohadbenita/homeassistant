@@ -9,6 +9,15 @@ template:
         icon: mdi:thermometer
 
 
+sensor:
+  - platform: derivative
+    source: sensor.adi_room_temperature
+    name: Adi room temp difference change per 10 minutes
+    round: 1
+    unit_time: min
+    time_window: 10
+
+
 automation:
   - alias: "Adi Room - Set AC to night mode (summer)"
     id: adi_room_ac_night_automation
@@ -62,7 +71,7 @@ automation:
 
   - alias: "Turn on Adi room light on motion"
     id: adi_room_turn_light_on_motion
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.occupancy_sensor_3012_occupancy
@@ -79,8 +88,8 @@ automation:
     action:
       - action: homeassistant.turn_on
         entity_id:
-          - switch.shellyplus2pm_fcb467a580a8_switch_0  # light
-          - switch.adi_night_light
+          - switch.shellyplus2pm_fcb467a580a8_switch_0    # light
+          - switch.shelly1pmminig3_34b7da9275f0_switch_0  # Night light
 
 
   - alias: "Turn off Adi room light when no motion is detected"
@@ -106,9 +115,9 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shellyplus2pm_fcb467a580a8_switch_0  # light
-          - switch.shellyplus2pm_fcb467a580a8_switch_1  # fan
-          - switch.adi_night_light
+          - switch.shellyplus2pm_fcb467a580a8_switch_0    # light
+          - switch.shellyplus2pm_fcb467a580a8_switch_1    # fan
+          - switch.shelly1pmminig3_34b7da9275f0_switch_0  # Night light
 
 
   - alias: 'Adi room - Handle Bedside button actions'
@@ -147,3 +156,61 @@ automation:
               - action: climate.toggle
                 target:
                   entity_id: climate.adi_room_ac
+
+
+  - alias: "Sync Adi night light with fan light"
+    id: adi_room_sync_night_light_with_fan_light
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: switch.shellyplus2pm_fcb467a580a8_switch_0
+      - platform: homeassistant
+        event: start
+    action:
+      - action: >
+          {% if trigger.platform == 'homeassistant' %}
+            {% if states('switch.shellyplus2pm_fcb467a580a8_switch_0') == 'on' %}
+              switch.turn_on
+            {% else %}
+              switch.turn_off
+            {% endif %}
+          {% elif trigger.to_state.state == 'on' %}
+            switch.turn_on
+          {% elif trigger.to_state.state == 'off' %}
+            switch.turn_off
+          {% endif %}
+        entity_id: switch.shelly1pmminig3_34b7da9275f0_switch_0
+
+
+  - alias: Shutdown Adi room AC 1 hour after target temperature has been reached
+    id: adi_room_shutdown_ac_target_temp_reached
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.adi_room_temp_difference_change_per_10_minutes
+        above: -1
+        below: 1
+        for:
+          hours: 1
+      - platform: template
+        value_template: >-
+          {{
+            states('climate.adi_room_ac') != 'off' and
+            (now() - states.climate.adi_room_ac.last_changed).total_seconds() > 3600
+          }}
+
+    condition:
+      - condition: template
+        value_template: >
+          {{
+            states('climate.adi_room_ac') != 'off' and
+            (now() - states.climate.adi_room_ac.last_changed).total_seconds() > 3600
+          }}
+      - condition: numeric_state
+        entity_id: sensor.adi_room_temp_difference_change_per_10_minutes
+        above: -1
+        below: 1
+
+    action:
+      - action: climate.turn_off
+        entity_id: climate.adi_room_ac

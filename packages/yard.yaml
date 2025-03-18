@@ -9,8 +9,9 @@ script:
             - switch.shellyplus2pm_d48afc581860_switch_1
             - switch.shellyswitch25_6869e3_channel_1
             - switch.shellyswitch25_6869e3_channel_2
-            - switch.shelly1pmminig3_54320454e6dc_switch_0
+            - switch.shelly1pmminig3_34b7dac88574_switch_0
             - switch.shellyplus2pm_c4d8d557f404_switch_1
+            - switch.shelly1pmminig3_34b7dac9ea68_switch_0
       - wait_template: >-
           {{ is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'off') }}
         timeout:
@@ -32,7 +33,6 @@ script:
         target:
           entity_id: switch.shelly1pmminig3_34b7da9342c4_switch_0
 
-
   turn_on_backyard_light:
     sequence:
       - action: homeassistant.turn_on
@@ -44,7 +44,7 @@ script:
           minutes: 1
         continue_on_timeout: false
 
-      - delay: '00:00:05'
+      - delay: "00:00:05"
 
       - action: homeassistant.turn_on
         target:
@@ -60,23 +60,25 @@ light:
             is_state('switch.shellyplus2pm_d48afc581860_switch_1', 'on') and
             is_state('switch.shellyswitch25_6869e3_channel_1', 'on') and
             is_state('switch.shellyswitch25_6869e3_channel_2', 'on') and
-            is_state('switch.shelly1pmminig3_54320454e6dc_switch_0', 'on') and
+            is_state('switch.shelly1pmminig3_34b7dac88574_switch_0', 'on') and
             is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'on') and
-            is_state('switch.shellyplus2pm_c4d8d557f404_switch_1', 'on')
+            is_state('switch.shellyplus2pm_c4d8d557f404_switch_1', 'on') and
+            is_state('switch.shelly1pmminig3_34b7dac9ea68_switch_0', 'on')
           }}
         turn_on:
-          service: script.turn_on_all_yard_lights
+          action: script.turn_on_all_yard_lights
         turn_off:
-          service: homeassistant.turn_off
+          action: homeassistant.turn_off
           data:
             entity_id:
               - switch.shellyplus2pm_fcb467a557a0_switch_0
               - switch.shellyplus2pm_d48afc581860_switch_1
               - switch.shellyswitch25_6869e3_channel_1
               - switch.shellyswitch25_6869e3_channel_2
-              - switch.shelly1pmminig3_54320454e6dc_switch_0
+              - switch.shelly1pmminig3_34b7dac88574_switch_0
               - switch.shelly1pmminig3_ecda3bc26fb4_switch_0
               - switch.shellyplus2pm_c4d8d557f404_switch_1
+              - switch.shelly1pmminig3_34b7dac9ea68_switch_0
 
       backyard:
         value_template: >-
@@ -85,14 +87,13 @@ light:
             is_state('switch.shelly1pmminig3_34b7da9342c4_switch_0', 'on')
           }}
         turn_on:
-          service: script.turn_on_backyard_light
+          action: script.turn_on_backyard_light
         turn_off:
-          service: homeassistant.turn_off
+          action: homeassistant.turn_off
           data:
             entity_id:
               - switch.shelly1pmminig3_34b7da9342c4_switch_0
               - switch.shellyplus2pm_c4d8d557f404_switch_1
-
 
 automation:
   - alias: "Yard - Turn off roof lights in the night"
@@ -105,9 +106,8 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shellyswitch25_6869e3_channel_1  # roof flood light #1
-          - switch.shellyswitch25_6869e3_channel_2  # roof flood light #2
-
+          - switch.shellyswitch25_6869e3_channel_1 # roof flood light #1
+          - switch.shellyswitch25_6869e3_channel_2 # roof flood light #2
 
   - alias: "Yard - Turn off path lights in the night"
     id: yard_turn_off_path_lights_in_the_night
@@ -119,79 +119,22 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shellyplus2pm_c4d8d557f404_switch_1  # clinic door
-          - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
-          - switch.shellyplus2pm_fcb467a557a0_switch_0  # kids bathroom outdoor light
-          - switch.shelly1pmminig3_54320454e6dc_switch_0  # Parking and outdoor fan
+          - switch.shellyplus2pm_c4d8d557f404_switch_1 # clinic door
+          - switch.shellyplus2pm_d48afc581860_switch_1 # kitchen outdoor light
+          - switch.shellyplus2pm_fcb467a557a0_switch_0 # kids bathroom outdoor light
+          - switch.shelly1pmminig3_34b7dac88574_switch_0 # Parking and outdoor fan
 
-
-  - alias: "Turn on kitchen door path and clinic lights when a person is detected"
-    id: yard_turn_on_kitchen_door_path_and_clinic_lights_when_person_detected
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.kitchen_path_person
-        to: 'on'
-
-    condition:
-      condition: and
-      conditions:
-        - condition: or
-          conditions:
-            - condition: sun
-              before: sunrise
-              before_offset: "00:15:00"
-            - condition: sun
-              after: sunset
-              after_offset: "-00:15:00"
-
-    action:
-      - action: homeassistant.turn_on
-        entity_id:
-          - switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
-          - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
-          - switch.shellyplus2pm_c4d8d557f404_switch_1  # Clinic door
-
-
-  - alias: "Turn off kitchen door path and bathroom door lights when no person is detected"
-    id: yard_turn_off_kitchen_door_path_and_bathroom_door_lights_when_no_person_detected
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.kitchen_path_person
-        to: 'off'
-        for:
-          minutes: 15
-
-    condition:
-      - condition: or
-        conditions:
-          - condition: state
-            entity_id: switch.shellyplus2pm_d48afc581860_switch_1
-            state: 'on'
-          - condition: state
-            entity_id: switch.shellyplus2pm_fcb467a557a0_switch_0
-            state: 'on'
-
-    action:
-      - action: homeassistant.turn_off
-        entity_id:
-          - switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
-          - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
-
-
-  - alias: "Turn on path lights when either door is opened"
-    id: yard_turn_on_path_lights_when_either_door_is_opened
+  - alias: "Turn on kids bathroom path and clinic lights"
+    id: yard_turn_on_kids_bathroom_path_clinic_lights
     initial_state: true
     mode: single
     trigger:
       - platform: state
         entity_id:
-          - binary_sensor.kitchen_door_contact
           - binary_sensor.kids_bathroom_door_contact
-        to: 'on'
+          - binary_sensor.kitchen_path_person
+          - binary_sensor.kids_bathroom_door_external_occupancy
+        to: "on"
       - platform: homeassistant
         event: start
 
@@ -210,58 +153,59 @@ automation:
           conditions:
             - condition: state
               entity_id: binary_sensor.kitchen_door_contact
-              state: 'on'
+              state: "on"
             - condition: state
               entity_id: binary_sensor.kids_bathroom_door_contact
-              state: 'on'
+              state: "on"
+            - condition: state
+              entity_id: binary_sensor.kids_bathroom_door_external_occupancy
+              state: "on"
 
     action:
       - action: homeassistant.turn_on
         entity_id:
-          - switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
-          - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
+          - switch.shellyplus2pm_fcb467a557a0_switch_0 # Bathroom door
+          - switch.shellyplus2pm_c4d8d557f404_switch_1 # Clinic door
 
-
-  - alias: "Turn off kitchen door path light when door is closed"
-    id: yard_turn_on_kitchen_door_path_light_when_door_is_closed
+  - alias: "Turn off kids bathroom path and clinic lights"
+    id: yard_turn_off_kids_bathroom_path_clinic_light
     initial_state: true
     mode: single
     trigger:
       - platform: state
         entity_id:
-          - binary_sensor.kitchen_door_contact
+          - binary_sensor.kids_bathroom_door_contact
           - binary_sensor.kitchen_path_person
-        to: 'off'
+        to: "off"
         for:
           minutes: 5
-
       - platform: homeassistant
         event: start
 
     condition:
       - condition: state
-        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
-        state: 'on'
-      - condition: state
-        entity_id: binary_sensor.kitchen_door_contact
-        state: 'off'
+        entity_id: binary_sensor.kids_bathroom_door_contact
+        state: "off"
       - condition: state
         entity_id: binary_sensor.kitchen_path_person
-        state: 'off'
+        state: "off"
 
     action:
       - action: homeassistant.turn_off
-        entity_id: switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
+        entity_id:
+          - switch.shellyplus2pm_fcb467a557a0_switch_0 # Bathroom door
+          - switch.shellyplus2pm_c4d8d557f404_switch_1 # Clinic door
 
-
-  - alias: "Turn on kids bathroom door and clinic light when door is opened"
-    id: yard_turn_on_kids_bathroom_door_path_light_when_door_is_opened
+  - alias: "Turn on kitchen door light"
+    id: yard_turn_on_kitchen_door_light
     initial_state: true
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.kids_bathroom_door_contact
-        to: 'on'
+        entity_id:
+          - binary_sensor.kitchen_door_01_occupancy
+          - binary_sensor.kitchen_door_contact
+        to: "on"
       - platform: homeassistant
         event: start
 
@@ -279,15 +223,46 @@ automation:
         - condition: or
           conditions:
             - condition: state
-              entity_id: binary_sensor.kids_bathroom_door_contact
-              state: 'on'
+              entity_id: binary_sensor.kitchen_door_01_occupancy
+              state: "on"
+            - condition: state
+              entity_id: binary_sensor.kitchen_door_contact
+              state: "on"
 
     action:
       - action: homeassistant.turn_on
-        entity_id:
-          - switch.shellyplus2pm_fcb467a557a0_switch_0
-          - switch.shellyplus2pm_c4d8d557f404_switch_1
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
 
+  - alias: "Turn off kitchen door light"
+    id: yard_turn_off_kitchen_door_light
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.kitchen_door_01_occupancy
+          - binary_sensor.kitchen_door_contact
+        to: "off"
+        for:
+          minutes: 5
+
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: state
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_1
+        state: "on"
+      - condition: state
+        entity_id: binary_sensor.kitchen_door_contact
+        state: "off"
+      - condition: state
+        entity_id: binary_sensor.kitchen_door_01_occupancy
+        state: "off"
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_1 # Kitchen path flood light
 
   - alias: "Turn off kids bathroom door path light when door is closed"
     id: yard_turn_on_kids_bathroom_door_path_light_when_door_is_closed
@@ -296,26 +271,25 @@ automation:
     trigger:
       - platform: state
         entity_id: binary_sensor.kids_bathroom_door_contact
-        to: 'off'
+        to: "off"
         for:
-          minutes: 30
+          minutes: 15
       - platform: homeassistant
         event: start
 
     condition:
       - condition: state
         entity_id: binary_sensor.kids_bathroom_door_contact
-        state: 'off'
+        state: "off"
       - condition: state
         entity_id: switch.shellyplus2pm_fcb467a557a0_switch_0
-        state: 'on'
+        state: "on"
 
     action:
       - action: homeassistant.turn_off
         entity_id:
           - switch.shellyplus2pm_fcb467a557a0_switch_0
           - switch.shellyplus2pm_c4d8d557f404_switch_1
-
 
   - alias: "Alert on high expected water consumption"
     id: yard_cost_alert_on_high_expected_water_consumption
@@ -332,7 +306,7 @@ automation:
       - condition: numeric_state
         entity_id: sensor.meter_1018_monthly_forecast
         above: 55
-      - condition: template  # once a week
+      - condition: template # once a week
         value_template: "{{ (now() | as_timestamp) - (state_attr('automation.alert_on_high_expected_water_consumption', 'last_triggered') | default(0) | as_timestamp) > 604800 }}"
 
     action:
@@ -343,8 +317,7 @@ automation:
             The current forecasted monthly water consumption is {{ states('sensor.meter_1018_monthly_forecast') | int }} m³.
             Please check whether there's a water leak.
 
-
-  - alias: 'Clnic door entrance - Handle button actions'
+  - alias: "Clnic door entrance - Handle button actions"
     id: clinic_entrance_button_actions
     initial_state: true
     mode: single
@@ -357,7 +330,7 @@ automation:
           - conditions:
               - condition: state
                 entity_id: sensor.clinic_door_entrance_action
-                state: 'button_1_single'
+                state: "button_1_single"
             sequence:
               - action: homeassistant.turn_on
                 target:
@@ -366,7 +339,7 @@ automation:
           - conditions:
               - condition: state
                 entity_id: sensor.clinic_door_entrance_action
-                state: 'button_2_single'
+                state: "button_2_single"
             sequence:
               - action: homeassistant.turn_off
                 target:
@@ -375,7 +348,7 @@ automation:
           - conditions:
               - condition: state
                 entity_id: sensor.clinic_door_entrance_action
-                state: 'button_1_double'
+                state: "button_1_double"
             sequence:
               - action: switch.turn_on
                 target:
@@ -386,14 +359,13 @@ automation:
           - conditions:
               - condition: state
                 entity_id: sensor.clinic_door_entrance_action
-                state: 'button_2_double'
+                state: "button_2_double"
             sequence:
               - action: switch.turn_off
                 target:
                   entity_id:
                     - switch.shellyplus2pm_c4d8d557f404_switch_1
                     - switch.shellyplus2pm_fcb467a557a0_switch_0
-
 
   - alias: "Turn off clinic door flood light when the door is locked"
     id: yard_turn_off_clinic_door_flight_light_when_door_locked
@@ -402,29 +374,29 @@ automation:
     trigger:
       - platform: state
         entity_id: lock.clinic_door
-        to: 'locked'
+        to: "locked"
         for:
           minutes: 5
 
     condition:
       - condition: state
-        entity_id: switch.shellyplus2pm_c4d8d557f404_switch_1  # clinic door
-        state: 'on'
+        entity_id: switch.shellyplus2pm_c4d8d557f404_switch_1 # clinic door
+        state: "on"
 
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shellyplus2pm_c4d8d557f404_switch_0  # Clinic inside closet
-          - switch.shellyplus2pm_c4d8d557f404_switch_1  # Clinic door
+          - switch.shellyplus2pm_c4d8d557f404_switch_0 # Clinic inside closet
+          - switch.shellyplus2pm_c4d8d557f404_switch_1 # Clinic door
 
   - alias: Turn off clinic floodlight during daylight hours
     id: yard_turn_off_clinic_door_light_during_daylight_hours
     trigger:
       - platform: state
         entity_id: switch.shellyplus2pm_c4d8d557f404_switch_1
-        to: 'on'
+        to: "on"
         for:
-          minutes: 5
+          minutes: 2
 
     condition:
       - condition: sun
@@ -436,9 +408,8 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shellyplus2pm_c4d8d557f404_switch_0  # Clinic inside closet
-          - switch.shellyplus2pm_c4d8d557f404_switch_1  # Clinic door
-
+          - switch.shellyplus2pm_c4d8d557f404_switch_0 # Clinic inside closet
+          - switch.shellyplus2pm_c4d8d557f404_switch_1 # Clinic door
 
   - alias: Sunset and Sunrise house sign control
     id: yard_house_sign_control
@@ -451,17 +422,98 @@ automation:
         event: sunrise
     action:
       - choose:
-        - conditions:
-            - condition: template
-              value_template: "{{ trigger.event == 'sunset' }}"
-          sequence:
-            - service: switch.turn_on
-              target:
-                entity_id: switch.shelly1pmminig3_34b7da8f8b78_switch_0
-        - conditions:
-            - condition: template
-              value_template: "{{ trigger.event == 'sunrise' }}"
-          sequence:
-            - service: switch.turn_off
-              target:
-                entity_id: switch.shelly1pmminig3_34b7da8f8b78_switch_0
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event == 'sunset' }}"
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.shelly1pmminig3_34b7da8f8b78_switch_0
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event == 'sunrise' }}"
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.shelly1pmminig3_34b7da8f8b78_switch_0
+
+  - alias: "Turn on clinic door light"
+    id: yard_turn_on_clinic_door_light_on_motion
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.clinic_entrance_01_motion_state
+        to: "large"
+      - platform: homeassistant
+        event: start
+
+    condition:
+      condition: and
+      conditions:
+        - condition: or
+          conditions:
+            - condition: sun
+              before: sunrise
+              before_offset: "00:15:00"
+            - condition: sun
+              after: sunset
+              after_offset: "-00:15:00"
+        - condition: or
+          conditions:
+            - condition: state
+              entity_id: sensor.clinic_entrance_01_motion_state
+              state: "large"
+
+    action:
+      - action: homeassistant.turn_on
+        entity_id: switch.shellyplus2pm_c4d8d557f404_switch_1
+
+  - alias: "Turn off clinic door light"
+    id: yard_turn_off_clinic_door_light_no_motion_detected
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.clinic_entrance_01_motion_state
+        to: "static"
+        for:
+          minutes: 5
+
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: state
+        entity_id: sensor.clinic_entrance_01_motion_state
+        state: "static"
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id: switch.shellyplus2pm_c4d8d557f404_switch_1
+
+  - alias: Re-enable Parking Flood Lights Automation after being disabled for 1 hour
+    id: yard_re_enable_parking_flood_lights_automation
+    description: "Re-enables the turn_off_parking_flood_lights_when_no_motion_is_detected automation 1 hour after it is disabled."
+    trigger:
+      - platform: state
+        entity_id: automation.turn_off_parking_flood_lights_when_no_motion_is_detected
+        to: 'off'
+        for: '01:00:00'
+    action:
+      - service: automation.turn_on
+        entity_id: automation.turn_off_parking_flood_lights_when_no_motion_is_detected
+
+
+  - alias: "Sync front lawn flood light with roof 2 switch"
+    id: yard_sync_front_lawn_flood_light_with_roof_2_switch
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: switch.shellyswitch25_6869e3_channel_2
+      - platform: homeassistant
+        event: start
+    action:
+      - action: switch.toggle
+        entity_id: switch.shelly1pmminig3_34b7dac9ea68_switch_0

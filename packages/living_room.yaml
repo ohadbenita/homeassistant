@@ -24,23 +24,23 @@ light:
           {{
             is_state('switch.shellyplus2pm_fcb4670e68e8_switch_0', 'on') and
             is_state('switch.shellyplus2pm_fcb4670e68e8_switch_1', 'on') and
-            is_state('switch.shelly1_34945470bfa1', 'on') and
-            is_state('switch.shelly1_e8db84d27b53', 'on')
+            is_state('switch.shelly1pmminig3_3030f9eca0dc_switch_0', 'on') and
+            is_state('switch.shelly1pmminig3_34b7da92245c_switch_0', 'on')
           }}
         turn_on:
           action: homeassistant.turn_on
           data:
             entity_id:
-              - switch.shelly1_e8db84d27b53
-              - switch.shelly1_34945470bfa1
+              - switch.shelly1pmminig3_3030f9eca0dc_switch_0
+              - switch.shelly1pmminig3_34b7da92245c_switch_0
               - switch.shellyplus2pm_fcb4670e68e8_switch_0
               - switch.shellyplus2pm_fcb4670e68e8_switch_1
         turn_off:
           action: homeassistant.turn_off
           data:
             entity_id:
-              - switch.shelly1_e8db84d27b53
-              - switch.shelly1_34945470bfa1
+              - switch.shelly1pmminig3_34b7da92245c_switch_0
+              - switch.shelly1pmminig3_3030f9eca0dc_switch_0
               - switch.shellyplus2pm_fcb4670e68e8_switch_0
               - switch.shellyplus2pm_fcb4670e68e8_switch_1
 
@@ -60,7 +60,7 @@ automation:
 
     action:
       - variables:
-          left_window_position: "{{ state_attr('cover.living_room_left_window', 'current_position') }}"
+          left_window_position: "{{ state_attr('cover.shellyplus2pm_c4d8d5579560_cover_0', 'current_position') }}"
           middle_window_position: "{{ state_attr('cover.living_room_middle_window', 'current_position') }}"
           right_window_position: "{{ state_attr('cover.living_room_right_window', 'current_position') }}"
 
@@ -68,7 +68,7 @@ automation:
       - action: cover.set_cover_position
         target:
           entity_id:
-            - cover.living_room_left_window
+            - cover.shellyplus2pm_c4d8d5579560_cover_0
         data:
           position: "{{ [left_window_position, 15] | min }}"
 
@@ -105,7 +105,7 @@ automation:
           entity_id:
             - cover.living_room_right_window
             - cover.living_room_middle_window
-            - cover.living_room_left_window
+            - cover.shellyplus2pm_c4d8d5579560_cover_0  # left window
         data:
           position: 0
 
@@ -115,9 +115,7 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id:
-          - binary_sensor.entrance_to_living_room_01_occupancy
-          - binary_sensor.entrance_indoor_occupancy
+        entity_id: binary_sensor.kids_hallway_01_occupancy
         from: 'off'
         to: 'on'
 
@@ -128,13 +126,27 @@ automation:
           value_template: >-
             {{ as_timestamp(now()) - as_timestamp(state_attr('automation.open_living_room_shutters_in_the_morning', 'last_triggered') or today_at('00:00')) | int > 28800 }}
         - condition: time
-          after: '06:30:00'
+          after: '06:00:00'
           before: '10:00:00'
         - condition: state
           entity_id: input_boolean.away_mode
           state: 'off'
+        - condition: state
+          entity_id: sensor.school_is_high_vacation
+          state: 'False'
 
     action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.living_room_ac_temperature
+                below: 18
+            sequence:
+              - service: climate.turn_on
+                target:
+                  entity_id: climate.living_room_ac
+        default: []
+
       - action: cover.set_cover_position
         data_template:
           entity_id: cover.living_room_right_window
@@ -149,9 +161,9 @@ automation:
 
       - action: cover.set_cover_position
         data_template:
-          entity_id: cover.living_room_left_window
+          entity_id: cover.shellyplus2pm_c4d8d5579560_cover_0
           position: >-
-            {{ max(state_attr('cover.living_room_left_window', 'current_position') | int, 70) }}
+            {{ max(state_attr('cover.shellyplus2pm_c4d8d5579560_cover_0', 'current_position') | int, 70) }}
 
 
   - alias: 'Close living room shutters - sunset'
@@ -180,14 +192,14 @@ automation:
 
     action:
       - variables:
-          left_window_position: "{{ state_attr('cover.living_room_left_window', 'current_position') }}"
+          left_window_position: "{{ state_attr('cover.shellyplus2pm_c4d8d5579560_cover_0', 'current_position') }}"
           middle_window_position: "{{ state_attr('cover.living_room_middle_window', 'current_position') }}"
           right_window_position: "{{ state_attr('cover.living_room_right_window', 'current_position') }}"
 
       - action: cover.set_cover_position
         target:
           entity_id:
-            - cover.living_room_left_window
+            - cover.shellyplus2pm_c4d8d5579560_cover_0
         data:
           position: "{{ [left_window_position, 35] | min }}"
 
@@ -238,15 +250,15 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.shelly1_34945470bfa1  # TV light
+        entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0  # TV light
         to: 'on'
     condition:
       - condition: state
-        entity_id: switch.shelly1_e8db84d27b53  # Couch light
+        entity_id: switch.shelly1pmminig3_34b7da92245c_switch_0  # Couch light
         state: 'off'
     action:
       - action: homeassistant.turn_on
-        entity_id: switch.shelly1_e8db84d27b53
+        entity_id: switch.shelly1pmminig3_34b7da92245c_switch_0
 
 
   - alias: "Turn off living room couch light when TV light is turned off"
@@ -254,15 +266,15 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.shelly1_34945470bfa1  # TV light
+        entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0  # TV light
         to: 'off'
     condition:
       - condition: state
-        entity_id: switch.shelly1_e8db84d27b53  # Couch light
+        entity_id: switch.shelly1pmminig3_34b7da92245c_switch_0  # Couch light
         state: 'on'
     action:
       - action: homeassistant.turn_off
-        entity_id: switch.shelly1_e8db84d27b53
+        entity_id: switch.shelly1pmminig3_34b7da92245c_switch_0
 
 
   - alias: 'Kitchen - toggle lights by single button press'
@@ -279,7 +291,7 @@ automation:
           - conditions:
               - condition: template
                 value_template: >
-                  {% set switches = [states('switch.shellyplus2pm_fcb4670e68e8_switch_0'), states('switch.shellyplus2pm_fcb4670e68e8_switch_1'), states('switch.shelly1_34945470bfa1'), states('switch.shelly1_e8db84d27b53')] %}
+                  {% set switches = [states('switch.shellyplus2pm_fcb4670e68e8_switch_0'), states('switch.shellyplus2pm_fcb4670e68e8_switch_1'), states('switch.shelly1pmminig3_34b7da92245c_switch_0'), states('switch.shelly1pmminig3_3030f9eca0dc_switch_0')] %}
                   {% set on_switches = switches | select('eq', 'on') | list %}
                   {{ on_switches | length > 2 }}
             sequence:
@@ -288,16 +300,16 @@ automation:
                   entity_id:
                     - switch.shellyplus2pm_fcb4670e68e8_switch_0
                     - switch.shellyplus2pm_fcb4670e68e8_switch_1
-                    - switch.shelly1_34945470bfa1
-                    - switch.shelly1_e8db84d27b53
+                    - switch.shelly1pmminig3_3030f9eca0dc_switch_0
+                    - switch.shelly1pmminig3_34b7da92245c_switch_0
         default:
           - action: switch.turn_on
             target:
               entity_id:
                 - switch.shellyplus2pm_fcb4670e68e8_switch_0
                 - switch.shellyplus2pm_fcb4670e68e8_switch_1
-                - switch.shelly1_34945470bfa1
-                - switch.shelly1_e8db84d27b53
+                - switch.shelly1pmminig3_34b7da92245c_switch_0
+                - switch.shelly1pmminig3_3030f9eca0dc_switch_0
 
 
   - alias: 'Kitchen - turn everything off by double button press'
@@ -391,7 +403,7 @@ automation:
           entity_id:
             - cover.living_room_right_window
             - cover.living_room_middle_window
-            - cover.living_room_left_window
+            - cover.shellyplus2pm_c4d8d5579560_cover_0
         data:
           position: 80
 
@@ -411,7 +423,7 @@ automation:
           entity_id:
             - cover.living_room_right_window
             - cover.living_room_middle_window
-            - cover.living_room_left_window
+            - cover.shellyplus2pm_c4d8d5579560_cover_0
         data:
           position: 35
 
@@ -428,7 +440,7 @@ automation:
       - action: cover.set_cover_position
         target:
           entity_id:
-            - cover.dining_room_right_window
+            - cover.shelly2pmg3_34cdb0776380_cover_0
             - cover.dining_room_left_window
         data:
           position: 80
@@ -453,7 +465,7 @@ automation:
       - action: cover.set_cover_position
         target:
           entity_id:
-            - cover.dining_room_right_window
+            - cover.shelly2pmg3_34cdb0776380_cover_0
             - cover.dining_room_main_window
             - cover.dining_room_left_window
         data:
@@ -561,7 +573,7 @@ automation:
         state: 'False'
       - condition: numeric_state
         entity_id: sensor.living_room_ac_temperature
-        below: 20
+        below: 18
 
     action:
       - action: climate.turn_on

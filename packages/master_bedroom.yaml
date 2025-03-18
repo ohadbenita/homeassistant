@@ -18,7 +18,7 @@ light:
       master_bedroom_lights:
         value_template: >-
           {{
-            is_state('light.shellydimmer2_ec64c9c66fdc', 'on') and
+            is_state('switch.shelly1_34945470bfa1', 'on') and
             is_state('switch.shelly1pmminig3_34b7da8eef08_switch_0', 'on') and
             is_state('switch.shellyplus2pm_fcb4670e673c_switch_0', 'on') and
             is_state('switch.shellyplus2pm_fcb4670e673c_switch_1', 'on')
@@ -30,7 +30,7 @@ light:
               - switch.shellyplus2pm_fcb4670e673c_switch_0
               - switch.shellyplus2pm_fcb4670e673c_switch_1
               - switch.shelly1pmminig3_34b7da8eef08_switch_0
-              - light.shellydimmer2_ec64c9c66fdc
+              - switch.shelly1_34945470bfa1
         turn_off:
           action: homeassistant.turn_off
           data:
@@ -38,7 +38,7 @@ light:
               - switch.shellyplus2pm_fcb4670e673c_switch_0
               - switch.shellyplus2pm_fcb4670e673c_switch_1
               - switch.shelly1pmminig3_34b7da8eef08_switch_0
-              - light.shellydimmer2_ec64c9c66fdc
+              - switch.shelly1_34945470bfa1
 
 
 template:
@@ -162,7 +162,7 @@ automation:
 
   - alias: "Turn on master bedroom light when fan light is turned on"
     id: master_bedroom_spots_turn_on_when_fan_light_is_on
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
@@ -187,7 +187,7 @@ automation:
 
   - alias: "Turn off master bedroom lights when light is turned off"
     id: master_bedroom_lights_turn_off_when_fan_light_is_off
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
@@ -428,19 +428,19 @@ automation:
             entity_id: light.shellydimmer2_ec64c9c66fdc
             state: 'off'
         then:
-          - service: switch.turn_off
+          - action: switch.turn_off
             target:
               entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
 
           - delay: '00:00:02'
 
-          - service: light.turn_on
+          - action: light.turn_on
             target:
               entity_id: light.shellydimmer2_ec64c9c66fdc
             data:
               brightness_pct: 1
         else:
-          - service: light.turn_off
+          - action: light.turn_off
             target:
               entity_id: light.shellydimmer2_ec64c9c66fdc
 
@@ -578,3 +578,160 @@ automation:
     action:
       - action: climate.turn_off
         entity_id: climate.master_bedroom_ac
+
+
+  - alias: Toggle master bedroom spots by button
+    id: master_bedroom_toggle_makeup_lights
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_makeup_wall_action
+        to: 'single'
+    action:
+      - choose:
+          - conditions:
+              # If it's currently off, turn it on at full brightness
+              - condition: state
+                entity_id: switch.shelly1_34945470bfa1
+                state: 'off'
+            sequence:
+              - action: switch.turn_on
+                entity_id: switch.shelly1_34945470bfa1
+        default:
+          # Otherwise, the light must be on, so turn it off
+          - action: switch.turn_off
+            entity_id: switch.shelly1_34945470bfa1
+
+  - alias: "Close master bedroom covers if bathroom humidity is above 85 / restore when below 50"
+    id: master_bathroom_covers_on_humidity_change
+    mode: single
+    initial_state: false
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.master_bathroom_temperature_humidity
+        above: 85
+        for:
+          minutes: 2
+      - platform: numeric_state
+        entity_id: sensor.master_bathroom_temperature_humidity
+        below: 50
+        for:
+          minutes: 2
+
+    action:
+      - choose:
+          # High humidity branch
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state | float > 85 }}"
+            sequence:
+              # 1) Capture current positions in an ad-hoc scene
+              - service: scene.create
+                data:
+                  scene_id: master_bedroom_covers_before_humidity
+                  snapshot_entities:
+                    - cover.shellyplus2pm_e465b8f38f54
+                    - cover.shellyplus2pm_c4d8d5582a90
+
+              # 2) Check and partially close covers if they're above 45
+              - choose:
+                  - conditions:
+                      - condition: numeric_state
+                        entity_id: cover.shellyplus2pm_e465b8f38f54
+                        attribute: current_position
+                        above: 45
+                    sequence:
+                      - service: cover.set_cover_position
+                        data:
+                          entity_id: cover.shellyplus2pm_e465b8f38f54
+                          position: 45
+              - choose:
+                  - conditions:
+                      - condition: numeric_state
+                        entity_id: cover.shellyplus2pm_c4d8d5582a90
+                        attribute: current_position
+                        above: 45
+                    sequence:
+                      - service: cover.set_cover_position
+                        data:
+                          entity_id: cover.shellyplus2pm_c4d8d5582a90
+                          position: 45
+
+          # Low humidity branch
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state | float < 50 }}"
+              - condition: state
+                entity_id: sun.sun
+                state: above_horizon
+            sequence:
+              - service: scene.turn_on
+                data:
+                  entity_id: scene.master_bedroom_covers_before_humidity
+
+        default: []
+
+
+  - alias: "Close master bedroom covers on sunset"
+    id: master_bathroom_covers_on_sunset
+    mode: single
+    initial_state: true
+    trigger:
+      - platform: sun
+        event: sunset
+
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: cover.shellyplus2pm_e465b8f38f54
+                attribute: current_position
+                above: 45
+            sequence:
+              - service: cover.set_cover_position
+                data:
+                  entity_id: cover.shellyplus2pm_e465b8f38f54
+                  position: 45
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: cover.shellyplus2pm_c4d8d5582a90
+                attribute: current_position
+                above: 45
+            sequence:
+              - service: cover.set_cover_position
+                data:
+                  entity_id: cover.shellyplus2pm_c4d8d5582a90
+                  position: 45
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: cover.master_bedroom_main_window
+                attribute: current_position
+                above: 30
+            sequence:
+              - service: cover.set_cover_position
+                data:
+                  entity_id: cover.master_bedroom_main_window
+                  position: 30
+
+
+  - alias: "Open covers to 100% when school is in session"
+    id: master_bedroom_open_covers_on_a_school_day
+    description: "At 8 AM, open covers to 100% if it's not school vacation"
+    initial_state: true
+    trigger:
+      - platform: time
+        at: "08:00:00"
+    condition:
+      - condition: state
+        entity_id: sensor.school_is_elementary_vacation
+        state: "False"
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.shellyplus2pm_c4d8d5582a90
+            - cover.shellyplus2pm_e465b8f38f54
+        data:
+          position: 100

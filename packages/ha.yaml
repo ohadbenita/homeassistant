@@ -52,6 +52,12 @@ template:
           {{now().timetuple().tm_isdst == 1}}
         device_class: running
 
+  - sensor:
+    - name: Day of the week
+      unique_id: day_of_week
+      state: >
+        {{ ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"][now().weekday()][:3] | lower}}
+
 rest_command:
   shelly_calibrate_cover:
     url: "http://{{ shelly_ip }}/rpc"
@@ -195,21 +201,21 @@ automation:
             'climate.living_room_ac',
             'climate.master_bedroom_ac',
             'climate.ella_ac',
-            'cover.living_room_left_window',
+            'cover.shellyplus2pm_c4d8d5579560_cover_0',
             'cover.living_room_middle_window',
             'cover.living_room_right_window',
-            'cover.dining_room_right_window',
+            'cover.shelly2pmg3_34cdb0776380_cover_0',
             'cover.dining_room_left_window',
             'cover.dining_room_main_window',
             'switch.shellyplus2pm_fcb4670e68e8_switch_0',
             'switch.shellyplus2pm_fcb4670e68e8_switch_1',
-            'switch.shelly1_34945470bfa1',
-            'switch.shelly1_e8db84d27b53'
+            'switch.shelly1pmminig3_34b7da92245c_switch_0',
+            'switch.shelly1pmminig3_3030f9eca0dc_switch_0'
           ] %}
           {% from 'availability_template.jinja' import avail %}
           {{- not (avail(core_devices) | bool) -}}
     action:
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data:
           message: >
             The following devices are offline:
@@ -221,16 +227,16 @@ automation:
               'climate.living_room_ac',
               'climate.master_bedroom_ac',
               'climate.ella_ac',
-              'cover.living_room_left_window',
+              'cover.shellyplus2pm_c4d8d5579560_cover_0',
               'cover.living_room_middle_window',
               'cover.living_room_right_window',
-              'cover.dining_room_right_window',
+              'cover.shelly2pmg3_34cdb0776380_cover_0',
               'cover.dining_room_left_window',
               'cover.dining_room_main_window',
               'switch.shellyplus2pm_fcb4670e68e8_switch_0',
               'switch.shellyplus2pm_fcb4670e68e8_switch_1',
-              'switch.shelly1_34945470bfa1',
-              'switch.shelly1_e8db84d27b53'
+              'switch.shelly1pmminig3_3030f9eca0dc_switch_0',
+              'switch.shelly1pmminig3_34b7da92245c_switch_0'
             ] -%}
               {% if states(entity_id) == 'unknown' or is_state(entity_id, 'unavailable') %}
                 - {{ state_attr(entity_id, 'friendly_name') | replace("_", "\\_") }} - {{ entity_id | replace("_", "\\_") }}
@@ -256,9 +262,14 @@ automation:
               - sensor.ohadbenita_battery_level
               - sensor.rinats_iphone_battery_level
               - sensor.rois_iphone_battery_level
+              - sensor.iphone_battery_level
               - sensor.ohadbenita_watch_battery
               - sensor.roi_room_entrance_battery
               - sensor.clinic_door_entrance_battery
+              - sensor.living_room_01_battery
+              - sensor.study_room_3d_printer_stand_battery
+              - sensor.kitchen_counter_01_battery
+              - sensor.ketem_tracker_battery
           low_battery_devices: >
             {% set threshold = states('input_number.battery_low_level_threshold') | int %}
             {% set exclude = exclude %}
@@ -307,7 +318,7 @@ automation:
           - binary_sensor.kitchen_ceiling_battery_low
         to: 'on'
     action:
-      - service: persistent_notification.create
+      - action: persistent_notification.create
         data:
           title: "Low Battery Alert"
           message: >
@@ -410,7 +421,7 @@ automation:
           weekday:
             - "sun"
     action:
-      - service: input_boolean.turn_off
+      - action: input_boolean.turn_off
         entity_id: input_boolean.skip_firmware_updates
 
 
@@ -447,39 +458,6 @@ automation:
           message: "Synology's security status changed to unsafe, please check security advisor for recent findings and recommendations"
 
 
-  - alias: Perform daily backup
-    id: ha_perform_daily_backup
-    trigger:
-      - platform: time
-        at: "02:00:00"
-    action:
-      - action: auto_backup.backup_full
-        data:
-          name: "DailyBackup: {{ now().strftime('%A, %B %-d, %Y') }}"
-          keep_days: 14
-
-
-  - alias: Notify on backup failure
-    id: ha_notify_on_backup_failure
-    trigger:
-      platform: event
-      event_type: auto_backup.backup_failed
-    action:
-      - action: persistent_notification.create
-        data:
-          title: "HA backup Failed"
-          message: |-
-            Name: {{ trigger.event.data.name }}
-            Error: {{ trigger.event.data.error }}
-
-      - action: notify.ohad_telegram
-        data:
-          title: "HA backup Failed"
-          message: >-
-            Name: {{ trigger.event.data.name }}
-            Error: {{ trigger.event.data.error }}
-
-
   - alias: "Monthly Cover Calibration"
     initial_state: false
     trigger:
@@ -497,7 +475,7 @@ automation:
       - action: input_text.set_value
         data_template:
           entity_id: input_text.cover_dining_room_right_position
-          value: "{{ state_attr('cover.dining_room_right_window', 'current_position') }}"
+          value: "{{ state_attr('cover.shelly2pmg3_34cdb0776380_cover_0', 'current_position') }}"
       - action: input_text.set_value
         data_template:
           entity_id: input_text.cover_dining_room_main_position
@@ -518,9 +496,9 @@ automation:
       - variables:
           cover_ip_map:
             cover.dining_room_left_window: '172.16.1.237'
-            cover.dining_room_right_window: '172.16.1.181'
+            cover.dining_room_right_window: '172.16.1.44'
             cover.dining_room_main_window: '172.16.1.189'
-            cover.living_room_left_window: '172.16.1.68'
+            cover.shellyplus2pm_c4d8d5579560_cover_0: '172.16.1.17'
             cover.living_room_right_window: '172.16.1.28'
             cover.living_room_middle_window: '172.16.1.208'
 
@@ -543,7 +521,7 @@ automation:
           position: "{{ states('input_text.cover_dining_room_left_position') | int }}"
       - action: cover.set_cover_position
         target:
-          entity_id: cover.dining_room_right_window
+          entity_id: cover.shelly2pmg3_34cdb0776380_cover_0
         data_template:
           position: "{{ states('input_text.cover_dining_room_right_position') | int }}"
       - action: cover.set_cover_position
@@ -553,7 +531,7 @@ automation:
           position: "{{ states('input_text.cover_dining_room_main_position') | int }}"
       - action: cover.set_cover_position
         target:
-          entity_id: cover.living_room_left_window
+          entity_id: cover.shellyplus2pm_c4d8d5579560_cover_0
         data_template:
           position: "{{ states('input_text.cover_living_room_left_position') | int }}"
       - action: cover.set_cover_position
@@ -594,7 +572,7 @@ automation:
         value_template: >
           {{ state_attr('sensor.dst', 'next').days_to_event in [7,1] }}
     action:
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data:
           message: >
             {%- set next = state_attr('sensor.dst', 'next') %}
@@ -630,7 +608,7 @@ automation:
         entity_id: binary_sensor.whatsapp_api_availability
         to: "off"
     action:
-      - service: notify.ohad_telegram
+      - action: notify.ohad_telegram
         data:
           title: "API Monitoring Alert"
           message: >
@@ -656,7 +634,7 @@ automation:
           minutes: 0
           seconds: 10
           milliseconds: 0
-      - service: persistent_notification.dismiss
+      - action: persistent_notification.dismiss
         data:
           notification_id: "{{ trigger.notification.notification_id }}"
     mode: parallel

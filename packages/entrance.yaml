@@ -2,9 +2,9 @@
 binary_sensor:
   - platform: template
     sensors:
-      entrance_sensors_off_for_10_minutes:
-        friendly_name: "Entrance sensors off for 10 Minutes"
-        delay_on: "00:10:00"
+      entrance_sensors_off_for_2_minutes:
+        friendly_name: "Entrance sensors off for 2 Minutes"
+        delay_on: "00:02:00"
         value_template: >
           {{ is_state('binary_sensor.entrance_door_occupancy', 'off') and
              is_state('binary_sensor.entrance_indoor_occupancy', 'off') and
@@ -50,10 +50,8 @@ automation:
           conditions:
             - condition: sun
               before: sunrise
-              before_offset: "01:00:00"
             - condition: sun
               after: sunset
-              after_offset: "-01:00:00"
         - condition: or
           conditions:
             - condition: state
@@ -77,7 +75,7 @@ automation:
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.entrance_sensors_off_for_10_minutes
+        entity_id: binary_sensor.entrance_sensors_off_for_2_minutes
         to: 'on'
 
     action:

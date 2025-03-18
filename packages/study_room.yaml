@@ -38,63 +38,69 @@ automation:
       - condition: state
         entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
         state: 'off'
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: sensor.creality_ender_v3_ke_current_print_state
+            state: 'printing'
 
     action:
       - action: homeassistant.turn_on
         entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
 
-  - alias: "Study room - Turn on AC when temperature is above threshold"
-    initial_state: true
-    id: study_room_turn_ac_on
-    trigger:
-      - platform: numeric_state
-        entity_id: sensor.study_temperature_temperature
-        above: 32
+  # DISABLED since the sensor has been removed
+  # - alias: "Study room - Turn on AC when temperature is above threshold"
+  #   initial_state: true
+  #   id: study_room_turn_ac_on
+  #   trigger:
+  #     - platform: numeric_state
+  #       entity_id: sensor.study_temperature_temperature
+  #       above: 32
 
-    condition:
-      - condition: state
-        entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
-        state: 'on'
-      - condition: state
-        entity_id: sensor.ohad_ble
-        state: 'study'
-      - condition: numeric_state
-        entity_id: sensor.ohad_ble
-        attribute: distance
-        below: 5.5
+  #   condition:
+  #     - condition: state
+  #       entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
+  #       state: 'on'
+  #     - condition: state
+  #       entity_id: sensor.ohad_ble
+  #       state: 'study'
+  #     - condition: numeric_state
+  #       entity_id: sensor.ohad_ble
+  #       attribute: distance
+  #       below: 5.5
 
-    action:
-      - action: switch.turn_on
-        entity_id: switch.study_room_ac_beeper
+  #   action:
+  #     - action: switch.turn_on
+  #       entity_id: switch.study_room_ac_beeper
 
-      - action: climate.set_hvac_mode
-        target:
-          entity_id: climate.study_room_ac
-        data:
-          hvac_mode: cool
+  #     - action: climate.set_hvac_mode
+  #       target:
+  #         entity_id: climate.study_room_ac
+  #       data:
+  #         hvac_mode: cool
 
-      - action: switch.turn_off
-        entity_id: switch.study_room_ac_beeper
+  #     - action: switch.turn_off
+  #       entity_id: switch.study_room_ac_beeper
 
-      - action: climate.set_preset_mode
-        data:
-          preset_mode: sleep
-          entity_id: climate.study_room_ac
+  #     - action: climate.set_preset_mode
+  #       data:
+  #         preset_mode: sleep
+  #         entity_id: climate.study_room_ac
 
-      - action: climate.set_temperature
-        data:
-          temperature: 25
-          entity_id: climate.study_room_ac
+  #     - action: climate.set_temperature
+  #       data:
+  #         temperature: 25
+  #         entity_id: climate.study_room_ac
 
-      - action: climate.set_fan_mode
-        data:
-          fan_mode: silent
-          entity_id: climate.study_room_ac
+  #     - action: climate.set_fan_mode
+  #       data:
+  #         fan_mode: silent
+  #         entity_id: climate.study_room_ac
 
-      - action: climate.set_swing_mode
-        data:
-          swing_mode: both
-          entity_id: climate.study_room_ac
+  #     - action: climate.set_swing_mode
+  #       data:
+  #         swing_mode: both
+  #         entity_id: climate.study_room_ac
 
 
   - alias: "Study Room - Close cover on sunset"
@@ -188,3 +194,77 @@ automation:
 
       - action: climate.toggle
         entity_id: climate.study_room_ac
+
+
+  - alias: Turn off Bike Charger when charging is complete
+    id: study_room_turn_off_bike_charger_when_complete
+    initial_state: true
+    trigger:
+      platform: numeric_state
+      entity_id: sensor.study_room_e_bike_charger_energy_power
+      below: 5
+      for:
+        hours: 1
+
+    condition:
+      - condition: state
+        entity_id: switch.study_room_e_bike_charger
+        state: 'on'
+
+    action:
+      - action: switch.turn_off
+        entity_id: switch.study_room_e_bike_charger
+      - action: notify.ohad_telegram
+        data:
+          title: Appliances
+          message: Bike charge cycle is completed
+
+
+  - alias: 'Study room - Handle 3D printer stand button actions'
+    id: study_room_3d_printer_stand_button_actions
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.study_room_3d_printer_stand_action
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.study_room_3d_printer_stand_action
+                state: 'button_1_single'
+            sequence:
+              - action: cover.set_cover_position
+                data_template:
+                  entity_id: cover.study_room
+                  position: >-
+                    {{ max(state_attr('cover.study_room', 'current_position') | int, 80) }}
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.study_room_3d_printer_stand_action
+                state: 'button_2_single'
+            sequence:
+              - action: cover.set_cover_position
+                data:
+                  entity_id: cover.study_room
+                  position: 0
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.study_room_3d_printer_stand_action
+                state: 'button_1_double'
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.creality_printer
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.study_room_3d_printer_stand_action
+                state: 'button_2_double'
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.creality_printer

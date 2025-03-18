@@ -1,9 +1,20 @@
 ---
-binary_sensor:
-  - platform: template
-    sensors:
-      washing_machine_active:
-        value_template: "{{ states('sensor.washing_machine_energy_power') | default(0) | float > 5 }}"
+template:
+  - binary_sensor:
+      - name: "Washing machine active"
+        state: "{{ states('sensor.washing_machine_energy_power') | default(0) | float > 5 }}"
+      - name: "Kids bathroom occupancy"
+        device_class: occupancy
+        state: >-
+          {% set s1 = states('binary_sensor.occupancy_sensor_808b_occupancy') %}
+          {% set s2 = states('binary_sensor.occupancy_sensor_a5d0_occupancy') %}
+          {% if 'unavailable' in [s1, s2] %}
+            'unavailable'
+          {% elif s1 == 'on' or s2 == 'on' %}
+            on
+          {% else %}
+            off
+          {% endif %}
 
 automation:
   - alias: Announce washing machine cycle completed
@@ -42,3 +53,26 @@ automation:
       - action: notify.ohad_telegram
         data_template:
           message: "Water leak has been detected @ {{ trigger.from_state.attributes.friendly_name }} !!!"
+
+
+  - alias: "Turn off kids bathroom lights when no motion is detected"
+    id: kids_bathroom_turn_light_off_no_motion_detected
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kids_bathroom_occupancy
+        to: 'off'
+        for:
+          minutes: 15
+
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.kids_bathroom_occupancy
+        state: 'off'
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1

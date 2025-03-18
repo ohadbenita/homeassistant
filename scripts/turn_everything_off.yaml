@@ -10,7 +10,7 @@ turn_everything_off:
         alexa_device: media_player.kitchen_echo
         notification_type: announce
         current_volume: >-
-          {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
+          {{ state_attr('media_player.kitchen_echo', 'volume_level') | float(0.25) }}
         message: >-
           Closing all shutters now, will turn off the lights & lock the doors in 20 seconds.
 

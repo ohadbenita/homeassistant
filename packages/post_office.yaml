@@ -1,0 +1,78 @@
+---
+template:
+  binary_sensor:
+    - name: "Post Office Open"
+      device_class: door
+      unique_id: "post_office_open_status"
+      state: >-
+        {% set wd = now().isoweekday() %}
+        {% set t = now().strftime('%H:%M') %}
+        {% set is_holiday = (states('binary_sensor.israel_workday_sensor') == 'off') %}
+        {#
+          Sunday => wd=7 => 13:00-18:00
+          Monday => wd=1 => 11:00-15:00
+          Tuesday => wd=2 => 13:00-18:00
+          Wednesday => wd=3 => 11:00-15:00
+          Thursday => wd=4 => 11:00-15:00
+          Friday => wd=5 => 09:00-12:00
+          Saturday => wd=6 => closed
+        #}
+
+        {# If it's a holiday or Saturday => closed #}
+        {% if is_holiday or wd == 6 %}
+          false
+        {% elif wd == 7 and '13:00' <= t < '18:00' %}
+          true
+        {% elif wd == 1 and '11:00' <= t < '15:00' %}
+          true
+        {% elif wd == 2 and '13:00' <= t < '18:00' %}
+          true
+        {% elif wd == 3 and '11:00' <= t < '15:00' %}
+          true
+        {% elif wd == 4 and '11:00' <= t < '15:00' %}
+          true
+        {% elif wd == 5 and '09:00' <= t < '12:00' %}
+          true
+        {% else %}
+          false
+        {% endif %}
+
+  sensor:
+    - name: "Post Office Next Close"
+      unique_id: "post_office_next_close"
+      state: >-
+        {% set wd = now().isoweekday() %}
+        {% set t = now().strftime('%H:%M') %}
+        {% set is_open = states('binary_sensor.post_office_open') == 'on' %}
+
+        {% if not is_open %}
+          Closed
+        {% else %}
+          {# We are currently open => show today’s closing time #}
+          {% if wd == 7 %} 18:00
+          {% elif wd == 1 %} 15:00
+          {% elif wd == 2 %} 18:00
+          {% elif wd == 3 %} 15:00
+          {% elif wd == 4 %} 15:00
+          {% elif wd == 5 %} 12:00
+          {% else %}
+            Unknown
+          {% endif %}
+        {% endif %}
+
+    - name: "Post Office Next Open"
+      unique_id: "post_office_next_open"
+      state: >-
+        {#
+          If closed, figure out the next day/time it opens
+          This example just shows the next day’s start time
+          (or “open now” if it’s currently open).
+        #}
+        {% set is_open = states('binary_sensor.post_office_open') == 'on' %}
+        {% if is_open %}
+          Open now
+        {% else %}
+          {# Simplify: if we’re past closing today, next open might be tomorrow or next day with valid hours. #}
+          {# Real logic would skip over Saturday or holidays. #}
+          Next open time depends on your exact logic
+        {% endif %}

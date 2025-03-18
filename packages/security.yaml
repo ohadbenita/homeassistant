@@ -98,6 +98,28 @@ lock:
           - lock.kitchen_door
           - lock.clinic_door
 
+  - platform: template
+    name: "Home only doors"
+    value_template: >
+      {{ is_state('lock.entrance_door', 'locked') and
+         is_state('lock.kids_bathroom_door', 'locked') and
+         is_state('lock.kitchen_door', 'locked')
+         }}
+    lock:
+      action: lock.lock
+      target:
+        entity_id:
+          - lock.entrance_door
+          - lock.kids_bathroom_door
+          - lock.kitchen_door
+    unlock:
+      action: lock.unlock
+      target:
+        entity_id:
+          - lock.entrance_door
+          - lock.kids_bathroom_door
+          - lock.kitchen_door
+
 
 automation:
   - alias: "Security - Camera snapshot on person trigger"
@@ -208,6 +230,7 @@ automation:
           message: >-
             The entrance door is open for 10 minutes, please close it.
 
+
   - alias: Turn everything off script execution failed
     id: security_turn_everything_off_script_failed
     mode: single
@@ -217,9 +240,66 @@ automation:
         entity_id: input_boolean.turn_everything_off_failed
         to: 'on'
         for:
-          minutes: 3
+          minutes: 5
 
     action:
       - action: notify.ohad_telegram
         data:
           message: 'Turn everything off automation failed to execute.'
+
+
+  - alias: Ask if the house should be locked when no person is identified
+    id: security_actionable_notifications_ask_if_house_should_be_locked
+    mode: single
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: zone.home
+        to: '0'
+        for:
+          minutes: 5
+
+    action:
+      - action: script.activate_alexa_actionable_notification
+        data:
+          text: 'I noticed there is no one in the house, knock knock - is someone home?'
+          event_id: 'actionable_notification_security_announce_house_lockdown'
+          alexa_device: 'media_player.kitchen_echo'
+
+
+  - alias: 'Handle house lockdown notification responses'
+    id: security_actionable_notifications_handle_house_lockdown_notification_responses
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_security_announce_house_lockdown
+
+    condition:
+      - condition: state
+        entity_id: lock.home_only_doors
+        state: 'unlocked'
+
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >
+                  {{ trigger.event.data.event_response_type != 'ResponseYes' }}
+            sequence:
+              - action: lock.lock
+                data:
+                  entity_id: lock.home_only_doors
+              - action: notify.ohad_telegram
+                data:
+                  title: "Security - home locked"
+                  message: >-
+                    The house has been locked as no one has been detected in the house and at least one door has been left unlocked
+
+        default:
+          - action: notify.ohad_telegram
+            data:
+              title: "Security - house locking skipped"
+              message: >-
+                The house has **NOT** been locked as no one has been detected in the house
+              parse_mode: markdown

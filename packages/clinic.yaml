@@ -1,0 +1,69 @@
+---
+input_number:
+  monthly_kwh_offset:
+    name: Clinic monthly kwh offset
+    unit_of_measurement: kWh
+    min: 0
+    max: 99999999
+    step: 1
+
+template:
+  - sensor:
+      - name: "Clinic aggregated energy consumption"
+        device_class: energy
+        state_class: total_increasing
+        unit_of_measurement: "kWh"
+        state: >
+          {{
+            states('sensor.shellypmminig3_dcda0cb4cd38_energy') | float(0) +
+            states('sensor.shellypmminig3_dcda0cb5af10_energy') | float(0) +
+            states('sensor.shellypmminig3_dcda0cb688b0_energy') | float(0) +
+            states('sensor.shellyplus2pm_c4d8d557f404_switch_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_c4d8d557f404_switch_1_energy') | float(0)
+          }}
+
+      # Monthly consumption = aggregator - offset
+      - name: "Clinic monthly kWh consumption"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        icon: mdi:chart-line
+        state: >
+          {{
+            (states('sensor.clinic_aggregated_energy_consumption') | float(0)
+             - states('input_number.monthly_kwh_offset') | float(0)) | round(2)
+          }}
+
+      # Monthly cost = monthly usage * cost per kWh
+      - name: "Clinic monthly energy cost"
+        unit_of_measurement: "ILS"
+        state: >
+          {{
+            (states('sensor.clinic_monthly_kwh_consumption') | float(0)
+             * states('input_number.kwh_cost_gross') | float(0)) | round(2)
+          }}
+
+utility_meter:
+  clinic_daily_energy:
+    source: sensor.clinic_aggregated_energy_consumption
+    cycle: daily
+  clinic_monthly_energy:
+    source: sensor.clinic_aggregated_energy_consumption
+    cycle: monthly
+  clinic_yearly_energy:
+    source: sensor.clinic_aggregated_energy_consumption
+    cycle: yearly
+
+automation:
+  - alias: "Reset Monthly Energy Offset"
+    mode: single
+    trigger:
+      - platform: time
+        at: "00:00:00"
+    condition:
+      - condition: template
+        value_template: "{{ now().day == 1 }}"
+    action:
+      - action: input_number.set_value
+        data:
+          entity_id: input_number.monthly_kwh_offset
+          value: "{{ states('sensor.clinic_aggregated_energy_consumption') | float(0) }}"

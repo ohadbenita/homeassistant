@@ -15,6 +15,15 @@ template:
         icon: mdi:thermometer
 
 
+sensor:
+  - platform: derivative
+    source: sensor.roi_room_temperature
+    name: Roi room temp difference change per 10 minutes
+    round: 1
+    unit_time: min
+    time_window: 10
+
+
 automation:
   - alias: "Roi Room - Set AC to night mode (summer)"
     id: roi_room_ac_night_automation
@@ -90,7 +99,7 @@ automation:
 
   - alias: "Turn on Roi room light on motion"
     id: roi_room_turn_light_on_motion
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.occupancy_sensor_71bf_occupancy
@@ -252,3 +261,37 @@ automation:
               - action: switch.turn_off
                 target:
                   entity_id: switch.shellyplus2pm_10061ccdc57c_switch_1
+
+
+  - alias: Shutdown Roi room AC 1 hour after target temperature has been reached
+    id: roi_room_shutdown_ac_target_temp_reached
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.roi_room_temp_difference_change_per_10_minutes
+        above: -1
+        below: 1
+        for:
+          hours: 1
+      - platform: template
+        value_template: >-
+          {{
+            states('climate.roi_room_ac') != 'off' and
+            (now() - states.climate.roi_room_ac.last_changed).total_seconds() > 3600
+          }}
+
+    condition:
+      - condition: template
+        value_template: >
+          {{
+            states('climate.roi_room_ac') != 'off' and
+            (now() - states.climate.roi_room_ac.last_changed).total_seconds() > 3600
+          }}
+      - condition: numeric_state
+        entity_id: sensor.roi_room_temp_difference_change_per_10_minutes
+        above: -1
+        below: 1
+
+    action:
+      - action: climate.turn_off
+        entity_id: climate.roi_room_ac

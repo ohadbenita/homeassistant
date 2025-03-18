@@ -1,19 +1,161 @@
 ---
-sensor:
-  - platform: integration
-    source: sensor.adi_room_ac_power_usage
-    name: Adi room AC Energy Consumption
-    unit_prefix: k
-    round: 2
+template:
+  - binary_sensor:
+      - name: "Should display energy badge"
+        unique_id: "energy_should_display_energy_badge"
+        delay_off: "01:00:00"
+        state: >-
+          {{ states('sensor.solaredge_current_power') | int > 0 }}
 
-  - platform: integration
-    source: sensor.roi_room_ac_power_usage
-    name: Roi room AC Energy Consumption
-    unit_prefix: k
-    round: 2
+      - name: "Last Three Days of Month"
+        state: >
+          {% set now_ = now() %}
+          {% set next_month = now_.replace(day=28) + timedelta(days=4) %}
+          {% set last_day_this_month = (next_month - timedelta(days=next_month.day)).day %}
+          {% if now_.day >= (last_day_this_month - 2) %}
+            on
+          {% else %}
+            off
+          {% endif %}
 
-  - platform: integration
-    source: sensor.study_room_ac_power_usage
-    name: Study room AC Energy Consumption
-    unit_prefix: k
-    round: 2
+  - sensor:
+      - name: "Solar Monthly Income"
+        unit_of_measurement: "ILS"
+        state: >
+          {{
+            (
+              (states('sensor.solaredge_energy_this_month') | float(0) / 1000 * 0.8 * (states('input_number.kwh_sold') | float(0)))
+              +
+              (states('sensor.solaredge_energy_this_month') | float(0) / 1000 * 0.2 * (states('input_number.kwh_cost_net') | float(0)))
+            ) | round(2)
+          }}
+
+      - name: Aggregated house consumption raw
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: >
+          {{
+            states('sensor.athom_02_energy_total') | float(0) +
+            states('sensor.charger_energy_active_import_register') | float(0) +
+            states('sensor.dryer_plug_energy_total') | float(0) +
+            states('sensor.washing_machine_energy_total') | float(0) +
+            states('sensor.study_room_e_bike_charger_energy_total') | float(0) +
+            states('sensor.clinic_aggregated_energy') | float(0) +
+            states('sensor.shellyplus2pm_fcb4670e68e8_switch_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_fcb4670e68e8_switch_1_energy') | float(0) +
+            states('sensor.shellyplus2pm_d48afc581860_switch_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_d48afc581860_switch_1_energy') | float(0) +
+            states('sensor.shelly2pmg3_34cdb0776380_cover_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_c4d8d5579560_cover_0_energy') | float(0) +
+            states('sensor.dining_room_left_window_energy') | float(0) +
+            states('sensor.living_room_right_window_energy') | float(0) +
+            states('sensor.living_room_middle_window_energy') | float(0) +
+            states('sensor.shellyswitch25_6869e3_channel_1_energy') | float(0) +
+            states('sensor.shellyswitch25_6869e3_channel_2_energy') | float(0) +
+            states('sensor.shellyplus2pm_fcb467a684e8_switch_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_fcb467a684e8_switch_1_energy') | float(0) +
+            states('sensor.shellyplus2pm_fcb467a580a8_switch_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_fcb467a580a8_switch_1_energy') | float(0) +
+            states('sensor.shellyplus2pm_fcb467a557a0_switch_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_fcb467a557a0_switch_1_energy') | float(0) +
+            states('sensor.shellyplus2pm_fcb4670e673c_switch_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_fcb4670e673c_switch_1_energy') | float(0) +
+            states('sensor.shellyplus2pm_e465b8f38f54_energy') | float(0) +
+            states('sensor.shellyplus2pm_e465b8b871b0_energy') | float(0) +
+            states('sensor.shellyplus2pm_c82e180e02a4_energy') | float(0) +
+            states('sensor.shellyplus2pm_c4d8d5582a90_energy') | float(0) +
+            states('sensor.shellyplus2pm_c4d8d557f404_switch_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_c4d8d557f404_switch_1_energy') | float(0) +
+            states('sensor.shellyplus2pm_a0a3b3682b10_switch_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_a0a3b3682b10_switch_1_energy') | float(0) +
+            states('sensor.shellyplus2pm_10061ccdc57c_switch_0_energy') | float(0) +
+            states('sensor.shellyplus2pm_10061ccdc57c_switch_1_energy') | float(0) +
+            states('sensor.shellyplus1pm_e465b8f12024_switch_0_energy') | float(0) +
+            states('sensor.shelly2pmg3_8cbfea94c76c_switch_1_energy') | float(0) +
+            states('sensor.shellypmminig3_dcda0cb4cd38_energy') | float(0) +
+            states('sensor.shelly2pmg3_8cbfea94c76c_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_dcda0cead100_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_dcda0cafe368_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7dac88574_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_54320451ae98_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da92c7a4_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da92adb0_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da9275f0_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da8f8b78_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da8f85bc_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da8eef08_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da8da318_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da8c3e68_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da8b78c4_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da92245c_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_3030f9eca0dc_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_34b7da8a0338_switch_0_energy') | float(0) +
+            states('sensor.shelly2pmg3_8cbfea9f54b0_switch_0_energy') | float(0) +
+            states('sensor.shelly2pmg3_8cbfea9f54b0_switch_1_energy') | float(0)
+          }}
+
+      - name: "Aggregated house consumption"
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: >
+          {% set old = states('sensor.aggregated_house_consumption') | float(0) %}
+          {% set new = states('sensor.aggregated_house_consumption_raw') | float(0) %}
+          {% if new >= old %}
+            {{ new }}
+          {% else %}
+            {{ old }}
+          {% endif %}
+
+      - name: "Return to Grid Energy"
+        device_class: energy
+        unit_of_measurement: "kWh"
+        state_class: total_increasing
+        state: >
+          {% set production = states('sensor.solaredge_produced_energy') | float(0) %}
+          {% set consumption = states('sensor.aggregated_house_consumption') | float(0) %}
+          {{ (production - consumption) if (production > consumption) else 0 }}
+
+input_number:
+  kwh_cost_gross:
+    name: kWh Cost Gross
+    initial: 0.64
+    min: 0.5
+    max: 1
+    step: 0.01
+    unit_of_measurement: "ILS/kWh"
+
+  kwh_cost_net:
+    name: kWh Cost net
+    initial: 0.5952
+    min: 0.5
+    max: 1
+    step: 0.01
+    unit_of_measurement: "ILS/kWh"
+
+  kwh_sold:
+    name: kWh sold net
+    initial: 0.48
+    min: 0.48
+    max: 0.49
+    step: 0.01
+    unit_of_measurement: "ILS/kWh"
+
+automation:
+  - alias: "Alert when solar system is inactive"
+    id: energy_alert_when_solar_system_is_inactive
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.solaredge_site_details
+        from: Active
+        for:
+          minutes: 10
+
+    action:
+      - action: notify.ohad_telegram
+        data_template:
+          message: >-
+            An issue has been identified in the Solar panels system,
+            current system state is {{  state('sensor.solaredge_site_details') }}

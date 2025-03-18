@@ -10,6 +10,8 @@ input_boolean:
   dishwasher_message_scheduled:
     name: Dishwasher Message Scheduled
 
+  should_announce_pantry_freezer_door_closed:
+    name: Should announce pantry freezer door closed
 
 input_datetime:
   dishwasher_announcement_time:
@@ -104,9 +106,7 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id:
-          - binary_sensor.entrance_to_living_room_01_occupancy
-          - binary_sensor.entrance_indoor_occupancy
+        entity_id: binary_sensor.kids_hallway_01_occupancy
         from: 'off'
         to: 'on'
 
@@ -117,7 +117,7 @@ automation:
           value_template: >-
             {{ as_timestamp(now()) - as_timestamp(state_attr('automation.turn_on_kitchen_lights_upon_first_movement_in_the_morning', 'last_triggered') or today_at('00:00')) | int > 14400 }}
         - condition: time
-          after: '06:30:00'
+          after: '06:00:00'
           before: '10:00:00'
         - condition: state
           entity_id: input_boolean.away_mode
@@ -181,7 +181,7 @@ automation:
                 entity_id: person.roi_benita
                 state: 'home'
             sequence:
-              - service: notify.ohad_whatsapp_api
+              - action: notify.ohad_whatsapp_api
                 data:
                   message: Dishwasher cycle complete, please unload the dishes
                   title: Chore notification
@@ -193,7 +193,7 @@ automation:
                 value_template: >-
                   {{ not is_state('person.roi_benita', 'home') }}
             sequence:
-              - service: input_boolean.turn_on
+              - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.dishwasher_message_scheduled
 
@@ -474,6 +474,7 @@ automation:
           message: >-
             Yulanda's fan speed is set to {{ state_attr('vacuum.yulanda', 'fan_speed') }}
 
+
   - alias: Pantry freezer open detection
     id: kitchen_pantry_freezer_open
     initial_state: true
@@ -495,3 +496,76 @@ automation:
           target: !secret rinat_benita_whatsapp_user_id
           data:
             media_url: {}
+
+      - action: input_boolean.turn_on
+        entity_id: input_boolean.should_announce_pantry_freezer_door_closed
+
+
+  - alias: Pantry Freezer Closed Notification
+    id: kitchen_pantry_freezer_closed
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.pantry_freezer_01_contact
+        to: 'off'
+        for:
+          minutes: 1
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.should_announce_pantry_freezer_door_closed
+        state: 'on'
+
+    action:
+      - action: notify.ohad_telegram
+        data:
+          message: >-
+            The pantry freezer door has been closed after being open for {{
+            (as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60
+            | int }} minutes
+
+      - action: notify.ohad_whatsapp_api
+        data:
+          message: >
+            The pantry freezer door has been closed after being open for {{
+            (as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60
+            | int }} minutes
+          title: Appliance Alert
+          target: !secret rinat_benita_whatsapp_user_id
+          data:
+            media_url: {}
+
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.should_announce_pantry_freezer_door_closed
+
+
+  - alias: "Kitchen - Set Yulanda Volume at 08:00 & 21:00"
+    id: kitchen_pantry_set_yulanda_volume
+    mode: single
+    trigger:
+      - platform: time
+        at: "08:00:00"
+      - platform: time
+        at: "21:00:00"
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ now().hour == 8 }}
+            sequence:
+              - action: number.set_value
+                data:
+                  entity_id: number.roborock_s8_maxv_ultra_volume
+                  value: 50
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {{ now().hour == 21 }}
+            sequence:
+              - action: number.set_value
+                data:
+                  entity_id: number.roborock_s8_maxv_ultra_volume
+                  value: 5
+        default: []

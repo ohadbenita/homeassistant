@@ -10,7 +10,7 @@ alexa_notification:
       example: 'tts'
     current_volume:
       description: 'The current volume of the media player'
-      example: '0.35'
+      example: 0.35
     message:
       description: 'The message to send to the device'
       example: 'some important message'
@@ -18,7 +18,7 @@ alexa_notification:
     - action: media_player.volume_set
       data_template:
         entity_id: '{{ alexa_device }}'
-        volume_level: '0.25'
+        volume_level: 0.25
 
     - action: notify.alexa_media
       data_template:
@@ -31,7 +31,7 @@ alexa_notification:
     - action: media_player.volume_set
       data_template:
         entity_id: '{{ alexa_device }}'
-        volume_level: '{{ current_volume }}'
+        volume_level: '{{ current_volume | float(0.25) }}'
 
 activate_alexa_actionable_notification:
   description: 'Activates an actionable notification on a specific echo device'
@@ -48,7 +48,7 @@ activate_alexa_actionable_notification:
   sequence:
     - action: media_player.volume_set
       data:
-        volume_level: '0.3'
+        volume_level: 0.3
         entity_id: "{{ alexa_device }}"
 
     - action: input_text.set_value

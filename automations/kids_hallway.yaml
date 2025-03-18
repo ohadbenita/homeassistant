@@ -12,18 +12,16 @@
     - platform: homeassistant
       event: start
 
-  # Only allow this automation to proceed if we are:
-  #   BEFORE sunrise OR AFTER sunset
   condition:
     - condition: or
       conditions:
         - condition: sun
           before: sunrise
+          before_offset: "02:00:00"
         - condition: sun
           after: sunset
           after_offset: "-01:00:00"
 
-    # Also require that at least one sensor is on
     - condition: or
       conditions:
         - condition: state
@@ -45,7 +43,7 @@
             - condition: time
               after: '00:00:00'
           sequence:
-            - service: light.turn_on
+            - action: light.turn_on
               target:
                 entity_id: light.shellydimmer2_34945478921b
               data:
@@ -55,15 +53,16 @@
         - conditions:
             - condition: sun
               after: sunset
+              after_offset: "-01:00:00"
             - condition: time
               before: '00:00:00'
           sequence:
-            - service: homeassistant.turn_on
+            - action: homeassistant.turn_on
               target:
                 entity_id:
                   - switch.shelly1pmminig3_dcda0cafe368_switch_0  # kids rooms spots
                   - switch.shelly1pmminig3_dcda0cead100_switch_0  # master bathroom spots
-            - service: light.turn_on
+            - action: light.turn_on
               target:
                 entity_id: light.shellydimmer2_34945478921b
               data:
@@ -162,3 +161,30 @@
   action:
     - action: switch.toggle
       entity_id: switch.shelly1pmminig3_34b7da92c7a4_switch_0
+
+- alias: Toggle Vegetable Planter at Scheduled Times
+  id: kids_hallway_toggle_vegetable_planter
+  initial_state: true
+  trigger:
+    - id: off_trigger
+      platform: time
+      at: '22:00:00'
+    - id: on_trigger
+      platform: time
+      at: '07:15:00'
+  action:
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.id == 'off_trigger' }}"
+          sequence:
+            - action: switch.turn_off
+              target:
+                entity_id: switch.vegetable_planter
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.id == 'on_trigger' }}"
+          sequence:
+            - action: switch.turn_on
+              target:
+                entity_id: switch.vegetable_planter

@@ -20,6 +20,7 @@ input_number:
 
 automation:
   - alias: Awtrix Spotify Now Playing
+    initial_state: false
     id: awtrix_spotify_now_playing
     description: Awtrix now playing automation
     trigger:
@@ -73,7 +74,7 @@ automation:
 
   - alias: Awtrix ohad@lightricks.com calendar event notification
     id: awtrix_ohad_lightricks_com_calendar_event_notification
-    initial_state: true
+    initial_state: false
     description: "Awtrix ohad@lightricks.com calendar event notification"
     trigger:
       - platform: calendar
@@ -134,6 +135,7 @@ automation:
 
   - alias: Awtrix Night Clock
     id: awtrix_night_clock
+    initial_state: false
     use_blueprint:
       path: RDG88/nightclock_awtrix.yaml
       input:
@@ -150,6 +152,7 @@ automation:
 
   - alias: "Awtrix set transition Speed"
     id: awtrix_transition_speed
+    initial_state: false
     trigger:
       - platform: state
         entity_id: input_number.awtrix_transition_speed
@@ -161,6 +164,7 @@ automation:
 
 
   - alias: "Awtrix set app time"
+    initial_state: false
     id: awtrix_app_time
     trigger:
       - platform: state

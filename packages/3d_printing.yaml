@@ -1,12 +1,30 @@
 ---
+input_datetime:
+  print_active_start_time:
+    name: Print Active Start Time
+    has_date: true
+    has_time: true
+
 sensor:
   - platform: history_stats
     name: "3D Print Active Time"
     entity_id: sensor.creality_ender_v3_ke_current_print_state
     state: "printing"
     type: time
-    start: "{{ now().replace(hour=0, minute=0, second=0) }}"
+    start: "{{ states('input_datetime.print_active_start_time') }}"
     end: "{{ now() }}"
+
+  - platform: command_line
+    name: 3D print latest timelapse filename
+    command: >
+      find /config/www -type f -name '*.mp4' -printf '%T@ %f\n' |
+      sort -n |
+      tail -1 |
+      awk '{print $2}'
+    scan_interval: 300
+
+shell_command:
+  download_latest_mp4_timelapse: '/config/scripts/download_latest_timelapse.sh'
 
 
 template:
@@ -23,6 +41,34 @@ template:
           {% endif %}
 
 automation:
+  - alias: "Initialize Print Active Start Time on Startup"
+    id: 3d_printer_initialize_print_active_start_time
+    initial_state: false
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.print_active_start_time
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+  - alias: "Reset 3D Print Active Time When Printing Starts"
+    id: 3d_printer_reset_print_active_time_when_printing_starts
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.creality_ender_v3_ke_current_print_state
+        to: printing
+    action:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.print_active_start_time
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+
   - alias: "Send picture once printing is done"
     id: 3d_printer_send_snapshot_when_done
     initial_state: true
@@ -40,16 +86,13 @@ automation:
 
       - delay: '00:00:02'
 
-      - action: homeassistant.turn_off
-        entity_id: switch.creality_printer
-
       - action: notify.ohad_telegram
         data:
-          message: "The 3D print has completed & the printer has been turned off"
+          message: "The 3D print has completed"
           data:
             photo:
               - file: "/config/www/snapshots/3d_printer_snapshot.jpg"
-                caption: "The 3D print has completed & the printer has been turned off"
+                caption: "The 3D print has completed"
 
   - alias: "Send picture once printing is in error"
     id: 3d_printer_send_snapshot_when_in_error
@@ -73,3 +116,161 @@ automation:
             photo:
               - file: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
                 caption: "The 3D print has come to an error. Here's a snapshot"
+
+  - alias: 'Ask if printer should be shut down after print is done'
+    id: 3d_printer_actionable_notification_shutdown_printer_and_turn_lights_off
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.creality_ender_v3_ke_current_print_state
+        from: printing
+        to: complete
+        for:
+          minutes: 15
+
+    action:
+      - action: script.activate_alexa_actionable_notification
+        data:
+          text: 'The 3D print is done, should I turn off the printer and lights?'
+          event_id: 'actionable_notification_study_printing_complete_shutdown'
+          alexa_device: 'media_player.study_room'
+
+
+  - alias: '3D print shutdown printer and turn lights off'
+    id: 3d_printer_shutdown_printer_and_turn_lights_off
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_study_printing_complete_shutdown
+          event_response_type: ResponseYes
+
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_study_printing_complete_shutdown
+          event_response_type: ResponseNone
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id:
+          - switch.creality_printer
+          - switch.shellyplus1pm_e465b8f12024_switch_0
+
+
+  - alias: 'Alert on a possible printing fault'
+    id: 3d_print_alert_on_possible_fault
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.creality_ender_v3_ke_current_print_state
+        to: paused
+
+    action:
+      - action: camera.snapshot
+        data:
+          entity_id: camera.creality_ender_v3_ke
+          filename: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
+
+      - delay: '00:00:02'
+
+      - action: notify.ohad_telegram
+        data:
+          message: "A possible issue has been detected in the current 3D print"
+          data:
+            photo:
+              - file: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
+                caption: "A possible issue has been detected in the current 3D print"
+
+
+  - alias: 'Ask if lights should be turned off after printing starts'
+    id: 3d_print_actionable_notification_ask_if_light_should_be_turned_off_when_printing_starts
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.creality_ender_v3_ke_current_print_state
+        to: printing
+
+    action:
+      - action: script.activate_alexa_actionable_notification
+        data:
+          text: 'A new 3D print has started, should I keep the light on?'
+          event_id: 'actionable_notification_study_printing_starts'
+          alexa_device: 'media_player.study_room'
+
+
+  - alias: '3D print turn lights off when printing starts'
+    id: 3d_printer_turn_lights_off_when_printing_starts
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_study_printing_starts
+          event_response_type: ResponseNone
+
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_study_printing_starts
+          event_response_type: ResponseNo
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+
+
+  - alias: Study room Toggle light when door opens or closes during 3D print
+    id: study_room_toggle_light_when_door_opens_or_closes_during_3d_print
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.study_room_door_contact
+        to: 'on'
+      - platform: state
+        entity_id: binary_sensor.study_room_door_contact
+        to: 'off'
+    condition:
+      - condition: state
+        entity_id: sensor.creality_ender_v3_ke_current_print_state
+        state: 'printing'
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.study_room_door_contact
+                state: 'on'
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.study_room_door_contact
+                state: 'off'
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+
+
+  - alias: "Send Timelapse Link via Telegram After Print Completes"
+    description: "Downloads the latest .mp4 timelapse and sends a link via Telegram when a print completes."
+    trigger:
+      - platform: state
+        entity_id: sensor.creality_ender_v3_ke_current_print_state
+        from: printing
+        to: complete
+        for:
+          minutes: 5
+    action:
+      - action: shell_command.download_latest_mp4_timelapse
+
+      - delay: '00:05:00'
+
+      - action: notify.ohad_telegram
+        data_template:
+          message: "Your latest 3D print timelapse is ready!"
+          data:
+            video:
+              - file: "/config/www/3d_print_latest_timelapse.mp4"
+                caption: "Latest Timelapse"

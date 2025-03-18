@@ -1,0 +1,47 @@
+---
+automation:
+  - alias: Master bathroom water leak detection
+    id: master_bathroom_water_leak_detection
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.master_bathroom_sink_water_leak
+        platform: state
+        to: 'on'
+    action:
+      - action: notify.ohad_telegram
+        data_template:
+          message: "Water leak has been detected @ {{ trigger.from_state.attributes.friendly_name }} !!!"
+
+
+  - alias: "Turn off master bathroom lights when no motion is detected"
+    id: master_bathroom_turn_light_off_no_motion_detected
+    initial_state: false
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.occupancy_sensor_7480_occupancy
+        to: 'off'
+        for:
+          minutes: 5
+
+      - platform: state
+        entity_id: sensor.master_bathroom_01_motion_state
+        to: 'static'
+        for:
+          minutes: 5
+
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.occupancy_sensor_7480_occupancy
+        state: 'off'
+      - condition: state
+        entity_id: sensor.master_bathroom_01_motion_state
+        state: 'static'
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id:
+          - switch.shelly2pmg3_8cbfea94c76c_switch_0
+          - switch.shelly2pmg3_8cbfea94c76c_switch_1

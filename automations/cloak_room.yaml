@@ -35,3 +35,63 @@
   action:
     - action: homeassistant.turn_off
       entity_id: switch.shellyplus2pm_fcb467a684e8_switch_0
+
+
+- alias: Toggle Switch Based on UPS Voltage
+  initial_state: true
+  mode: single
+  id: cloak_room_turn_on_water_heater_after_power_failure
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.ups_input_voltage
+      below: 200
+
+  action:
+    - wait_for_trigger:
+        - platform: numeric_state
+          entity_id: sensor.ups_input_voltage
+          above: 200
+      continue_on_timeout: false
+    - action: switch.toggle
+      target:
+        entity_id: switch.gas_water_heater
+    - action: notify.ohad_whatsapp_api
+      data:
+        message: "Electricity power failure detected. The gas water heater has been reset, check that it's on"
+        title: Appliance alert
+        target: !secret rinat_benita_whatsapp_user_id
+        data:
+          media_url: {}
+    - action: notify.ohad_telegram
+      data_template:
+        message: "Electricity power failure detected. The gas water heater has been reset, check that it's on"
+
+
+- alias: "Breaker Panel LED Control"
+  id: cloak_room_breaker_panel_led_control
+  description: "Gradually turn on the LED at 100% brightness and ~4000K white when the cabinet is opened (sensor on), and gradually turn it off when closed."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.breaker_panel_01_contact
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.breaker_panel_01_contact
+              state: "on"
+          sequence:
+            - service: light.turn_on
+              target:
+                entity_id: light.breaker_panel_led_01
+              data:
+                brightness_pct: 100
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.breaker_panel_01_contact
+              state: "off"
+          sequence:
+            - service: light.turn_off
+              target:
+                entity_id: light.breaker_panel_led_01
+      default: []
+  mode: single
