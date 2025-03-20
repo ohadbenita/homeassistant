@@ -292,12 +292,12 @@ def analyze_gas_heater_display():
                 "Identify if the image contains a number, a red dot and a green dot. "
                 "Respond **only** in JSON with keys 'temperature' (integer) 'is_active' for the green "
                 "dot ('on' if there is a green dot, 'off' if there isn't) and 'state' for the red "
-                "dot ('on' if there is a green dot, 'off' if there isn't)"
+                "dot ('on' if there is a green dot, 'off' if there isn't) and 'confidence' (0 to 1)"
                 "Don't include any other markdown or text in your response such as ```json"
             ),
             user_prompt=(
                 "Parse the image provided and check for a number, red dot and green dot."
-                "Answer with a JSON object containing 'temperature', 'is_active' and 'state'"
+                "Answer with a JSON object containing 'temperature', 'is_active', 'state' and 'confidence' "
                 "and nothing else but these fields."
             ),
         )
