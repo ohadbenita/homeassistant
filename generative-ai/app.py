@@ -301,7 +301,7 @@ def analyze_gas_heater_display():
                 "and nothing else but these fields."
             ),
         )
-        data_sent = update_clothes_rack_ha_entity(detection_result)
+        data_sent = update_gas_heater_display_ha_entity(detection_result)
 
         return jsonify(data_sent, 200)
 
