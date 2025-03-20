@@ -218,13 +218,13 @@ def update_gas_heater_display_ha_entity(result: Dict[str, Any]) -> Dict[str, Any
     confidence = detection_result["confidence"]
     attributes = {
         "device_class": "temperature",
-        "is_active": detection_result["is_active"],
-        "temperature": detection_result["temperature"],
+        "is_heating": detection_result["is_active"],
         "confidence": round(confidence, 3),
         "updated_at": int(time.time()),
         "input_tokens": result["usage"]["inputTokens"],
         "output_tokens": result["usage"]["outputTokens"],
         "stop_reason": result["stopReason"],
+        "heater_state": detection_result["state"],
     }
 
     url = f"{HA_BASE_URL}/api/states/{GAS_HEATER_TARGET_ENTITY_ID}"
@@ -232,7 +232,7 @@ def update_gas_heater_display_ha_entity(result: Dict[str, Any]) -> Dict[str, Any
         "Authorization": f"Bearer {HA_TOKEN}",
         "Content-Type": "application/json",
     }
-    data = {"state": detection_result["state"], "attributes": attributes}
+    data = {"state": detection_result["temperature"], "attributes": attributes}
 
     resp = requests.post(url, headers=headers, json=data, timeout=5)
     if resp.status_code in (200, 201):
