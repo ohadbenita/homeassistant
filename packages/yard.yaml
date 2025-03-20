@@ -95,6 +95,11 @@ light:
               - switch.shelly1pmminig3_34b7da9342c4_switch_0
               - switch.shellyplus2pm_c4d8d557f404_switch_1
 
+rest_command:
+  analyze_laundry:
+    url: !secret analyze_laundry_image_url
+    method: GET
+
 automation:
   - alias: "Yard - Turn off roof lights in the night"
     id: yard_turn_off_roof_lights_in_the_night
@@ -502,7 +507,7 @@ automation:
         to: 'off'
         for: '01:00:00'
     action:
-      - service: automation.turn_on
+      - action: automation.turn_on
         entity_id: automation.turn_off_parking_flood_lights_when_no_motion_is_detected
 
 
@@ -512,8 +517,38 @@ automation:
     trigger:
       - platform: state
         entity_id: switch.shellyswitch25_6869e3_channel_2
-      - platform: homeassistant
-        event: start
+
     action:
       - action: switch.toggle
         entity_id: switch.shelly1pmminig3_34b7dac9ea68_switch_0
+
+
+  - alias: "Analyze laundry when the sun sets"
+    id: yard_analyze_laundry_sunset
+    initial_state: true
+    trigger:
+      platform: sun
+      event: sunset
+
+    action:
+      - action: rest_command.analyze_laundry
+
+  - alias: "Alert if laundry is out during the night"
+    id: yard_alert_if_laundry_is_out
+    initial_state: true
+    trigger:
+      platform: sun
+      event: sunset
+      offset: "01:00:00"
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.is_laundry_hanging
+        state: 'on'
+
+    action:
+      - action: notify.ohad_telegram
+        data:
+          title: "Alert: Laundry is out"
+          message: >-
+            please consider bringing it into the house

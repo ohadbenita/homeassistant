@@ -397,6 +397,10 @@ automation:
         entity_id: sensor.living_room_01_action
         to: 'button_6_single'
 
+      - platform: state
+        entity_id: sensor.entrance_01_action
+        to: 'hold'
+
     action:
       - action: cover.set_cover_position
         target:
@@ -435,6 +439,9 @@ automation:
       - platform: state
         entity_id: sensor.living_room_01_action
         to: 'button_6_double'
+      - platform: state
+        entity_id: sensor.entrance_01_action
+        to: 'hold'
 
     action:
       - action: cover.set_cover_position
@@ -544,12 +551,6 @@ automation:
         event_data:
           event_id: actionable_notification_lights_tv_playing
           event_response_type: ResponseYes
-
-      - platform: event
-        event_type: alexa_actionable_notification
-        event_data:
-          event_id: actionable_notification_lights_tv_playing
-          event_response_type: ResponseNone
 
     action:
       - action: homeassistant.turn_off

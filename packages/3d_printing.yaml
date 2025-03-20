@@ -191,6 +191,11 @@ automation:
         entity_id: sensor.creality_ender_v3_ke_current_print_state
         to: printing
 
+    condition:
+      - condition: state
+        entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+        state: 'on'
+
     action:
       - action: script.activate_alexa_actionable_notification
         data:
@@ -229,10 +234,12 @@ automation:
       - platform: state
         entity_id: binary_sensor.study_room_door_contact
         to: 'off'
+
     condition:
       - condition: state
         entity_id: sensor.creality_ender_v3_ke_current_print_state
         state: 'printing'
+
     action:
       - choose:
           - conditions:
