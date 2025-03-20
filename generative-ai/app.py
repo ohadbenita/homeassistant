@@ -20,8 +20,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------
 HA_BASE_URL = os.environ.get("HA_BASE_URL").rstrip("/")
 HA_TOKEN = os.environ.get("HA_TOKEN")
-CAMERA_ENTITY_ID = os.environ.get("CAMERA_ENTITY_ID")
-TARGET_ENTITY_ID = os.environ.get("TARGET_ENTITY_ID")
+CLOTHES_RACK_CAMERA_ENTITY_ID = os.environ.get("CLOTHES_RACK_CAMERA_ENTITY_ID")
+CLOTHES_RACK_TARGET_ENTITY_ID = os.environ.get("CLOTHES_RACK_TARGET_ENTITY_ID")
+GAS_HEATER_CAMERA_ENTITY_ID = os.environ.get("GAS_HEATER_CAMERA_ENTITY_ID")
+GAS_HEATER_TARGET_ENTITY_ID = os.environ.get("GAS_HEATER_TARGET_ENTITY_ID")
+
 AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "us.amazon.nova-lite-v1:0")
 
@@ -29,8 +32,10 @@ BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "us.amazon.nova-lite-v1:0"
 required_vars = [
     HA_BASE_URL,
     HA_TOKEN,
-    CAMERA_ENTITY_ID,
-    TARGET_ENTITY_ID,
+    CLOTHES_RACK_CAMERA_ENTITY_ID,
+    CLOTHES_RACK_TARGET_ENTITY_ID,
+    GAS_HEATER_CAMERA_ENTITY_ID,
+    GAS_HEATER_TARGET_ENTITY_ID,
     BEDROCK_MODEL_ID,
 ]
 if any(not var for var in required_vars):
@@ -94,7 +99,9 @@ def capture_image_from_ha(camera_entity_id: str) -> bytes:
         )
 
 
-def analyze_image_with_bedrock(image_bytes: bytes) -> Dict[str, Any]:
+def analyze_image_with_bedrock(
+    image_bytes: bytes, system_prompt: str, user_prompt: str
+) -> Dict[str, Any]:
     """
     Send the base64-encoded image to AWS Bedrock for analysis.
     Assumes the model returns JSON with 'detected' (bool) and 'confidence' (float).
@@ -104,16 +111,7 @@ def analyze_image_with_bedrock(image_bytes: bytes) -> Dict[str, Any]:
         raise EnvironmentError("AWS Bedrock Model ID is not configured.")
 
     base64_image = base64.b64encode(image_bytes).decode("utf-8")
-    system_prompt = [
-        {
-            "text": (
-                "You are an image analysis expert. "
-                "Identify if an image contains a clothes drying rack with clothes on it. "
-                "Respond **only** in JSON with keys 'detected' (boolean) and 'confidence' (0 to 1)."
-                "Don't include any other markdown or text in your response such as ```json"
-            )
-        }
-    ]
+    system_prompt = [{"text": system_prompt}]
 
     user_message = [
         {
@@ -125,13 +123,7 @@ def analyze_image_with_bedrock(image_bytes: bytes) -> Dict[str, Any]:
                         "source": {"bytes": base64_image},
                     }
                 },
-                {
-                    "text": (
-                        "Does this image contain a clothes drying rack with clothes on it? "
-                        "Answer with a JSON object containing 'detected' and 'confidence' and "
-                        "nothing else but these fields."
-                    )
-                },
+                {"text": user_prompt},
             ],
         }
     ]
@@ -169,11 +161,11 @@ def analyze_image_with_bedrock(image_bytes: bytes) -> Dict[str, Any]:
     return result
 
 
-def update_home_assistant_entity(result: Dict[str, Any]) -> Tuple[bool, float]:
+def update_clothes_rack_ha_entity(result: Dict[str, Any]) -> Tuple[bool, float]:
     """
     Update a Home Assistant entity with the detection results.
     """
-    if not (HA_BASE_URL and HA_TOKEN and TARGET_ENTITY_ID):
+    if not (HA_BASE_URL and HA_TOKEN and CLOTHES_RACK_TARGET_ENTITY_ID):
         logger.warning("Cannot update entity. Missing HA config or target entity.")
         raise ValueError("Cannot update entity. Missing HA config or target entity.")
 
@@ -192,7 +184,7 @@ def update_home_assistant_entity(result: Dict[str, Any]) -> Tuple[bool, float]:
         "stop_reason": result["stopReason"],
     }
 
-    url = f"{HA_BASE_URL}/api/states/{TARGET_ENTITY_ID}"
+    url = f"{HA_BASE_URL}/api/states/{CLOTHES_RACK_TARGET_ENTITY_ID}"
     headers = {
         "Authorization": f"Bearer {HA_TOKEN}",
         "Content-Type": "application/json",
@@ -202,28 +194,116 @@ def update_home_assistant_entity(result: Dict[str, Any]) -> Tuple[bool, float]:
     resp = requests.post(url, headers=headers, json=data, timeout=5)
     if resp.status_code in (200, 201):
         logger.info(
-            f"Successfully updated '{TARGET_ENTITY_ID}' with detected={is_detected}, "
+            f"Successfully updated '{CLOTHES_RACK_TARGET_ENTITY_ID}' with detected={is_detected}, "
             f"confidence={confidence:.3f}."
         )
     else:
         logger.error(
-            f"Failed to update entity '{TARGET_ENTITY_ID}'. Status: {resp.status_code}, Error: {resp.text}"
+            f"Failed to update entity '{CLOTHES_RACK_TARGET_ENTITY_ID}'. Status: {resp.status_code}, Error: {resp.text}"
         )
 
     return is_detected, confidence
 
 
-@app.route("/analyze", methods=["GET"])
-def analyze():
+def update_gas_heater_display_ha_entity(result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Update a Home Assistant entity with the detection results.
+    """
+    if not (HA_BASE_URL and HA_TOKEN and GAS_HEATER_TARGET_ENTITY_ID):
+        logger.warning("Cannot update entity. Missing HA config or target entity.")
+        raise ValueError("Cannot update entity. Missing HA config or target entity.")
+
+    # For a binary sensor style: 'on' if True, 'off' if False
+    detection_result = json.loads(result["output"]["message"]["content"][0]["text"])
+    confidence = detection_result["confidence"]
+    attributes = {
+        "device_class": "temperature",
+        "is_active": detection_result["is_active"],
+        "temperature": detection_result["temperature"],
+        "confidence": round(confidence, 3),
+        "updated_at": int(time.time()),
+        "input_tokens": result["usage"]["inputTokens"],
+        "output_tokens": result["usage"]["outputTokens"],
+        "stop_reason": result["stopReason"],
+    }
+
+    url = f"{HA_BASE_URL}/api/states/{GAS_HEATER_TARGET_ENTITY_ID}"
+    headers = {
+        "Authorization": f"Bearer {HA_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    data = {"state": detection_result["state"], "attributes": attributes}
+
+    resp = requests.post(url, headers=headers, json=data, timeout=5)
+    if resp.status_code in (200, 201):
+        logger.info(
+            f"Successfully updated '{GAS_HEATER_TARGET_ENTITY_ID}' with data={data}, "
+            f"confidence={confidence:.3f}."
+        )
+    else:
+        logger.error(
+            f"Failed to update entity '{CLOTHES_RACK_TARGET_ENTITY_ID}'. Status: {resp.status_code}, Error: {resp.text}"
+        )
+
+    return data
+
+
+@app.route("/analyze/clothes-rack", methods=["GET"])
+def analyze_clothes_rack():
     """
     Flask endpoint to capture, analyze, and update the detection results in Home Assistant.
     """
     try:
-        image_bytes = capture_image_from_ha(CAMERA_ENTITY_ID)
-        detection_result = analyze_image_with_bedrock(image_bytes)
-        is_detected, confidence = update_home_assistant_entity(detection_result)
+        image_bytes = capture_image_from_ha(CLOTHES_RACK_CAMERA_ENTITY_ID)
+        detection_result = analyze_image_with_bedrock(
+            image_bytes=image_bytes,
+            system_prompt=(
+                "You are an image analysis expert. "
+                "Identify if an image contains a clothes drying rack with clothes on it. "
+                "Respond **only** in JSON with keys 'detected' (boolean) and 'confidence' (0 to 1)."
+                "Don't include any other markdown or text in your response such as ```json"
+            ),
+            user_prompt=(
+                "Does this image contain a clothes drying rack with clothes on it? "
+                "Answer with a JSON object containing 'detected' and 'confidence' and "
+                "nothing else but these fields."
+            ),
+        )
+        is_detected, confidence = update_clothes_rack_ha_entity(detection_result)
 
         return jsonify({"detected": is_detected, "confidence": confidence}), 200
+
+    except Exception as ex:
+        logger.error(f"Analysis workflow failed: {ex}")
+        return jsonify({"error": str(ex)}), 500
+
+
+@app.route("/analyze/gas-heater-display", methods=["GET"])
+def analyze_gas_heater_display():
+    """
+    Flask endpoint to capture, analyze, and update the detection results in Home Assistant.
+    """
+    try:
+        image_bytes = capture_image_from_ha(GAS_HEATER_CAMERA_ENTITY_ID)
+        detection_result = analyze_image_with_bedrock(
+            image_bytes=image_bytes,
+            system_prompt=(
+                "You are an image analysis expert. "
+                "Identify if the image contains a number, a red dot and a green dot. "
+                "Respond **only** in JSON with keys 'temperature' (integer) 'is_active' for the green "
+                "dot ('on' if there is a green dot, 'off' if there isn't) and 'state' for the red "
+                "dot ('on' if there is a green dot, 'off' if there isn't)"
+                "Don't include any other markdown or text in your response such as ```json"
+            ),
+            user_prompt=(
+                "Parse the image provided and check for a number, red dot and green dot."
+                "Answer with a JSON object containing 'temperature', 'is_active' and 'state'"
+                "and nothing else but these fields."
+            ),
+        )
+        data_sent = update_clothes_rack_ha_entity(detection_result)
+
+        return jsonify(data_sent, 200)
 
     except Exception as ex:
         logger.error(f"Analysis workflow failed: {ex}")
