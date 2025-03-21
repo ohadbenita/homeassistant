@@ -141,5 +141,6 @@ automation:
           data:
             photo:
               - file: "/config/www/snapshots/gas_heater_cam_gas_heater_esp32_cam_snapshot.jpg"
-                caption: "[View Live Feed](https://hass.benita.lol/api/camera_proxy/camera.gas_heater_cam_gas_heater_esp32_cam?token={{ state_attr('camera.gas_heater_cam_gas_heater_esp32_cam', 'access_token') }})"
+                caption: >-
+                  [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.gas_heater_cam_gas_heater_esp32_cam?token={{ state_attr('camera.gas_heater_cam_gas_heater_esp32_cam', 'access_token') }})
                 parse_mode: markdown

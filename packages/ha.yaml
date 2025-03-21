@@ -58,6 +58,10 @@ template:
       state: >
         {{ ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"][now().weekday()][:3] | lower}}
 
+    - name: ha_base_url
+      unique_id: ha_base_url
+      state: !secret base_url
+
 rest_command:
   shelly_calibrate_cover:
     url: "http://{{ shelly_ip }}/rpc"

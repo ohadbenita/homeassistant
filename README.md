@@ -107,6 +107,74 @@ Each room in the house has its own dedicated automation file in the `packages` d
 
 This setup is designed to be modular, allowing for easy customization and expansion by adding new packages and automations to the appropriate room or function.
 
+## Generative AI server
+
+- The generative AI server is a Docker-wrapped Flask web service that exposes camera image analysis and reporting of data identified by an LLM of your choice back as a Home Assistant entity.
+- The web service uses Amazon Bedrock as the platform to invoke the model, which is configurable according to your needs.
+- Keep in mind that the current implementation is designed to my needs, but changing the prompt and entities to one's needs is relatively simple.
+
+### How-To install
+
+1. Change the [app.py](./generative-ai/app.py) code to expose endpoints to your needs.
+2. Build and deploy the docker image (See [Dockerfile](./generative-ai/Dockerfile)) by running `docker build -t camera-analysis .`
+3. Configure an IAM user with permissions to invoke the [AWS Bedrock](https://aws.amazon.com/bedrock/) model you chose. Keep in mind the cost could be steep so use this service wisely.
+4. Configure the required environment variables for the app service.
+5. Deploy the container using Docker CLI or Docker compose:
+
+```yaml
+  gen_ai_server:
+    image: hass-generative-ai:latest
+    container_name: hass-gen-ai-server
+    restart: unless-stopped
+    network_mode: bridge
+    ports:
+      - "6543:5000"
+    environment:
+      - HA_BASE_URL=${HA_BASE_URL}
+      - HA_TOKEN=${HA_TOKEN}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=US-EAST-1
+      - CLOTHES_RACK_CAMERA_ENTITY_ID=${CLOTHES_RACK_CAMERA_ENTITY_ID}
+      - CLOTHES_RACK_TARGET_ENTITY_ID=${CLOTHES_RACK_TARGET_ENTITY_ID}
+      - GAS_HEATER_CAMERA_ENTITY_ID=${GAS_HEATER_CAMERA_ENTITY_ID}
+      - GAS_HEATER_TARGET_ENTITY_ID=${GAS_HEATER_TARGET_ENTITY_ID}
+```
+6. Configure Home Assistant to call the web service using REST command:
+
+```yaml
+  - alias: "Alert if water heater is out of order"
+    id: cloak_room_gas_water_heater_check
+    initial_state: true
+    trigger:
+      platform: sun
+      event: sunset
+      offset: '01:00:00'
+
+    condition:
+      - condition: template
+        value_template: >-
+          {{ not (state_attr('sensor.water_heater', 'is_out_of_order') == 'off' and is_state('sensor.water_heater', '45')) }}
+
+    action:
+      - action: camera.snapshot
+        data:
+          entity_id: camera.gas_heater_cam_gas_heater_esp32_cam
+          filename: "/config/www/snapshots/gas_heater_cam_gas_heater_esp32_cam_snapshot.jpg"
+
+      - delay: '00:00:02'
+
+      - action: notify.ohad_telegram
+        data:
+          title: "Alert: Water heater malfunction"
+          message: "Please check the heater display"
+          data:
+            photo:
+              - file: "/config/www/snapshots/gas_heater_cam_gas_heater_esp32_cam_snapshot.jpg"
+                caption: "[View Live Feed](https://my-hass-base-url/api/camera_proxy/camera.gas_heater_cam_gas_heater_esp32_cam?token={{ state_attr('camera.gas_heater_cam_gas_heater_esp32_cam', 'access_token') }})"
+                parse_mode: markdown
+```
+
 ## Contributions
 
 Contributions are welcome! If you have any suggestions, bug reports, or feature requests, please open an issue or submit a pull request.
