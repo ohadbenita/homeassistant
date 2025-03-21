@@ -218,13 +218,13 @@ def update_gas_heater_display_ha_entity(result: Dict[str, Any]) -> Dict[str, Any
     confidence = detection_result["confidence"]
     attributes = {
         "device_class": "temperature",
-        "is_heating": detection_result["is_active"],
+        "is_out_of_order": "off" if detection_result["is_active"] == "on" else "off",
         "confidence": round(confidence, 3),
         "updated_at": int(time.time()),
         "input_tokens": result["usage"]["inputTokens"],
         "output_tokens": result["usage"]["outputTokens"],
         "stop_reason": result["stopReason"],
-        "heater_state": detection_result["state"],
+        "is_heating": detection_result["state"],
     }
 
     url = f"{HA_BASE_URL}/api/states/{GAS_HEATER_TARGET_ENTITY_ID}"
@@ -292,7 +292,7 @@ def analyze_gas_heater_display():
                 "Identify if the image contains a number, a red dot and a green dot. "
                 "Respond **only** in JSON with keys 'temperature' (integer) 'is_active' for the green "
                 "dot ('on' if there is a green dot, 'off' if there isn't) and 'state' for the red "
-                "dot ('on' if there is a green dot, 'off' if there isn't) and 'confidence' (0 to 1)"
+                "dot ('on' if there is a red dot, 'off' if there isn't) and 'confidence' (0 to 1)"
                 "Don't include any other markdown or text in your response such as ```json"
             ),
             user_prompt=(

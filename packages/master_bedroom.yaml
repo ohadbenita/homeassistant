@@ -723,10 +723,19 @@ automation:
     trigger:
       - platform: time
         at: "08:00:00"
+
     condition:
       - condition: state
         entity_id: sensor.school_is_elementary_vacation
         state: "False"
+      - condition: time
+        weekday:
+          - sun
+          - mon
+          - tue
+          - wed
+          - thu
+
     action:
       - action: cover.set_cover_position
         target:

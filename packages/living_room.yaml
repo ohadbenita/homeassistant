@@ -515,7 +515,7 @@ automation:
 
   - alias: Notify TV is playing for turning the lights off
     id: kitchen_notify_tv_is_playing_before_turning_lights_off
-    initial_state: true
+    initial_state: false
     trigger:
       platform: state
       entity_id: media_player.livingroom_tv
