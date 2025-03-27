@@ -43,9 +43,33 @@ automation:
         from: 'off'
         to: 'on'
     action:
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Hazards"
+          message: "Smoke has been detected in the kitchen"
+          data:
+            push:
+              sound:
+                name: "US-EN-Morgan-Freeman-Smoke-Detected-In-Kitchen.wav"
+                critical: 1
+                volume: 1.0
+
+      - action: notify.mobile_app_rinats_iphone
+        data:
+          title: "Hazards"
+          message: "Smoke has been detected in the kitchen"
+          data:
+            push:
+              sound:
+                name: "US-EN-Morgan-Freeman-Smoke-Detected-In-Kitchen.wav"
+                critical: 1
+                volume: 1.0
+
+
       - action: notify.ohad_telegram
         data_template:
           message: "Smoke has been detected in the kitchen"
+
       - action: notify.mobile_app_ohadbenita
         data_template:
           title: "Hazards"

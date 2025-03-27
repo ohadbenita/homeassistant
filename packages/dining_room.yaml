@@ -7,11 +7,22 @@ automation:
       - platform: sun
         event: sunset
         offset: "-03:00:00"
+        id: "offset_trigger"
+      - platform: sun
+        event: sunset
+        id: "sunset_trigger"
 
     condition:
-      - condition: state
-        entity_id: binary_sensor.dst
-        state: 'on'
+      - condition: template
+        value_template: >
+          {% if trigger.id == "offset_trigger" %}
+            {{ is_state('binary_sensor.dst', 'on') }}
+          {% elif trigger.id == "sunset_trigger" %}
+            {{ is_state('binary_sensor.dst', 'off') and
+               ( not is_state('climate.living_room_ac', 'on') or (states('sensor.openweathermap_feels_like_temperature')|int < 15)) }}
+          {% else %}
+            false
+          {% endif %}
 
     action:
       - variables:

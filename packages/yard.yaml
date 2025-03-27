@@ -181,6 +181,7 @@ automation:
         entity_id:
           - binary_sensor.kids_bathroom_door_contact
           - binary_sensor.kitchen_path_person
+          - binary_sensor.kids_bathroom_door_external_occupancy
         to: "off"
         for:
           minutes: 5
@@ -193,6 +194,9 @@ automation:
         state: "off"
       - condition: state
         entity_id: binary_sensor.kitchen_path_person
+        state: "off"
+      - condition: state
+        entity_id: binary_sensor.kids_bathroom_door_external_occupancy
         state: "off"
 
     action:
@@ -547,8 +551,21 @@ automation:
         state: 'on'
 
     action:
+      - action: camera.snapshot
+        data:
+          entity_id: camera.kitchen_path_snapshots_clear
+          filename: "/config/www/snapshots/kitchen_path_camera_clear_snapshot.jpg"
+
+      - delay: '00:00:02'
+
       - action: notify.ohad_telegram
         data:
           title: "Alert: Laundry is out"
           message: >-
             please consider bringing it into the house
+          data:
+            photo:
+              - file: "/config/www/snapshots/kitchen_path_camera_clear_snapshot.jpg"
+                caption: >-
+                  [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.kitchen_path_snapshots_clear?token={{ state_attr('camera.kitchen_path_snapshots_clear', 'access_token') }})
+                parse_mode: markdown

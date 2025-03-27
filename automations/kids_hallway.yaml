@@ -1,6 +1,6 @@
 ---
 - alias: "Turn on kids hallway lights on motion"
-  id: kids_hallway_turn_lights_on_basement_on_motion
+  id: kids_hallway_turn_lights_on_motion
   initial_state: true
   trigger:
     - platform: state
@@ -33,6 +33,10 @@
         - condition: state
           entity_id: binary_sensor.occupancy_sensor_a206_occupancy
           state: 'on'
+
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: 'off'
 
   action:
     - choose:
@@ -123,14 +127,40 @@
       platform: state
       from: 'off'
       to: 'on'
+
   action:
+    - action: notify.mobile_app_ohadbenita
+      data:
+        title: "Hazards"
+        message: "Smoke has been detected in the hallway"
+        data:
+          push:
+            sound:
+              name: "US-EN-Morgan-Freeman-Smartthings-Detected-Smoke.wav"
+              critical: 1
+              volume: 1.0
+
+    - action: notify.mobile_app_rinats_iphone
+      data:
+        title: "Hazards"
+        message: "Smoke has been detected in the hallway"
+        data:
+          push:
+            sound:
+              name: "US-EN-Morgan-Freeman-Smartthings-Detected-Smoke.wav"
+              critical: 1
+              volume: 1.0
+
+
     - action: notify.ohad_telegram
       data_template:
         message: "Smoke has been detected in the hallway"
+
     - action: notify.mobile_app_ohadbenita
       data_template:
         title: "Hazards"
         message: "Smoke has been detected in the hallway, density is {{states('sensor.hallway_ceiling_smoke_density')}}%"
+
 
 - alias: Hallway smoke detection off
   id: hallway_smoke_detection_off

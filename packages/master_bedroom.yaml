@@ -75,8 +75,8 @@ sensor:
 
 
 automation:
-  - alias: "Turn on master bedroom wardrobe light on motion"
-    id: master_bedroom_wardrobe_turn_light_on_motion
+  - alias: "Turn on master bedroom wardrobe light when the door is opened"
+    id: master_bedroom_wardrobe_turn_light_when_the_door_is_opened
     initial_state: true
     trigger:
       - platform: state

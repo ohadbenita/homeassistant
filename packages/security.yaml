@@ -221,6 +221,7 @@ automation:
           title: "Security - entrance door is open"
           message: >-
             The entrance door has been open for the past 10 minutes, please close it as soon as possible.
+
       - action: script.alexa_notification
         data:
           alexa_device: media_player.master_bedroom_echo
@@ -229,6 +230,18 @@ automation:
             {{ state_attr('media_player.master_bedroom_echo', 'volume_level') }}
           message: >-
             The entrance door is open for 10 minutes, please close it.
+
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Security alert"
+          message: "The entrance door is open for 10 minutes, please close it now."
+          data:
+            push:
+              sound:
+                name: "US-EN-Morgan-Freeman-Front-Door-Opened.wav"
+                critical: 1
+                volume: 1.0
+
 
 
   - alias: Turn everything off script execution failed

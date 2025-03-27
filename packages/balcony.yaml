@@ -288,14 +288,17 @@ automation:
         entity_id: binary_sensor.parking_stairs_01_occupancy
         to: 'off'
 
-    condition:
-      condition: state
-      entity_id: light.parking_flood_light
-      state: 'on'
+    # Should be re-added when the parking flood light shelly is replaced
+    # condition:
+    #   condition: state
+    #   entity_id: light.parking_flood_light
+    #   state: 'on'
 
     action:
       - action: homeassistant.turn_off
-        entity_id: light.parking_flood_light
+        entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
+      #   entity_id: light.parking_flood_light
+      # - action:
 
   - alias: "Turn on pergola fan light when motion is detected"
     id: balcony_turn_on_pergola_fan_light_when_motion_detected

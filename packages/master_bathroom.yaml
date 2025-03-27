@@ -1,4 +1,20 @@
 ---
+template:
+  - binary_sensor:
+      - name: "Master bathroom occupancy"
+        device_class: occupancy
+        state: >-
+          {% set s1 = states('binary_sensor.occupancy_sensor_6cc0_occupancy') %}
+          {% set s2 = states('binary_sensor.occupancy_sensor_7480_occupancy') %}
+          {% if 'unavailable' in [s1, s2] %}
+            'unavailable'
+          {% elif s1 == 'on' or s2 == 'on' %}
+            on
+          {% else %}
+            off
+          {% endif %}
+
+
 automation:
   - alias: Master bathroom water leak detection
     id: master_bathroom_water_leak_detection
@@ -15,30 +31,31 @@ automation:
 
   - alias: "Turn off master bathroom lights when no motion is detected"
     id: master_bathroom_turn_light_off_no_motion_detected
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.occupancy_sensor_7480_occupancy
+        entity_id: binary_sensor.master_bathroom_occupancy
         to: 'off'
         for:
-          minutes: 5
-
-      - platform: state
-        entity_id: sensor.master_bathroom_01_motion_state
-        to: 'static'
-        for:
-          minutes: 5
+          minutes: 10
 
       - platform: homeassistant
         event: start
 
     condition:
       - condition: state
-        entity_id: binary_sensor.occupancy_sensor_7480_occupancy
+        entity_id: binary_sensor.master_bathroom_occupancy
         state: 'off'
-      - condition: state
-        entity_id: sensor.master_bathroom_01_motion_state
-        state: 'static'
+        for:
+          minutes: 10
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: switch.shelly2pmg3_8cbfea94c76c_switch_0
+            state: 'on'
+          - condition: state
+            entity_id: switch.shelly2pmg3_8cbfea94c76c_switch_1
+            state: 'on'
 
     action:
       - action: homeassistant.turn_off
