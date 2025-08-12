@@ -125,52 +125,11 @@ script:
           entity_id: switch.irrigation_l6
 
 
-input_boolean:
-  rain_expected_next_12_hours:
-    name: Rain Expected in Next 12 Hours
-    initial: false
-
-
 timer:
   irrigation_disable_timer:
     restore: true
 
 automation:
-  - alias: Check rain expected in next 12 hours
-    trigger:
-      - platform: time_pattern
-        hours: "/1"
-    action:
-      - action: weather.get_forecasts
-        response_variable: forecasts
-        data:
-          type: hourly
-        target:
-          entity_id: weather.openweathermap
-
-      - if:
-        - condition: or  # yamllint disable-line rule:indentation
-          conditions:
-            - condition: template
-              value_template: >
-                {{ forecasts['weather.openweathermap']['forecast']
-                  | selectattr('precipitation_probability', 'gt', 75)
-                  | selectattr('precipitation', 'gt', 5)
-                  | list | length > 0
-                }}
-            - condition: state
-              entity_id: weather.openweathermap
-              state: rainy
-
-        then:
-          - action: input_boolean.turn_on
-            target:
-              entity_id: input_boolean.rain_expected_next_12_hours
-        else:
-          - action: input_boolean.turn_off
-            target:
-              entity_id: input_boolean.rain_expected_next_12_hours
-
   - alias: Weekly Irrigation Cycle - trees and bushes
     id: irrigation_simple_weekly_schedule_trees_bushes
     initial_state: true
@@ -183,6 +142,8 @@ automation:
       - condition: time
         weekday:
           - mon
+          - wed
+          - fri
       - condition: state
         entity_id: timer.irrigation_disable_timer
         state: "idle"
@@ -198,7 +159,7 @@ automation:
               additional_switches:
                 - switch.irrigation_l4
                 - switch.irrigation_l5
-              irrigation_duration_minutes: 15
+              irrigation_duration_minutes: 60
         else:
           - action: notify.ohad_telegram
             data:
@@ -273,3 +234,23 @@ automation:
       - action: notify.ohad_telegram
         data:
           message: 'Irrigation Watchdog had to stop the irrigation, please check the issue with the automations'
+
+
+  - alias: "Update Daily Max Temperature"
+    id: weather_update_daily_max_temperature
+    trigger:
+      - platform: time
+        at: "01:00:00"
+    action:
+      - action: weather.get_forecasts
+        data:
+          type: daily
+        target:
+          entity_id: weather.openweathermap
+        response_variable: daily_forecasts
+
+      - action: input_number.set_value
+        data:
+          entity_id: input_number.daily_expected_max_temperature
+          value: >
+            {{ daily_forecasts['weather.openweathermap']['forecast'][0].temperature }}

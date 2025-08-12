@@ -8,6 +8,20 @@ automation:
         entity_id: binary_sensor.oref_alert
         to: 'on'
 
+    condition:
+      - condition: time
+        weekday:
+          - sun
+          - mon
+          - tue
+          - wed
+          - thu
+        after: '08:00:00'
+        before: '21:00:00'
+      - condition: state
+        entity_id: binary_sensor.jewish_calendar_issur_melacha_in_effect
+        state: 'off'
+
     action:
       - action: notify.ohad_telegram
         data_template:
@@ -22,7 +36,7 @@ automation:
           - switch.shellyplus2pm_d48afc581860_switch_1  # Pantry
           - switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
-          - switch.shellyplus2pm_c4d8d557f404_switch_1  # Clinic door
+          - switch.clinic_door_floodlight_switch_0  # Clinic door
           - switch.shelly1pmminig3_34b7da8f8b78_switch_0  # Main hallway
           - switch.shelly1pmminig3_34b7da8b78c4_switch_0  # Shelter entrance
           - switch.shelly1pmminig3_34b7da8a0338_switch_0  # Shelter main
@@ -39,3 +53,28 @@ automation:
             Red alert, please head to the nearest shelter now.
             Red alert, please head to the nearest shelter now.
             Red alert, please head to the nearest shelter now!
+
+      - delay: '00:10:00'
+
+      - action: lock.lock
+        entity_id: lock.kitchen_door
+
+
+  - alias: Ella IASA red alert
+    id: red_alert_ella_iasa
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.oref_alert_jeruslaem_west
+        to: 'on'
+
+    condition:
+      - condition: numeric_state
+        entity_id: sensor.ella_to_iasa_ella_benita_distance
+        below: 5000
+
+    action:
+      - action: notify.ohad_telegram
+        data_template:
+          message: >-
+            Red alert in Jerusalem, check on Ella

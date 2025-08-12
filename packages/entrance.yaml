@@ -46,6 +46,9 @@ automation:
     condition:
       condition: and
       conditions:
+        - condition: state
+          entity_id: input_boolean.away_mode
+          state: 'off'
         - condition: or
           conditions:
             - condition: sun

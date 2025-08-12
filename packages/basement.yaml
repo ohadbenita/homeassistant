@@ -80,7 +80,7 @@ automation:
         entity_id: binary_sensor.occupancy_sensor_fe31_occupancy
         to: 'off'
         for:
-          minutes: 10
+          minutes: 5
 
       - platform: homeassistant
         event: start
@@ -90,10 +90,63 @@ automation:
         entity_id: binary_sensor.occupancy_sensor_fe31_occupancy
         state: 'off'
         for:
-          minutes: 10
+          minutes: 5
 
     action:
       - action: homeassistant.turn_off
         entity_id:
           - switch.shellyplus2pm_a0a3b3682b10_switch_0  # Ceiling
           - switch.shellyplus2pm_a0a3b3682b10_switch_1  # Piano
+
+
+  - alias: "Control shelter light with 15 min off delay"
+    id: basement_control_shelter_light_with_off_delay
+    initial_state: true
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.occupancy_sensor_fe31_occupancy
+        to: 'off'
+        for: "00:15:00"
+      - platform: homeassistant
+        event: start
+
+    action:
+      - if:
+          - condition: state
+            entity_id: binary_sensor.occupancy_sensor_fe31_occupancy
+            state: 'on'
+        then:
+          - service: homeassistant.turn_on
+            entity_id: switch.shelly1pmminig3_34b7da8a0338_switch_0
+        else:
+          - service: homeassistant.turn_off
+            entity_id: switch.shelly1pmminig3_34b7da8a0338_switch_0
+
+
+  - alias: "Control shelter corridor light with 5 min off delay"
+    id: basement_control_shelter_corridor_light_with_off_delay
+    initial_state: true
+    mode: restart
+    trigger:
+      # - platform: state
+      #   entity_id: binary_sensor.occupancy_sensor_34f8_occupancy
+      #   to: 'on'
+      - platform: state
+        entity_id: binary_sensor.occupancy_sensor_34f8_occupancy
+        to: 'off'
+        for: "00:05:00"
+      - platform: homeassistant
+        event: start
+
+    action:
+      - if:
+          - condition: state
+            entity_id: binary_sensor.occupancy_sensor_34f8_occupancy
+            state: 'on'
+        then:
+          - service: homeassistant.turn_on
+            entity_id: switch.shelly1pmminig3_34b7da8b78c4_switch_0
+        else:
+          - service: homeassistant.turn_off
+            entity_id: switch.shelly1pmminig3_34b7da8b78c4_switch_0

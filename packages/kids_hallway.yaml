@@ -1,0 +1,222 @@
+---
+binary_sensor:
+  - platform: template
+    sensors:
+      waiting_for_printer_availability:
+        friendly_name: "Waiting for printer availability"
+        value_template: >
+          {{
+            is_state('sensor.brother_hl_l2300d_series_using_brlaser_v6', 'printing') and
+            state_attr('sensor.brother_hl_l2300d_series_using_brlaser_v6', 'state_message') == 'Waiting for printer to become available.'
+          }}
+
+
+automation:
+  - alias: "Turn on kids hallway lights on motion"
+    id: kids_hallway_turn_lights_on_motion
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.kids_hallway_01_occupancy
+          - binary_sensor.kids_hallway_02_occupancy
+          - binary_sensor.occupancy_sensor_a206_occupancy
+        to: 'on'
+
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: or
+        conditions:
+          - condition: sun
+            before: sunrise
+            before_offset: "02:00:00"
+          - condition: sun
+            after: sunset
+            after_offset: "-01:00:00"
+
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: binary_sensor.kids_hallway_01_occupancy
+            state: 'on'
+          - condition: state
+            entity_id: binary_sensor.kids_hallway_02_occupancy
+            state: 'on'
+          - condition: state
+            entity_id: binary_sensor.occupancy_sensor_a206_occupancy
+            state: 'on'
+
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - choose:
+          # CASE 1: Between midnight and sunrise => Dimmer only
+          - conditions:
+              - condition: sun
+                before: sunrise
+              - condition: time
+                after: '00:00:00'
+            sequence:
+              - action: light.turn_on
+                target:
+                  entity_id: light.shellydimmer2_34945478921b
+                data:
+                  brightness_pct: 35
+
+          # CASE 2: After sunset until midnight => All lights
+          - conditions:
+              - condition: sun
+                after: sunset
+                after_offset: "-01:00:00"
+              - condition: time
+                before: '00:00:00'
+            sequence:
+              - action: homeassistant.turn_on
+                target:
+                  entity_id:
+                    - switch.shelly1pmminig3_dcda0cafe368_switch_0  # kids rooms spots
+                    - switch.shelly1pmminig3_dcda0cead100_switch_0  # master bathroom spots
+              - action: light.turn_on
+                target:
+                  entity_id: light.shellydimmer2_34945478921b
+                data:
+                  brightness_pct: 35
+
+        default: []
+
+
+  - alias: "Turn off kids hallway light when no motion detected"
+    id: kids_hallway_turn_lights_off_when_no_motion_detected
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.kids_hallway_01_occupancy
+          - binary_sensor.kids_hallway_02_occupancy
+          - binary_sensor.occupancy_sensor_a206_occupancy
+        to: 'off'
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.kids_hallway_01_occupancy
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.kids_hallway_02_occupancy
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.occupancy_sensor_a206_occupancy
+        state: 'off'
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id:
+          - switch.shelly1pmminig3_dcda0cafe368_switch_0
+          - light.shellydimmer2_34945478921b
+          - switch.shelly1pmminig3_dcda0cead100_switch_0
+
+
+  - alias: "Kids hallway - Turn off lights in the night"
+    id: kids_hallway_turn_off_light_in_the_night
+    initial_state: true
+    trigger:
+      - platform: time
+        at: "23:00:00"
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id:
+          - switch.shelly1pmminig3_34b7da92c7a4_switch_0  # book shelves hallway light
+
+
+  - alias: Hallway smoke detection on
+    id: hallway_smoke_detection_on
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.hallway_ceiling_smoke
+        platform: state
+        from: 'off'
+        to: 'on'
+
+    action:
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Hazards"
+          message: "Smoke has been detected in the hallway"
+          data:
+            push:
+              sound:
+                name: "US-EN-Morgan-Freeman-Smartthings-Detected-Smoke.wav"
+                critical: 1
+                volume: 1.0
+
+      - action: notify.mobile_app_rinats_iphone
+        data:
+          title: "Hazards"
+          message: "Smoke has been detected in the hallway"
+          data:
+            push:
+              sound:
+                name: "US-EN-Morgan-Freeman-Smartthings-Detected-Smoke.wav"
+                critical: 1
+                volume: 1.0
+
+
+      - action: notify.ohad_telegram
+        data_template:
+          message: "Smoke has been detected in the hallway"
+
+      - action: notify.mobile_app_ohadbenita
+        data_template:
+          title: "Hazards"
+          message: "Smoke has been detected in the hallway, density is {{states('sensor.hallway_ceiling_smoke_density')}}%"
+
+
+  - alias: Hallway smoke detection off
+    id: hallway_smoke_detection_off
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.hallway_ceiling_smoke
+        platform: state
+        from: 'on'
+        to: 'off'
+    action:
+      - action: notify.ohad_telegram
+        data_template:
+          message: "Smoke in the hallway is not detected anymore"
+      - action: notify.mobile_app_ohadbenita
+        data_template:
+          title: "Hazards"
+          message: "Smoke is not detected in the hallway, density is {{states('sensor.hallway_ceiling_smoke_density')}}%"
+
+
+  - alias: "Wake printer if waiting for printing for more than 1 minute"
+    id: kids_hallway_printer_wake_up_if_pending
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.waiting_for_printer_availability
+        to: 'on'
+        for:
+          seconds: 5
+
+    condition:
+      - condition: template
+        value_template: >-
+          {{
+            as_timestamp(now()) -
+            as_timestamp(state_attr('automation.wake_printer_if_waiting_for_printing_for_more_than_1_minute', 'last_triggered'))
+            > 600
+          }}
+
+    action:
+      - action: homeassistant.turn_on
+        entity_id: switch.main_hallway_printer
+
+      - action: homeassistant.turn_on
+        entity_id: switch.main_hallway_printer_fingerbot

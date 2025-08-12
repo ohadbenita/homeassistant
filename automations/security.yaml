@@ -69,14 +69,13 @@
   action:
     - action: cover.set_cover_position
       data:
-        position: 0
+        position: 15
       target:
         entity_id: >
           {{ states.cover | map(attribute='entity_id') | list }}
     - action: lock.lock
       target:
-        entity_id: >
-          {{ states.lock | map(attribute='entity_id') | list }}
+        entity_id: lock.home_only_doors
 
 
 - alias: Open covers when away mode is turned off

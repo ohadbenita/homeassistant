@@ -1,0 +1,78 @@
+---
+input_number:
+  daily_expected_max_temperature:
+    name: "Daily expected max temperature"
+    min: -10
+    max: 60
+    step: 0.1
+    unit_of_measurement: "°C"
+
+
+input_boolean:
+  rain_expected_next_12_hours:
+    name: Rain Expected in Next 12 Hours
+    initial: false
+
+template:
+  - sensor:
+      - name: "Openweather map temperature feels like rounded"
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >
+          {{ states('sensor.openweathermap_feels_like_temperature') | int }}
+
+
+automation:
+  - alias: "Update Daily Max Temperature"
+    id: weather_update_daily_max_temperature
+    trigger:
+      - platform: time
+        at: "01:00:00"
+    action:
+      - action: weather.get_forecasts
+        data:
+          type: daily
+        target:
+          entity_id: weather.openweathermap
+        response_variable: daily_forecasts
+
+      - action: input_number.set_value
+        data:
+          entity_id: input_number.daily_expected_max_temperature
+          value: >
+            {{ daily_forecasts['weather.openweathermap']['forecast'][0].temperature }}
+
+  - alias: Check rain expected in next 12 hours
+    trigger:
+      - platform: time_pattern
+        hours: "/1"
+    action:
+      - action: weather.get_forecasts
+        response_variable: forecasts
+        data:
+          type: hourly
+        target:
+          entity_id: weather.openweathermap
+
+      - if:
+        - condition: or  # yamllint disable-line rule:indentation
+          conditions:
+            - condition: template
+              value_template: >
+                {{ forecasts['weather.openweathermap']['forecast']
+                  | selectattr('precipitation_probability', 'gt', 75)
+                  | selectattr('precipitation', 'gt', 5)
+                  | list | length > 0
+                }}
+            - condition: state
+              entity_id: weather.openweathermap
+              state: rainy
+
+        then:
+          - action: input_boolean.turn_on
+            target:
+              entity_id: input_boolean.rain_expected_next_12_hours
+        else:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.rain_expected_next_12_hours

@@ -1,0 +1,513 @@
+automation:
+  - alias: 'Open public space shutters in the morning'
+    id: public_space_open_shutters_morning
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kids_hallway_01_occupancy
+        from: 'off'
+        to: 'on'
+
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: >-
+            {{ as_timestamp(now()) - as_timestamp(state_attr('automation.open_public_space_shutters_in_the_morning', 'last_triggered') or today_at('00:00')) | int > 28800 }}
+        - condition: time
+          after: '06:00:00'
+          before: '10:00:00'
+        - condition: state
+          entity_id: input_boolean.away_mode
+          state: 'off'
+        - condition: state
+          entity_id: binary_sensor.living_room_presence
+          state: 'off'
+        - condition: template
+          value_template: >-
+            {{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.living_room_presence.last_changed)) > 600 }}
+
+    action:
+      - action: cover.set_cover_position
+        data_template:
+          entity_id: cover.living_room_right_window
+          position: >-
+            {{ max(state_attr('cover.living_room_right_window', 'current_position') | int, 70) }}
+
+      - action: cover.set_cover_position
+        data_template:
+          entity_id: cover.shelly2pmg3_8cbfea9a4548_cover_0
+          position: >-
+            {{ max(state_attr('cover.shelly2pmg3_8cbfea9a4548_cover_0', 'current_position') | int, 70) }}
+
+      - action: cover.set_cover_position
+        data_template:
+          entity_id: cover.shelly2pmg3_e4b32313d15c_cover_0
+          position: >-
+            {{ max(state_attr('cover.shelly2pmg3_e4b32313d15c_cover_0', 'current_position') | int, 70) }}
+
+      - action: cover.set_cover_position
+        data_template:
+          entity_id: cover.dining_room_main_window
+          position: >-
+            {{ max(state_attr('cover.dining_room_main_window', 'current_position') | int, 100) }}
+
+      - action: cover.set_cover_position
+        data_template:
+          entity_id: cover.shelly2pmg3_34cdb0776380_cover_0
+          position: >-
+            {{ max(state_attr('cover.shelly2pmg3_34cdb0776380_cover_0', 'current_position') | int, 70) }}
+
+      - action: cover.set_cover_position
+        data_template:
+          entity_id: cover.dining_room_left_window
+          position: >-
+            {{ max(state_attr('cover.dining_room_left_window', 'current_position') | int, 70) }}
+
+
+  - alias: 'Close dining room shutters before sunset - main shutter'
+    id: dining_room_shutters_close_before_sunset_main_shutter
+    initial_state: true
+    trigger:
+      - platform: sun
+        event: sunset
+        offset: "-03:00:00"
+        id: "offset_trigger"
+      - platform: sun
+        event: sunset
+        id: "sunset_trigger"
+
+    condition:
+      - condition: template
+        value_template: >-
+          {% if trigger.id == "offset_trigger" %}
+            {{ is_state('binary_sensor.dst', 'on') }}
+          {% elif trigger.id == "sunset_trigger" %}
+            {{ is_state('binary_sensor.dst', 'off') and
+              ( not is_state('climate.living_room_ac', 'on') or (states('sensor.openweathermap_feels_like_temperature')|int < 15)) }}
+          {% else %}
+            false
+          {% endif %}
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - variables:
+          main_window_position: "{{ state_attr('cover.dining_room_main_window', 'current_position') | int }}"
+
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.dining_room_main_window_contact
+                state: 'off'
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: cover.dining_room_main_window
+                data:
+                  position: "{{ [main_window_position, 35] | min }}"
+
+        default:
+          # If the window is open, prompt via Alexa
+          - service: script.activate_alexa_actionable_notification
+            data:
+              text: 'I see the balcony window is open, should I close its shutter?'
+              event_id: 'actionable_notification_close_balcony_window_sunset'
+              alexa_device: 'media_player.kitchen_echo'
+
+
+  - alias: 'Close dining room shutters before sunset (main shutter) - actionable notification'
+    id: dining_room_shutters_close_before_sunset_main_shutter_actionable_notification
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_close_balcony_window_sunset
+          event_response_type: ResponseYes
+
+    action:
+      - variables:
+          main_window_position: "{{ state_attr('cover.dining_room_main_window', 'current_position') | int }}"
+
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.dining_room_main_window_contact
+                state: 'on'
+            sequence:
+              - action: script.activate_alexa_actionable_notification
+                data:
+                  text: 'I see the balcony window is open, should I close its shutter?'
+                  event_id: 'actionable_notification_close_balcony_window_sunset'
+                  alexa_device: 'media_player.kitchen_echo'
+        default:
+          - service: cover.set_cover_position
+            target:
+              entity_id: cover.dining_room_main_window
+            data:
+              position: "{{ [main_window_position, 35] | min }}"
+
+  - alias: 'Close dining room shutters before sunset - small shutters'
+    id: dining_room_shutters_close_before_sunset_small_shutters
+    initial_state: true
+    trigger:
+      - platform: sun
+        event: sunset
+        offset: "-03:00:00"
+        id: "offset_trigger"
+      - platform: sun
+        event: sunset
+        id: "sunset_trigger"
+
+    condition:
+      - condition: template
+        value_template: >
+          {% if trigger.id == "offset_trigger" %}
+            {{ is_state('binary_sensor.dst', 'on') }}
+          {% elif trigger.id == "sunset_trigger" %}
+            {{ is_state('binary_sensor.dst', 'off') and
+               ( not is_state('climate.living_room_ac', 'on') or (states('sensor.openweathermap_feels_like_temperature')|int < 15)) }}
+          {% else %}
+            false
+          {% endif %}
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - variables:
+          right_window_position: "{{ state_attr('cover.shelly2pmg3_34cdb0776380_cover_0', 'current_position') }}"
+          left_window_position: "{{ state_attr('cover.dining_room_left_window', 'current_position') }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.shelly2pmg3_34cdb0776380_cover_0
+        data:
+          position: "{{ [right_window_position, 35] | min }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.dining_room_left_window
+        data:
+          position: "{{ [left_window_position, 35] | min }}"
+
+
+  - alias: 'Close public space shutters at night'
+    id: dining_room_shutters_close_night
+    initial_state: true
+    trigger:
+      - platform: time
+        at: '21:00:00'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id:
+                  - binary_sensor.dining_room_main_window_01_contact
+                  - binary_sensor.dining_room_main_window_02_contact
+                state: 'off'
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id:
+                    - cover.shelly2pmg3_34cdb0776380_cover_0
+                    - cover.dining_room_main_window
+                    - cover.dining_room_left_window
+                    - cover.living_room_right_window
+                    - cover.shelly2pmg3_8cbfea9a4548_cover_0
+                    - cover.shelly2pmg3_e4b32313d15c_cover_0
+                data:
+                  position: 15
+        default:
+          - action: script.activate_alexa_actionable_notification
+            data:
+              text: 'I see the balcony window is open, should I close its shutter?'
+              event_id: 'actionable_notification_close_balcony_window'
+              alexa_device: 'media_player.kitchen_echo'
+
+
+  - alias: 'Close public space shutters via actionable notification'
+    id: public_space_shutters_close_actionable_notification
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_close_balcony_window
+          event_response_type: ResponseYes
+
+    action:
+      # - action: notify.alexa_media
+      #   data_template:
+      #     data:
+      #       type: tts
+      #     target:
+      #       - media_player.kitchen_echo
+      #     message: >-
+      #       Please close the window for me to be able to close the shutter.
+
+      # - wait_template: >
+      #     {{ is_state('binary_sensor.dining_room_main_window_01_contact', 'off')
+      #       and is_state('binary_sensor.dining_room_main_window_02_contact', 'off') }}
+      #   timeout:
+      #     minutes: 2
+      #   continue_on_timeout: false
+      - variables:
+          left_living_room_window_position: "{{ state_attr('cover.shelly2pmg3_e4b32313d15c_cover_0', 'current_position') }}"
+          middle_living_room_window_position: "{{ state_attr('cover.shelly2pmg3_8cbfea9a4548_cover_0', 'current_position') }}"
+          right_living_room_window_position: "{{ state_attr('cover.living_room_right_window', 'current_position') }}"
+
+          left_dining_room_window_position: "{{ state_attr('cover.dining_room_left_window', 'current_position') }}"
+          middle_dining_room_window_position: "{{ state_attr('cover.dining_room_main_window', 'current_position') }}"
+          right_dining_room_window_position: "{{ state_attr('cover.shelly2pmg3_34cdb0776380_cover_0', 'current_position') }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.shelly2pmg3_e4b32313d15c_cover_0
+        data:
+          position: "{{ [left_living_room_window_position, 15] | min }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.shelly2pmg3_8cbfea9a4548_cover_0
+        data:
+          position: "{{ [middle_living_room_window_position, 15] | min }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_right_window
+        data:
+          position: "{{ [right_living_room_window_position, 15] | min }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.dining_room_main_window
+        data:
+          position: "{{ [middle_dining_room_window_position, 15] | min }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.shelly2pmg3_34cdb0776380_cover_0
+        data:
+          position: "{{ [right_dining_room_window_position, 15] | min }}"
+
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.dining_room_left_window
+        data:
+          position: "{{ [left_dining_room_window_position, 15] | min }}"
+
+
+  - alias: 'Ask if public space shutters at night actionable notification @ midnight'
+    id: living_room_shutters_close_at_night_complete
+    initial_state: true
+    trigger:
+      platform: time
+      at: '00:00:00'
+
+    action:
+      - action: script.activate_alexa_actionable_notification
+        data:
+          text: 'Should I close the shutters?'
+          event_id: 'actionable_notification_close_public_space_shutters_midnight'
+          alexa_device: 'media_player.kitchen_echo'
+
+
+  - alias: 'Close public space shutters via actionable notification @ midnight'
+    id: public_space_shutters_close_actionable_notification_at_midnight
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_close_public_space_shutters_midnight
+          event_response_type: ResponseYes
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_close_public_space_shutters_midnight
+          event_response_type: ResponseNone
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.shelly2pmg3_34cdb0776380_cover_0
+            - cover.dining_room_main_window
+            - cover.dining_room_left_window
+            - cover.living_room_right_window
+            - cover.shelly2pmg3_8cbfea9a4548_cover_0
+            - cover.shelly2pmg3_e4b32313d15c_cover_0
+        data:
+          position: 0
+
+
+  - alias: 'Living room fireplace switch - Open living room shutters'
+    id: living_room_fireplace_open_living_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_6_single'
+
+      - platform: state
+        entity_id: sensor.entrance_01_action
+        to: 'hold'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_right_window
+            - cover.shelly2pmg3_8cbfea9a4548_cover_0  # middle window
+            - cover.shelly2pmg3_e4b32313d15c_cover_0  # left window
+        data:
+          position: 80
+
+
+  - alias: 'Living room fireplace switch - Close living room shutters'
+    id: living_room_fireplace_close_living_room_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_5_single'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.living_room_right_window
+            - cover.shelly2pmg3_8cbfea9a4548_cover_0  # middle window
+            - cover.shelly2pmg3_e4b32313d15c_cover_0  # left window
+        data:
+          position: 35
+
+  - alias: 'Living room fireplace switch - Open dining room shutters'
+    id: living_room_fireplace_open_dining_room_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_6_double'
+      - platform: state
+        entity_id: sensor.entrance_01_action
+        to: 'hold'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.shelly2pmg3_34cdb0776380_cover_0
+            - cover.dining_room_left_window
+        data:
+          position: 80
+
+      - action: cover.set_cover_position
+        target:
+          entity_id: cover.dining_room_main_window
+        data:
+          position: 100
+
+
+  - alias: 'Living room fireplace switch - Close dining room shutters'
+    id: living_room_fireplace_close_dining_room_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_5_double'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id:
+            - cover.shelly2pmg3_34cdb0776380_cover_0
+            - cover.dining_room_main_window
+            - cover.dining_room_left_window
+        data:
+          position: 35
+
+
+  - alias: 'Living room fireplace switch - Open public space shutters'
+    id: living_room_fireplace_open_public_space_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_6_triple'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id: group.public_space_shutters
+        data:
+          position: 100
+
+
+  - alias: 'Living room fireplace switch - Close public space shutters'
+    id: living_room_fireplace_close_public_space_shutters
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_01_action
+        to: 'button_5_triple'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - action: cover.set_cover_position
+        target:
+          entity_id: group.public_space_shutters
+        data:
+          position: 15

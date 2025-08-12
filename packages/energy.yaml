@@ -50,7 +50,7 @@ template:
             states('sensor.shellyplus2pm_c4d8d5579560_cover_0_energy') | float(0) +
             states('sensor.dining_room_left_window_energy') | float(0) +
             states('sensor.living_room_right_window_energy') | float(0) +
-            states('sensor.living_room_middle_window_energy') | float(0) +
+            states('sensor.shelly2pmg3_8cbfea9a4548_cover_0_energy') | float(0) +
             states('sensor.shellyswitch25_6869e3_channel_1_energy') | float(0) +
             states('sensor.shellyswitch25_6869e3_channel_2_energy') | float(0) +
             states('sensor.shellyplus2pm_fcb467a684e8_switch_0_energy') | float(0) +
@@ -65,8 +65,7 @@ template:
             states('sensor.shellyplus2pm_e465b8b871b0_energy') | float(0) +
             states('sensor.shellyplus2pm_c82e180e02a4_energy') | float(0) +
             states('sensor.shellyplus2pm_c4d8d5582a90_energy') | float(0) +
-            states('sensor.shellyplus2pm_c4d8d557f404_switch_0_energy') | float(0) +
-            states('sensor.shellyplus2pm_c4d8d557f404_switch_1_energy') | float(0) +
+            states('sensor.shelly1pmminig3_ecda3bc26fb4_switch_0_energy') | float(0) +
             states('sensor.shellyplus2pm_a0a3b3682b10_switch_0_energy') | float(0) +
             states('sensor.shellyplus2pm_a0a3b3682b10_switch_1_energy') | float(0) +
             states('sensor.shellyplus2pm_10061ccdc57c_switch_0_energy') | float(0) +
@@ -78,13 +77,13 @@ template:
             states('sensor.shelly1pmminig3_dcda0cead100_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_dcda0cafe368_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7dac88574_switch_0_energy') | float(0) +
-            states('sensor.shelly1pmminig3_54320451ae98_switch_0_energy') | float(0) +
+            state('sensor.shelly1pmminig3_54320451ae98_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da92c7a4_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da92adb0_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da9275f0_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da8f8b78_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da8f85bc_switch_0_energy') | float(0) +
-            states('sensor.shelly1pmminig3_34b7da8eef08_switch_0_energy') | float(0) +
+            states('sensor.master_bedroom_light_and_fan_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da8da318_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da8c3e68_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da8b78c4_switch_0_energy') | float(0) +

@@ -24,12 +24,23 @@ script:
         default:
           - action: homeassistant.turn_on
             entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
+
+      - choose:
+          - conditions:
+              - condition: sun
+                before: sunset
+            sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: light.balcony_fan_light
+        default: []
+
       - action: remote.send_command
         target:
           entity_id: remote.living_room_broadlink
         data:
           device: balcony_fan
-          command: fan_speed_1
+          command: fan_speed_2
 
   turn_balcony_fan_off:
     alias: "Turn balcony fan off"
@@ -153,12 +164,12 @@ script:
       - action: switch.turn_on
         entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
 
-      - wait_template: "{{ is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'off') }}"
+      - wait_template: "{{ is_state('switch.parking_flood_light_switch_0', 'off') }}"
         timeout: '00:01:00'
         continue_on_timeout: false
 
       - action: switch.turn_on
-        entity_id: switch.shelly1pmminig3_ecda3bc26fb4_switch_0
+        entity_id: switch.parking_flood_light_switch_0
 
 fan:
   - platform: template
@@ -166,7 +177,7 @@ fan:
       balcony:
         friendly_name: "Balcony fan"
         value_template: >-
-          {%- set power_difference = (states('sensor.shelly1pmminig3_ecda3bc26fb4_switch_0_power') | float(default=0) - states('sensor.shelly1pmminig3_34b7dac88574_switch_0_power') | float) | abs -%}
+          {%- set power_difference = (states('sensor.parking_flood_light_switch_0_power') | float(default=0) - states('sensor.shelly1pmminig3_34b7dac88574_switch_0_power') | float) | abs -%}
           {{ power_difference > 7 and (power_difference < 23 or power_difference > 27) }}
         speed_count: 6
         turn_on:
@@ -204,15 +215,15 @@ light:
           action: switch.turn_off
           target:
             entity_id: >
-              {% if is_state('binary_sensor.occupancy_sensor_1104_occupancy', 'on') %}
-                switch.shelly1pmminig3_ecda3bc26fb4_switch_0
+              {% if is_state('switch.shelly1pmminig3_34b7dac88574_switch_0', 'on') %}
+                switch.parking_flood_light_switch_0
               {% else %}
                 switch.shelly1pmminig3_34b7dac88574_switch_0
               {% endif %}
         value_template: >-
           {{
-            is_state('switch.shelly1pmminig3_ecda3bc26fb4_switch_0', 'on') and
-            is_state('switch.shelly1pmminig3_34b7dac88574_switch_0', 'on')
+            is_state('switch.shelly1pmminig3_34b7dac88574_switch_0', 'on') and
+            is_state('switch.parking_flood_light_switch_0', 'on')
           }}
 
 automation:
@@ -224,21 +235,17 @@ automation:
       - platform: state
         entity_id: sensor.pergola_01_action
 
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
     action:
       - choose:
           - conditions:
               - condition: state
                 entity_id: sensor.pergola_01_action
-                state: 'single'
-            sequence:
-              - action: light.toggle
-                target:
-                  entity_id: light.parking_flood_light
-
-          - conditions:
-              - condition: state
-                entity_id: sensor.pergola_01_action
-                state: 'double'
+                state: 'button_1_single'
             sequence:
               - action: fan.toggle
                 target:
@@ -247,7 +254,16 @@ automation:
           - conditions:
               - condition: state
                 entity_id: sensor.pergola_01_action
-                state: 'hold'
+                state: 'button_1_double'
+            sequence:
+              - action: light.toggle
+                target:
+                  entity_id: light.parking_flood_light
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.pergola_01_action
+                state: 'button_2_single'
             sequence:
               - action: light.toggle
                 target:
@@ -256,7 +272,7 @@ automation:
 
   - alias: "Turn on parking flood lights when motion is detected"
     id: yard_turn_on_parking_flood_light_when_motion_detected
-    initial_state: true
+    initial_state: false
     mode: single
     trigger:
       - platform: state
@@ -281,7 +297,7 @@ automation:
 
   - alias: "Turn off parking flood lights when no motion is detected"
     id: yard_turn_off_parking_flood_light_when_no_motion_detected
-    initial_state: true
+    initial_state: false
     mode: single
     trigger:
       - platform: state
@@ -302,7 +318,7 @@ automation:
 
   - alias: "Turn on pergola fan light when motion is detected"
     id: balcony_turn_on_pergola_fan_light_when_motion_detected
-    initial_state: true
+    initial_state: false
     mode: single
     trigger:
       - platform: state
@@ -325,23 +341,23 @@ automation:
       - action: homeassistant.turn_on
         entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
 
-  - alias: "Turn off pergola fan light when no motion is detected"
-    id: balcony_turn_off_pergola_fan_light_when_no_motion_detected
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.parking_stairs_01_occupancy
-        to: 'off'
+  # - alias: "Turn off pergola fan light when no motion is detected"
+  #   id: balcony_turn_off_pergola_fan_light_when_no_motion_detected
+  #   initial_state: true
+  #   mode: single
+  #   trigger:
+  #     - platform: state
+  #       entity_id: binary_sensor.parking_stairs_01_occupancy
+  #       to: 'off'
 
-    condition:
-      - condition: state
-        entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
-        state: 'on'
-      - condition: state
-        entity_id: automation.turn_off_parking_flood_lights_when_no_motion_is_detected
-        state: 'on'
+  #   condition:
+  #     - condition: state
+  #       entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
+  #       state: 'on'
+  #     - condition: state
+  #       entity_id: automation.turn_off_parking_flood_lights_when_no_motion_is_detected
+  #       state: 'on'
 
-    action:
-      - action: homeassistant.turn_off
-        entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
+  #   action:
+  #     - action: homeassistant.turn_off
+  #       entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0

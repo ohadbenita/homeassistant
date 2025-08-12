@@ -35,6 +35,9 @@
           - condition: state
             entity_id: binary_sensor.upstairs_floor_stairs_03_occupancy
             state: 'on'
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
 
   action:
     - action: homeassistant.turn_on
@@ -49,7 +52,6 @@
     - platform: state
       entity_id:
         - binary_sensor.upstairs_floor_stairs_01_occupancy
-        - binary_sensor.upstairs_floor_stairs_02_occupancy
         - binary_sensor.upstairs_floor_stairs_03_occupancy
       to: 'off'
     - platform: homeassistant
@@ -60,9 +62,6 @@
     conditions:
       - condition: state
         entity_id: binary_sensor.upstairs_floor_stairs_01_occupancy
-        state: 'off'
-      - condition: state
-        entity_id: binary_sensor.upstairs_floor_stairs_02_occupancy
         state: 'off'
       - condition: state
         entity_id: binary_sensor.upstairs_floor_stairs_03_occupancy
@@ -86,6 +85,9 @@
       event: start
 
   condition:
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: 'off'
     - condition: or
       conditions:
         - condition: state

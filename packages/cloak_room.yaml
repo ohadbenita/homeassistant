@@ -43,7 +43,7 @@ automation:
         entity_id: switch.shellyplus2pm_fcb467a684e8_switch_0
 
 
-  - alias: Toggle Switch Based on UPS Voltage
+  - alias: Cloak room gas water heater - Toggle Switch Based on UPS Voltage
     initial_state: true
     mode: single
     id: cloak_room_turn_on_water_heater_after_power_failure
@@ -106,8 +106,10 @@ automation:
     id: cloak_room_analyze_gas_water_heater_display
     initial_state: true
     trigger:
-      platform: sun
-      event: sunset
+      - platform: sun
+        event: sunset
+      - platform: homeassistant
+        event: start
 
     action:
       - action: rest_command.analyze_gas_water_heater_display
@@ -119,12 +121,16 @@ automation:
     trigger:
       platform: sun
       event: sunset
-      offset: '01:00:00'
+      offset: '00:05:00'
 
     condition:
       - condition: template
         value_template: >-
-          {{ not (state_attr('sensor.water_heater', 'is_out_of_order') == 'off' and is_state('sensor.water_heater', '45')) }}
+          {{
+            state_attr('sensor.water_heater', 'is_out_of_order') == 'on' or
+            not is_state('sensor.water_heater', '45') or
+            state_attr('sensor.water_heater', 'confidence') | float < 0.8
+          }}
 
     action:
       - action: camera.snapshot
@@ -144,3 +150,7 @@ automation:
                 caption: >-
                   [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.gas_heater_cam_gas_heater_esp32_cam?token={{ state_attr('camera.gas_heater_cam_gas_heater_esp32_cam', 'access_token') }})
                 parse_mode: markdown
+
+      - action: switch.toggle
+        target:
+          entity_id: switch.gas_water_heater

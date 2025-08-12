@@ -120,6 +120,18 @@ automation:
           - switch.shelly1pmminig3_34b7da9275f0_switch_0  # Night light
 
 
+  - alias: "Adi room entrance switch fan control"
+    id: adi_room_entrance_switch_fan_control
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: switch.adi_room_fan_entrance_switch_switch_0
+
+    action:
+      - action: switch.toggle
+        entity_id: switch.shellyplus2pm_fcb467a580a8_switch_1    # fan
+
+
   - alias: 'Adi room - Handle Bedside button actions'
     id: adi_room_bedside_button_actions
     initial_state: true
@@ -153,10 +165,33 @@ automation:
                 entity_id: sensor.adi_bedside_action
                 state: 'hold'
             sequence:
-              - action: climate.toggle
-                target:
-                  entity_id: climate.adi_room_ac
-
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: climate.adi_room_ac
+                        state: 'off'
+                    sequence:
+                      - choose:
+                          - conditions:
+                              - condition: numeric_state
+                                entity_id: sensor.openweathermap_feels_like_temperature
+                                above: 23
+                            sequence:
+                              - service: climate.set_hvac_mode
+                                target:
+                                  entity_id: climate.adi_room_ac
+                                data:
+                                  hvac_mode: 'cool'
+                        default:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: climate.adi_room_ac
+                            data:
+                              hvac_mode: 'heat'
+                default:
+                  - service: climate.turn_off
+                    target:
+                      entity_id: climate.adi_room_ac
 
   - alias: "Sync Adi night light with fan light"
     id: adi_room_sync_night_light_with_fan_light

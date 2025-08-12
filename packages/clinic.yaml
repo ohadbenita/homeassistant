@@ -18,8 +18,7 @@ template:
             states('sensor.shellypmminig3_dcda0cb4cd38_energy') | float(0) +
             states('sensor.shellypmminig3_dcda0cb5af10_energy') | float(0) +
             states('sensor.shellypmminig3_dcda0cb688b0_energy') | float(0) +
-            states('sensor.shellyplus2pm_c4d8d557f404_switch_0_energy') | float(0) +
-            states('sensor.shellyplus2pm_c4d8d557f404_switch_1_energy') | float(0)
+            states('sensor.shelly1pmminig3_ecda3bc26fb4_switch_0_energy') | float(0)
           }}
 
       # Monthly consumption = aggregator - offset
@@ -41,6 +40,15 @@ template:
             (states('sensor.clinic_monthly_kwh_consumption') | float(0)
              * states('input_number.kwh_cost_gross') | float(0)) | round(2)
           }}
+
+sensor:
+  - platform: filter
+    name: "Clinic monthly energy cost (filtered)"
+    entity_id: sensor.clinic_monthly_energy_cost
+    filters:
+      - filter: outlier
+        window_size: 5
+        radius: 2.0
 
 utility_meter:
   clinic_daily_energy:

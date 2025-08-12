@@ -1,0 +1,137 @@
+---
+input_boolean:
+  clean_roi_room:
+    name: Roi's Room
+    initial: off
+  clean_adi_room:
+    name: Adi's Room
+    initial: off
+  clean_kitchen:
+    name: Kitchen
+    initial: off
+  clean_study:
+    name: Study
+    initial: off
+  clean_pantry:
+    name: Pantry
+    initial: off
+  clean_corridor1:
+    name: Corridor1
+    initial: off
+  clean_dining_room:
+    name: Dining Room
+    initial: off
+  clean_kids_bathroom:
+    name: Kids Bathroom
+    initial: off
+  clean_living_room_corridor:
+    name: Living Room Corridor
+    initial: off
+  clean_guest_bathroom:
+    name: Guest Bathroom
+    initial: off
+  clean_living_room:
+    name: Living Room
+    initial: off
+  clean_entrance:
+    name: Entrance
+    initial: off
+  clean_hall:
+    name: Hall
+    initial: off
+
+input_button:
+  start_cleaning:
+    name: Start Cleaning
+
+automation:
+  - alias: 'Clean selected areas with Roborock'
+    description: >
+      Gather all checked areas, send one segment‐clean command
+      with a YAML list of segments, then reset the toggles.
+    trigger:
+      - platform: state
+        entity_id: input_button.start_cleaning
+
+    action:
+      # 1) Only proceed if at least one helper is on
+      - condition: template
+        value_template: >
+          {% set s = [] %}
+          {% if is_state('input_boolean.clean_roi_room','on') %}{% set s = s + [16] %}{% endif %}
+          {% if is_state('input_boolean.clean_adi_room','on') %}{% set s = s + [17] %}{% endif %}
+          {% if is_state('input_boolean.clean_kitchen','on') %}{% set s = s + [18] %}{% endif %}
+          {% if is_state('input_boolean.clean_study','on') %}{% set s = s + [19] %}{% endif %}
+          {% if is_state('input_boolean.clean_pantry','on') %}{% set s = s + [20] %}{% endif %}
+          {% if is_state('input_boolean.clean_corridor1','on') %}{% set s = s + [21] %}{% endif %}
+          {% if is_state('input_boolean.clean_dining_room','on') %}{% set s = s + [23] %}{% endif %}
+          {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set s = s + [24] %}{% endif %}
+          {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set s = s + [25] %}{% endif %}
+          {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set s = s + [26] %}{% endif %}
+          {% if is_state('input_boolean.clean_living_room','on') %}{% set s = s + [27] %}{% endif %}
+          {% if is_state('input_boolean.clean_entrance','on') %}{% set s = s + [28] %}{% endif %}
+          {% if is_state('input_boolean.clean_hall','on') %}{% set s = s + [29] %}{% endif %}
+          {{ s | length > 0 }}
+
+      # 2) Send one vacuum command with the full segments list
+      - action: vacuum.send_command
+        data_template:
+          entity_id: vacuum.yulanda
+          command: app_segment_clean
+          repeat: 2
+          params: >
+            {% set s = [] %}
+            {% if is_state('input_boolean.clean_roi_room','on') %}{% set s = s + [16] %}{% endif %}
+            {% if is_state('input_boolean.clean_adi_room','on') %}{% set s = s + [17] %}{% endif %}
+            {% if is_state('input_boolean.clean_kitchen','on') %}{% set s = s + [18] %}{% endif %}
+            {% if is_state('input_boolean.clean_study','on') %}{% set s = s + [19] %}{% endif %}
+            {% if is_state('input_boolean.clean_pantry','on') %}{% set s = s + [20] %}{% endif %}
+            {% if is_state('input_boolean.clean_corridor1','on') %}{% set s = s + [21] %}{% endif %}
+            {% if is_state('input_boolean.clean_dining_room','on') %}{% set s = s + [23] %}{% endif %}
+            {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set s = s + [24] %}{% endif %}
+            {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set s = s + [25] %}{% endif %}
+            {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set s = s + [26] %}{% endif %}
+            {% if is_state('input_boolean.clean_living_room','on') %}{% set s = s + [27] %}{% endif %}
+            {% if is_state('input_boolean.clean_entrance','on') %}{% set s = s + [28] %}{% endif %}
+            {% if is_state('input_boolean.clean_hall','on') %}{% set s = s + [29] %}{% endif %}
+            {{ s }}
+
+      # 3) Turn off every helper that was on
+      - action: input_boolean.turn_off
+        data_template:
+          entity_id: >
+            {% set o = [] %}
+            {% if is_state('input_boolean.clean_roi_room','on') %}{% set o = o + ['input_boolean.clean_roi_room'] %}{% endif %}
+            {% if is_state('input_boolean.clean_adi_room','on') %}{% set o = o + ['input_boolean.clean_adi_room'] %}{% endif %}
+            {% if is_state('input_boolean.clean_kitchen','on') %}{% set o = o + ['input_boolean.clean_kitchen'] %}{% endif %}
+            {% if is_state('input_boolean.clean_study','on') %}{% set o = o + ['input_boolean.clean_study'] %}{% endif %}
+            {% if is_state('input_boolean.clean_pantry','on') %}{% set o = o + ['input_boolean.clean_pantry'] %}{% endif %}
+            {% if is_state('input_boolean.clean_corridor1','on') %}{% set o = o + ['input_boolean.clean_corridor1'] %}{% endif %}
+            {% if is_state('input_boolean.clean_dining_room','on') %}{% set o = o + ['input_boolean.clean_dining_room'] %}{% endif %}
+            {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set o = o + ['input_boolean.clean_kids_bathroom'] %}{% endif %}
+            {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set o = o + ['input_boolean.clean_living_room_corridor'] %}{% endif %}
+            {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set o = o + ['input_boolean.clean_guest_bathroom'] %}{% endif %}
+            {% if is_state('input_boolean.clean_living_room','on') %}{% set o = o + ['input_boolean.clean_living_room'] %}{% endif %}
+            {% if is_state('input_boolean.clean_entrance','on') %}{% set o = o + ['input_boolean.clean_entrance'] %}{% endif %}
+            {% if is_state('input_boolean.clean_hall','on') %}{% set o = o + ['input_boolean.clean_hall'] %}{% endif %}
+            {{ o }}
+
+
+  # maps:
+  #   - flag: 0
+  #     name: Main floor
+  #     rooms:
+  #       "16": Roi’s room
+  #       "17": Adi’s room
+  #       "18": Kitchen
+  #       "19": Study
+  #       "20": Pantry
+  #       "21": Corridor1
+  #       "22": Guest bedroom (clinic)
+  #       "23": Dining room
+  #       "24": Kids bathroom
+  #       "25": Living room corridor
+  #       "26": Bathroom
+  #       "27": Living room
+  #       "28": Entrance
+  #       "29": Hall

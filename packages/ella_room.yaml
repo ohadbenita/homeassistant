@@ -34,7 +34,7 @@ sensor:
 automation:
   - alias: Ella room shutdown AC 1 hour after target temperature has been reached
     id: ella_room_shutdown_ac_target_temp_reached
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: numeric_state
         entity_id: sensor.ella_room_temp_difference_change_per_10_minutes
@@ -152,9 +152,33 @@ automation:
                 entity_id: sensor.ella_bedside_action
                 state: 'double'
             sequence:
-              - action: climate.toggle
-                target:
-                  entity_id: climate.ella_ac
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: climate.ella_ac
+                        state: 'off'
+                    sequence:
+                      - choose:
+                          - conditions:
+                              - condition: numeric_state
+                                entity_id: sensor.openweathermap_feels_like_temperature
+                                above: 23
+                            sequence:
+                              - service: climate.set_hvac_mode
+                                target:
+                                  entity_id: climate.ella_ac
+                                data:
+                                  hvac_mode: 'cool'
+                        default:
+                          - service: climate.set_hvac_mode
+                            target:
+                              entity_id: climate.ella_ac
+                            data:
+                              hvac_mode: 'heat'
+                default:
+                  - service: climate.turn_off
+                    target:
+                      entity_id: climate.ella_ac
 
 
   - alias: 'Ella room - Send a notification when Ketem tracker is charged'

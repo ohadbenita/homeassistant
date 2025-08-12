@@ -18,27 +18,24 @@ light:
       master_bedroom_lights:
         value_template: >-
           {{
-            is_state('switch.shelly1_34945470bfa1', 'on') and
-            is_state('switch.shelly1pmminig3_34b7da8eef08_switch_0', 'on') and
-            is_state('switch.shellyplus2pm_fcb4670e673c_switch_0', 'on') and
-            is_state('switch.shellyplus2pm_fcb4670e673c_switch_1', 'on')
+            is_state('switch.master_bedroom_spots', 'on') and
+            is_state('switch.master_bedroom_light_and_fan_switch_1', 'on') and
+            is_state('switch.shellyplus2pm_fcb4670e673c_switch_0', 'on')
           }}
         turn_on:
           action: homeassistant.turn_on
-          data:
+          target:
             entity_id:
               - switch.shellyplus2pm_fcb4670e673c_switch_0
-              - switch.shellyplus2pm_fcb4670e673c_switch_1
-              - switch.shelly1pmminig3_34b7da8eef08_switch_0
-              - switch.shelly1_34945470bfa1
+              - switch.master_bedroom_light_and_fan_switch_1
+              - switch.master_bedroom_spots
         turn_off:
           action: homeassistant.turn_off
-          data:
+          target:
             entity_id:
               - switch.shellyplus2pm_fcb4670e673c_switch_0
-              - switch.shellyplus2pm_fcb4670e673c_switch_1
-              - switch.shelly1pmminig3_34b7da8eef08_switch_0
-              - switch.shelly1_34945470bfa1
+              - switch.master_bedroom_light_and_fan_switch_1
+              - switch.master_bedroom_spots
 
 
 template:
@@ -81,6 +78,7 @@ automation:
     trigger:
       - platform: state
         entity_id: binary_sensor.master_bedroom_wardrobe_contact
+        from: 'off'
         to: 'on'
       - platform: homeassistant
         event: start
@@ -99,6 +97,7 @@ automation:
     trigger:
       - platform: state
         entity_id: binary_sensor.master_bedroom_wardrobe_contact
+        from: 'on'
         to: 'off'
       - platform: homeassistant
         event: start
@@ -160,50 +159,17 @@ automation:
         data:
           position: 20
 
-  - alias: "Turn on master bedroom light when fan light is turned on"
-    id: master_bedroom_spots_turn_on_when_fan_light_is_on
-    initial_state: false
+
+  - alias: "Toggle spots on switch change"
+    id: master_bedroom_spots_toggle_on_switch_change
+    initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-        to: 'on'
-      - platform: homeassistant
-        event: start
-    condition:
-      - condition: state
-        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-        state: 'on'
+        entity_id: switch.shellyplus2pm_fcb4670e673c_switch_1
     action:
-      - action: light.turn_on
+      - action: switch.toggle
         target:
-          entity_id: light.shellydimmer2_ec64c9c66fdc
-        data:
-          brightness_pct: 100
-      # - action: homeassistant.turn_on
-      #   entity_id:
-      #     - switch.shellyplus2pm_fcb4670e673c_switch_0
-      #     - switch.shellyplus2pm_fcb4670e673c_switch_1
-
-
-  - alias: "Turn off master bedroom lights when light is turned off"
-    id: master_bedroom_lights_turn_off_when_fan_light_is_off
-    initial_state: false
-    trigger:
-      - platform: state
-        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-        to: 'off'
-      - platform: homeassistant
-        event: start
-    condition:
-      - condition: state
-        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-        state: 'off'
-    action:
-      - action: homeassistant.turn_off
-        entity_id:
-          - light.shellydimmer2_ec64c9c66fdc
-          # - switch.shellyplus2pm_fcb4670e673c_switch_0
-          # - switch.shellyplus2pm_fcb4670e673c_switch_1
+          entity_id: switch.master_bedroom_spots
 
 
   - alias: 'Master bedroom bedside switch 01 - turn on main light'
@@ -218,7 +184,7 @@ automation:
     action:
       - action: switch.turn_on
         target:
-          entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+          entity_id: switch.master_bedroom_light_and_fan_switch_0
 
 
   - alias: 'Master bedroom bedside switch 01 - turn off main light'
@@ -233,7 +199,7 @@ automation:
     action:
       - action: switch.turn_off
         target:
-          entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+          entity_id: switch.master_bedroom_light_and_fan_switch_0
 
 
   - alias: 'Master bedroom bedside switch 01 - open shutters'
@@ -276,43 +242,6 @@ automation:
             - cover.shellyplus2pm_e465b8f38f54  # left
 
 
-  - alias: 'Master bedroom bedside switch 01 - turn on spots in night mode'
-    id: master_bedroom_bedside_switch_01_turn_on_spots_night_mode
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.master_bedroom_bedside_01_action
-        to: 'button_6_single'
-
-    action:
-      - action: switch.turn_off
-        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-
-      - delay: '00:00:02'
-
-      - action: light.turn_on
-        target:
-          entity_id: light.shellydimmer2_ec64c9c66fdc
-        data:
-          brightness_pct: 1
-
-
-  - alias: 'Master bedroom bedside switch 01 - turn off spots'
-    id: master_bedroom_bedside_switch_01_turn_off_spots
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.master_bedroom_bedside_01_action
-        to: 'button_5_single'
-
-    action:
-      - action: light.turn_off
-        target:
-          entity_id: light.shellydimmer2_ec64c9c66fdc
-
-
   - alias: 'Master bedroom bedside switch 01 - turn on AC'
     id: master_bedroom_bedside_switch_01_turn_on_ac
     initial_state: true
@@ -323,9 +252,23 @@ automation:
         to: 'button_6_double'
 
     action:
-      - action: climate.turn_on
-        target:
-          entity_id: climate.master_bedroom_ac
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.openweathermap_feels_like_temperature
+                above: 23
+            sequence:
+              - service: climate.set_hvac_mode
+                target:
+                  entity_id: climate.master_bedroom_ac
+                data:
+                  hvac_mode: 'cool'
+        default:
+          - service: climate.set_hvac_mode
+            target:
+              entity_id: climate.master_bedroom_ac
+            data:
+              hvac_mode: 'heat'
 
 
   - alias: 'Master bedroom bedside switch 01 - turn off AC'
@@ -355,7 +298,7 @@ automation:
     action:
       - action: switch.toggle
         target:
-          entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+          entity_id: switch.master_bedroom_light_and_fan_switch_0
 
 
   - alias: 'Master bedroom bedside switch 02 - toggle AC'
@@ -413,38 +356,6 @@ automation:
             - cover.shellyplus2pm_e465b8f38f54  # left
 
 
-  - alias: 'Master bedroom bedside switch 02 - control spots'
-    id: master_bedroom_bedside_switch_02_control_spots
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.master_bedroom_bedside_02_action
-        to: '4_single'
-
-    action:
-      - if:
-          - condition: state
-            entity_id: light.shellydimmer2_ec64c9c66fdc
-            state: 'off'
-        then:
-          - action: switch.turn_off
-            target:
-              entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-
-          - delay: '00:00:02'
-
-          - action: light.turn_on
-            target:
-              entity_id: light.shellydimmer2_ec64c9c66fdc
-            data:
-              brightness_pct: 1
-        else:
-          - action: light.turn_off
-            target:
-              entity_id: light.shellydimmer2_ec64c9c66fdc
-
-
   - alias: 'Master bedroom bedside switch 02 - control night light'
     id: master_bedroom_bedside_switch_02_night_light
     initial_state: true
@@ -466,6 +377,7 @@ automation:
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_2_398b60_radar_target
+        from: 'on'
         to: 'off'
         for:
           minutes: 10
@@ -490,6 +402,7 @@ automation:
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_2_398b60_radar_target
+        from: 'on'
         to: 'off'
         for:
           minutes: 5
@@ -510,45 +423,33 @@ automation:
         entity_id: climate.master_bedroom_ac
 
 
-  - alias: "Master bedroom turn off sleep mode"
-    id: master_bedroom_turn_off_sleep_mode
-    initial_state: true
-    trigger:
-      - platform: event
-        event_type: state_changed
-        event_data:
-          entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-    condition:
-      - condition: template
-        value_template: >
-          {{ not trigger.event.data.new_state.context.user_id and not trigger.event.data.new_state.context.parent_id }}
-      - condition: state
-        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-        state: 'on'
-      - condition: state
-        entity_id: input_boolean.master_bedroom_sleep_mode
-        state: 'on'
+  # - alias: "Master bedroom turn off sleep mode"
+  #   id: master_bedroom_turn_off_sleep_mode
+  #   initial_state: true
+  #   trigger:
+  #     - platform: event
+  #       event_type: state_changed
+  #       event_data:
+  #         entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+  #   condition:
+  #     - condition: template
+  #       value_template: >
+  #         {{ not trigger.event.data.new_state.context.user_id and not trigger.event.data.new_state.context.parent_id }}
+  #     - condition: state
+  #       entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+  #       state: 'on'
+  #     - condition: state
+  #       entity_id: input_boolean.master_bedroom_sleep_mode
+  #       state: 'on'
 
-    action:
-      - action: input_boolean.turn_off
-        entity_id: input_boolean.master_bedroom_sleep_mode
-
-  - alias: Toggle master bedroom fan light by entrance button
-    id: master_bedroom_toggle_master_bedroom_entrance_light
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: sensor.master_bedroom_entrance_01_action
-        to: 'single'
-
-    action:
-      - action: switch.toggle
-        entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+  #   action:
+  #     - action: input_boolean.turn_off
+  #       entity_id: input_boolean.master_bedroom_sleep_mode
 
 
   - alias: Shutdown AC 1 hour after target temperature has been reached
     id: master_bedroom_shutdown_ac_target_temp_reached
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: numeric_state
         entity_id: sensor.master_bedroom_temp_difference_change_per_10_minutes
@@ -579,28 +480,6 @@ automation:
       - action: climate.turn_off
         entity_id: climate.master_bedroom_ac
 
-
-  - alias: Toggle master bedroom spots by button
-    id: master_bedroom_toggle_makeup_lights
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: sensor.master_bedroom_makeup_wall_action
-        to: 'single'
-    action:
-      - choose:
-          - conditions:
-              # If it's currently off, turn it on at full brightness
-              - condition: state
-                entity_id: switch.shelly1_34945470bfa1
-                state: 'off'
-            sequence:
-              - action: switch.turn_on
-                entity_id: switch.shelly1_34945470bfa1
-        default:
-          # Otherwise, the light must be on, so turn it off
-          - action: switch.turn_off
-            entity_id: switch.shelly1_34945470bfa1
 
   - alias: "Close master bedroom covers if bathroom humidity is above 85 / restore when below 50"
     id: master_bathroom_covers_on_humidity_change
@@ -726,8 +605,8 @@ automation:
 
     condition:
       - condition: state
-        entity_id: sensor.school_is_elementary_vacation
-        state: "False"
+        entity_id: binary_sensor.high_vacation
+        state: 'off'
       - condition: time
         weekday:
           - sun
@@ -744,3 +623,20 @@ automation:
             - cover.shellyplus2pm_e465b8f38f54
         data:
           position: 100
+
+
+  - alias: "Toggle master bedroom lights by Ohad bedside switch"
+    id: master_bedroom_toggle_lights_by_ohad_bedside_switch
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_switches_i4_left_side_input_3
+
+    condition:
+      - condition: template
+        value_template: >
+          {{ trigger.from_state.state != 'unavailable' }}
+
+    action:
+      - action: light.toggle
+        entity_id: light.master_bedroom_lights

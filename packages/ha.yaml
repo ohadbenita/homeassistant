@@ -37,9 +37,9 @@ binary_sensor:
   - platform: rest
     name: Whatsapp API Availability
     unique_id: whatsapp_api_availability
-    resource: http://127.0.0.1:3000/client/getContacts/ha
-    method: GET
-    value_template: "{{ value_json.success | default(false) }}"
+    resource: !secret green_api_availability_url
+    method: POST
+    value_template: "{{ value_json.existsWhatsapp | default(false) }}"
     device_class: connectivity
 
 
@@ -50,6 +50,32 @@ template:
         state: >
           {{now().timetuple().tm_isdst == 1}}
         device_class: running
+
+      - name: "Ohad iPhone Location Permission"
+        state: >
+          {{ states('sensor.ohadbenita_location_permission') != 'Authorized Always' }}
+        device_class: problem
+
+      - name: "Rinat iPhone Location Permission"
+        state: >
+          {{ states('sensor.rinats_iphone_location_permission') != 'Authorized Always' }}
+        device_class: problem
+
+      - name: "Ella iPhone Location Permission"
+        state: >
+          {{ states('sensor.ellas_iphone_location_permission') != 'Authorized Always' }}
+        device_class: problem
+
+      - name: "Roi iPhone Location Permission"
+        state: >
+          {{ states('sensor.rois_iphone_location_permission') != 'Authorized Always' }}
+        device_class: problem
+
+      - name: "Adi iPhone Location Permission"
+        state: >
+          {{ states('sensor.iphone_location_permission') != 'Authorized Always' }}
+        device_class: problem
+
 
   - sensor:
     - name: Day of the week
@@ -205,7 +231,7 @@ automation:
             'climate.master_bedroom_ac',
             'climate.ella_ac',
             'cover.shellyplus2pm_c4d8d5579560_cover_0',
-            'cover.living_room_middle_window',
+            'cover.shelly2pmg3_8cbfea9a4548_cover_0',
             'cover.living_room_right_window',
             'cover.shelly2pmg3_34cdb0776380_cover_0',
             'cover.dining_room_left_window',
@@ -231,7 +257,7 @@ automation:
               'climate.master_bedroom_ac',
               'climate.ella_ac',
               'cover.shellyplus2pm_c4d8d5579560_cover_0',
-              'cover.living_room_middle_window',
+              'cover.shelly2pmg3_8cbfea9a4548_cover_0',
               'cover.living_room_right_window',
               'cover.shelly2pmg3_34cdb0776380_cover_0',
               'cover.dining_room_left_window',
@@ -273,6 +299,7 @@ automation:
               - sensor.study_room_3d_printer_stand_battery
               - sensor.kitchen_counter_01_battery
               - sensor.ketem_tracker_battery
+              - binary_sensor.entrance_door_battery_charging
           low_battery_devices: >
             {% set threshold = states('input_number.battery_low_level_threshold') | int %}
             {% set exclude = exclude %}
@@ -461,94 +488,6 @@ automation:
           message: "Synology's security status changed to unsafe, please check security advisor for recent findings and recommendations"
 
 
-  - alias: "Monthly Cover Calibration"
-    initial_state: false
-    trigger:
-      platform: time
-      at: "12:00:00"
-    condition:
-      - condition: template
-        value_template: "{{ now().day == 1 }}"  # Runs on the 1st of the month
-    action:
-      # Store current positions into input_text entities
-      - action: input_text.set_value
-        data_template:
-          entity_id: input_text.cover_dining_room_left_position
-          value: "{{ state_attr('cover.dining_room_left_window', 'current_position') }}"
-      - action: input_text.set_value
-        data_template:
-          entity_id: input_text.cover_dining_room_right_position
-          value: "{{ state_attr('cover.shelly2pmg3_34cdb0776380_cover_0', 'current_position') }}"
-      - action: input_text.set_value
-        data_template:
-          entity_id: input_text.cover_dining_room_main_position
-          value: "{{ state_attr('cover.dining_room_main_window', 'current_position') }}"
-      - action: input_text.set_value
-        data_template:
-          entity_id: input_text.cover_living_room_left_position
-          value: "{{ state_attr('cover.living_room_left_window', 'current_position') }}"
-      - action: input_text.set_value
-        data_template:
-          entity_id: input_text.cover_living_room_right_position
-          value: "{{ state_attr('cover.living_room_right_window', 'current_position') }}"
-      - action: input_text.set_value
-        data_template:
-          entity_id: input_text.cover_living_room_middle_position
-          value: "{{ state_attr('cover.living_room_middle_window', 'current_position') }}"
-
-      - variables:
-          cover_ip_map:
-            cover.dining_room_left_window: '172.16.1.237'
-            cover.dining_room_right_window: '172.16.1.44'
-            cover.dining_room_main_window: '172.16.1.189'
-            cover.shellyplus2pm_c4d8d5579560_cover_0: '172.16.1.17'
-            cover.living_room_right_window: '172.16.1.28'
-            cover.living_room_middle_window: '172.16.1.208'
-
-      # Calibrate covers by iterating over entity IDs and fetching IPs
-      - repeat:
-          count: "{{ cover_ip_map | length }}"
-          sequence:
-            - action: rest_command.shelly_calibrate_cover
-              data:
-                shelly_ip: "{{ cover_ip_map[(cover_ip_map.keys() | list)[repeat.index -1]] }}"
-
-      # Wait 10 minutes after calibration
-      - delay: "00:10:00"
-
-      # Restore positions from input_text entities
-      - action: cover.set_cover_position
-        target:
-          entity_id: cover.dining_room_left_window
-        data_template:
-          position: "{{ states('input_text.cover_dining_room_left_position') | int }}"
-      - action: cover.set_cover_position
-        target:
-          entity_id: cover.shelly2pmg3_34cdb0776380_cover_0
-        data_template:
-          position: "{{ states('input_text.cover_dining_room_right_position') | int }}"
-      - action: cover.set_cover_position
-        target:
-          entity_id: cover.dining_room_main_window
-        data_template:
-          position: "{{ states('input_text.cover_dining_room_main_position') | int }}"
-      - action: cover.set_cover_position
-        target:
-          entity_id: cover.shellyplus2pm_c4d8d5579560_cover_0
-        data_template:
-          position: "{{ states('input_text.cover_living_room_left_position') | int }}"
-      - action: cover.set_cover_position
-        target:
-          entity_id: cover.living_room_right_window
-        data_template:
-          position: "{{ states('input_text.cover_living_room_right_position') | int }}"
-      - action: cover.set_cover_position
-        target:
-          entity_id: cover.living_room_middle_window
-        data_template:
-          position: "{{ states('input_text.cover_living_room_middle_position') | int }}"
-
-
   - alias: "Alert on Grisha's bin being full"
     id: ha_alert_grisha_bin_full
     initial_state: true
@@ -621,6 +560,8 @@ automation:
 
   - alias: Dismiss OCPP integration notifications
     id: ha_dismiss_ocpp_integration_notifications
+    mode: parallel
+    max: 10
     trigger:
       - platform: persistent_notification
         update_type:
@@ -634,11 +575,56 @@ automation:
     action:
       - delay:
           hours: 0
-          minutes: 0
-          seconds: 10
+          minutes: 10
+          seconds: 0
           milliseconds: 0
-      - action: persistent_notification.dismiss
+      - service: persistent_notification.dismiss
         data:
           notification_id: "{{ trigger.notification.notification_id }}"
-    mode: parallel
-    max: 10
+
+
+  - id: ha_notify_iphone_storage_low
+    alias: "Notify iPhone Storage Low"
+    mode: single
+
+    trigger:
+      - platform: numeric_state
+        entity_id:
+          - sensor.rois_iphone_storage
+          - sensor.rinats_iphone_storage
+          - sensor.ellas_iphone_storage
+          - sensor.iphone_storage
+          - sensor.ohadbenita_storage
+        below: 5
+
+    action:
+      - action: >
+          notify.mobile_app_{{
+            trigger.entity_id.split('.')[1].replace('_storage','')
+          }}
+        data:
+          message: >
+            {{ state_attr(trigger.entity_id, 'friendly_name') }} Storage Report:
+            • Available: {{ state_attr(trigger.entity_id, 'Available') }}
+            • Available (Important): {{ state_attr(trigger.entity_id, 'Available (Important)') }}
+            • Available (Opportunistic): {{ state_attr(trigger.entity_id, 'Available (Opportunistic)') }}
+            • Total: {{ state_attr(trigger.entity_id, 'Total') }}
+
+
+  - id: ha_notify_iphone_location_permission_problem
+    alias: "Notify when any iPhone location permission is in problem state"
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.ohad_iphone_location_permission
+          - binary_sensor.rinat_iphone_location_permission
+          - binary_sensor.ella_iphone_location_permission
+          - binary_sensor.roi_iphone_location_permission
+          - binary_sensor.adi_iphone_location_permission
+        to: 'on'
+    action:
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Location Permission Problem"
+          message: >
+            {{ trigger.to_state.name }} is in a problem state (current: {{ trigger.to_state.state }})

@@ -15,6 +15,14 @@ template:
         device_class: humidity
         icon: mdi:water-percent
 
+sensor:
+  - platform: history_stats
+    name: living_room_presence_hours_today
+    entity_id: binary_sensor.living_room_presence
+    state: 'on'
+    type: time
+    start: "{{ today_at('00:00') }}"
+    end: "{{ now() }}"
 
 light:
   - platform: template
@@ -46,188 +54,6 @@ light:
 
 
 automation:
-  - alias: 'Close living room shutters at 21:00'
-    id: living_room_shutters_close_at_night
-    initial_state: true
-    trigger:
-      platform: time
-      at: '21:00:00'
-
-    condition:
-      - condition: state
-        entity_id: input_boolean.away_mode
-        state: 'off'
-
-    action:
-      - variables:
-          left_window_position: "{{ state_attr('cover.shellyplus2pm_c4d8d5579560_cover_0', 'current_position') }}"
-          middle_window_position: "{{ state_attr('cover.living_room_middle_window', 'current_position') }}"
-          right_window_position: "{{ state_attr('cover.living_room_right_window', 'current_position') }}"
-
-
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.shellyplus2pm_c4d8d5579560_cover_0
-        data:
-          position: "{{ [left_window_position, 15] | min }}"
-
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.living_room_middle_window
-        data:
-          position: "{{ [middle_window_position, 15] | min }}"
-
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.living_room_right_window
-        data:
-          position: "{{ [right_window_position, 15] | min }}"
-
-
-  - alias: 'Close living room shutters at night'
-    id: living_room_shutters_close_at_night_complete
-    initial_state: true
-    trigger:
-      platform: time
-      at: '00:00:00'
-
-    condition:
-      - condition: state
-        entity_id: input_boolean.away_mode
-        state: 'off'
-
-    action:
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.living_room_right_window
-            - cover.living_room_middle_window
-            - cover.shellyplus2pm_c4d8d5579560_cover_0  # left window
-        data:
-          position: 0
-
-
-  - alias: 'Open living room shutters in the morning'
-    id: living_room_open_living_room_shutters_morning
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.kids_hallway_01_occupancy
-        from: 'off'
-        to: 'on'
-
-    condition:
-      condition: and
-      conditions:  # 4 hours passed (don't run twice the same day)
-        - condition: template
-          value_template: >-
-            {{ as_timestamp(now()) - as_timestamp(state_attr('automation.open_living_room_shutters_in_the_morning', 'last_triggered') or today_at('00:00')) | int > 28800 }}
-        - condition: time
-          after: '06:00:00'
-          before: '10:00:00'
-        - condition: state
-          entity_id: input_boolean.away_mode
-          state: 'off'
-
-    action:
-      - choose:
-          - conditions:
-              - condition: numeric_state
-                entity_id: sensor.living_room_ac_temperature
-                below: 18
-            sequence:
-              - service: climate.turn_on
-                target:
-                  entity_id: climate.living_room_ac
-        default: []
-
-      - action: cover.set_cover_position
-        data_template:
-          entity_id: cover.living_room_right_window
-          position: >-
-            {{ max(state_attr('cover.living_room_right_window', 'current_position') | int, 70) }}
-
-      - action: cover.set_cover_position
-        data_template:
-          entity_id: cover.living_room_middle_window
-          position: >-
-            {{ max(state_attr('cover.living_room_middle_window', 'current_position') | int, 70) }}
-
-      - action: cover.set_cover_position
-        data_template:
-          entity_id: cover.shellyplus2pm_c4d8d5579560_cover_0
-          position: >-
-            {{ max(state_attr('cover.shellyplus2pm_c4d8d5579560_cover_0', 'current_position') | int, 70) }}
-
-
-  - alias: 'Close living room shutters - sunset'
-    id: living_room_shutters_close_before_sunset
-    trigger:
-      - platform: event
-        id: actionable_notification_trigger_yes
-        event_type: alexa_actionable_notification
-        event_data:
-          event_id: shutters_close_sunset
-          event_response_type: ResponseYes
-
-      - platform: event
-        id: actionable_notification_trigger_none
-        event_type: alexa_actionable_notification
-        event_data:
-          event_id: shutters_close_sunset
-          event_response_type: ResponseNone
-
-      - platform: sun
-        event: sunset
-        offset: "-03:00:00"
-        id: "offset_trigger"
-
-      - platform: sun
-        event: sunset
-        id: "sunset_trigger"
-
-    condition:
-      - condition: template
-        value_template: >
-          {% if trigger.id == "offset_trigger" %}
-            {{ is_state('binary_sensor.dst', 'on') }}
-          {% elif trigger.id == "sunset_trigger" %}
-            {{ is_state('binary_sensor.dst', 'off') and
-               ( not is_state('climate.living_room_ac', 'on') or (states('sensor.openweathermap_feels_like_temperature')|int < 15)) }}
-          {% else %}
-            false
-          {% endif %}
-
-    action:
-      - variables:
-          left_window_position: "{{ state_attr('cover.shellyplus2pm_c4d8d5579560_cover_0', 'current_position') }}"
-          middle_window_position: "{{ state_attr('cover.living_room_middle_window', 'current_position') }}"
-          right_window_position: "{{ state_attr('cover.living_room_right_window', 'current_position') }}"
-
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.shellyplus2pm_c4d8d5579560_cover_0
-        data:
-          position: "{{ [left_window_position, 35] | min }}"
-
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.living_room_middle_window
-        data:
-          position: "{{ [middle_window_position, 35] | min }}"
-
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.living_room_right_window
-        data:
-          position: "{{ [right_window_position, 35] | min }}"
-
   - alias: "Living Room - Turn AC off when no one is in the room"
     id: living_room_no_presence_turn_ac_off
     initial_state: false
@@ -335,6 +161,7 @@ automation:
     action:
       - action: script.turn_everything_off
 
+
   - alias: 'Living room fireplace switch - turn on AC'
     id: living_room_fireplace_switch_turn_on_ac
     initial_state: true
@@ -345,9 +172,23 @@ automation:
         to: 'button_2_single'
 
     action:
-      - action: climate.turn_on
-        target:
-          entity_id: climate.living_room_ac
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: input_number.daily_expected_max_temperature
+                above: 23
+            sequence:
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: climate.living_room_ac
+                data:
+                  hvac_mode: 'cool'
+        default:
+          - service: climate.set_hvac_mode
+            target:
+              entity_id: climate.living_room_ac
+            data:
+              hvac_mode: 'heat'
 
 
   - alias: 'Living room fireplace switch - turn off AC'
@@ -399,131 +240,6 @@ automation:
           temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float - 1 }}"
 
 
-  - alias: 'Living room fireplace switch - Open living room shutters'
-    id: living_room_fireplace_open_living_shutters
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.living_room_01_action
-        to: 'button_6_single'
-
-      - platform: state
-        entity_id: sensor.entrance_01_action
-        to: 'hold'
-
-    action:
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.living_room_right_window
-            - cover.living_room_middle_window
-            - cover.shellyplus2pm_c4d8d5579560_cover_0
-        data:
-          position: 80
-
-
-  - alias: 'Living room fireplace switch - Close living room shutters'
-    id: living_room_fireplace_close_living_room_shutters
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.living_room_01_action
-        to: 'button_5_single'
-
-    action:
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.living_room_right_window
-            - cover.living_room_middle_window
-            - cover.shellyplus2pm_c4d8d5579560_cover_0
-        data:
-          position: 35
-
-  - alias: 'Living room fireplace switch - Open dining room shutters'
-    id: living_room_fireplace_open_dining_room_shutters
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.living_room_01_action
-        to: 'button_6_double'
-      - platform: state
-        entity_id: sensor.entrance_01_action
-        to: 'hold'
-
-    action:
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.shelly2pmg3_34cdb0776380_cover_0
-            - cover.dining_room_left_window
-        data:
-          position: 80
-
-      - action: cover.set_cover_position
-        target:
-          entity_id: cover.dining_room_main_window
-        data:
-          position: 100
-
-
-  - alias: 'Living room fireplace switch - Close dining room shutters'
-    id: living_room_fireplace_close_dining_room_shutters
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.living_room_01_action
-        to: 'button_5_double'
-
-    action:
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.shelly2pmg3_34cdb0776380_cover_0
-            - cover.dining_room_main_window
-            - cover.dining_room_left_window
-        data:
-          position: 35
-
-
-  - alias: 'Living room fireplace switch - Open public space shutters'
-    id: living_room_fireplace_open_public_space_shutters
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.living_room_01_action
-        to: 'button_6_triple'
-
-    action:
-      - action: cover.set_cover_position
-        target:
-          entity_id: group.public_space_shutters
-        data:
-          position: 100
-
-
-  - alias: 'Living room fireplace switch - Close public space shutters'
-    id: living_room_fireplace_close_public_space_shutters
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.living_room_01_action
-        to: 'button_5_triple'
-
-    action:
-      - action: cover.set_cover_position
-        target:
-          entity_id: group.public_space_shutters
-        data:
-          position: 15
-
-
   - alias: Notify TV is playing for turning the lights off
     id: kitchen_notify_tv_is_playing_before_turning_lights_off
     initial_state: false
@@ -553,6 +269,7 @@ automation:
           event_id: 'actionable_notification_lights_tv_playing'
           alexa_device: 'media_player.kitchen_echo'
 
+
   - alias: Turn off the lights via actionable notification
     id: living_room_turn_off_lights_via_actionable_notification
     initial_state: true
@@ -581,8 +298,8 @@ automation:
         after: "06:00:00"
         before: "08:00:00"
       - condition: state
-        entity_id: sensor.school_is_high_vacation
-        state: 'False'
+        entity_id: binary_sensor.high_vacation
+        state: 'off'
       - condition: numeric_state
         entity_id: sensor.living_room_ac_temperature
         below: 18
@@ -590,3 +307,23 @@ automation:
     action:
       - action: climate.turn_on
         entity_id: climate.living_room_ac
+
+
+  - alias: 'Shutdown AC if window is left open for more than 10 minutes'
+    id: living_room_shutdown_ac_balcony_window_is_open
+    initial_state: false
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.dining_room_main_window_contact
+        to: 'on'
+        for:
+          minutes: 10
+
+    conditions:
+      - condition: template
+        value_template: "{{ not is_state('climate.living_room_ac', 'off') }}"
+
+    action:
+      - action: climate.turn_off
+        target:
+          entity_id: climate.living_room_ac

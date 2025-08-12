@@ -24,6 +24,8 @@ CLOTHES_RACK_CAMERA_ENTITY_ID = os.environ.get("CLOTHES_RACK_CAMERA_ENTITY_ID")
 CLOTHES_RACK_TARGET_ENTITY_ID = os.environ.get("CLOTHES_RACK_TARGET_ENTITY_ID")
 GAS_HEATER_CAMERA_ENTITY_ID = os.environ.get("GAS_HEATER_CAMERA_ENTITY_ID")
 GAS_HEATER_TARGET_ENTITY_ID = os.environ.get("GAS_HEATER_TARGET_ENTITY_ID")
+STUDY_ROOM_CAMERA_ENTITY_ID = os.environ.get("STUDY_ROOM_CAMERA_ENTITY_ID")
+STUDY_ROOM_CAMERA_TARGET_ENTITY_ID = os.environ.get("STUDY_ROOM_CAMERA_TARGET_ENTITY_ID")
 
 AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "us.amazon.nova-lite-v1:0")
@@ -274,7 +276,7 @@ def analyze_clothes_rack():
         return jsonify({"detected": is_detected, "confidence": confidence}), 200
 
     except Exception as ex:
-        logger.error(f"Analysis workflow failed: {ex}")
+        logger.exception(f"Analysis workflow failed: {ex}")
         return jsonify({"error": str(ex)}), 500
 
 
@@ -306,8 +308,76 @@ def analyze_gas_heater_display():
         return jsonify(data_sent, 200)
 
     except Exception as ex:
-        logger.error(f"Analysis workflow failed: {ex}")
+        logger.exception(f"Analysis workflow failed: {ex}")
         return jsonify({"error": str(ex)}), 500
+
+@app.route("/analyze/study-room-camera", methods=["GET"])
+def analyze_study_room_camera():
+    try:
+        image_bytes = capture_image_from_ha(STUDY_ROOM_CAMERA_ENTITY_ID)
+        detection_result = analyze_image_with_bedrock(
+            image_bytes=image_bytes,
+            system_prompt=(
+                "You are an image analysis expert. "
+                "Identify if the image shows a person. "
+                "Respond **only** in JSON with keys 'state' (string) when a person "
+                "is present ('on' when present, 'off' when not present) and 'confidence' (0 to 1)"
+                "Don't include any other markdown or text in your response such as ```json"
+            ),
+            user_prompt=(
+                "Parse the image provided and check for a person existence."
+                "Answer with a JSON object containing 'state' and 'confidence' "
+                "and nothing else but these fields."
+            ),
+        )
+        data_sent = update_study_room_ha_entity(detection_result)
+
+        return jsonify(data_sent, 200)
+
+    except Exception as ex:
+        logger.exception(f"Analysis workflow failed: {ex}")
+        return jsonify({"error": str(ex)}), 500
+
+
+def update_study_room_ha_entity(result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Update a Home Assistant entity with the detection results.
+    """
+    if not (HA_BASE_URL and HA_TOKEN and STUDY_ROOM_CAMERA_TARGET_ENTITY_ID):
+        logger.warning("Cannot update entity. Missing HA config or target entity.")
+        raise ValueError("Cannot update entity. Missing HA config or target entity.")
+
+    # For a binary sensor style: 'on' if True, 'off' if False
+    detection_result = json.loads(result["output"]["message"]["content"][0]["text"])
+    confidence = detection_result["confidence"]
+    attributes = {
+        "device_class": "presence",
+        "confidence": round(confidence, 3),
+        "updated_at": int(time.time()),
+        "input_tokens": result["usage"]["inputTokens"],
+        "output_tokens": result["usage"]["outputTokens"],
+        "stop_reason": result["stopReason"],
+    }
+
+    url = f"{HA_BASE_URL}/api/states/{STUDY_ROOM_CAMERA_TARGET_ENTITY_ID}"
+    headers = {
+        "Authorization": f"Bearer {HA_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    data = {"state": detection_result["state"], "attributes": attributes}
+
+    resp = requests.post(url, headers=headers, json=data, timeout=5)
+    if resp.status_code in (200, 201):
+        logger.info(
+            f"Successfully updated '{GAS_HEATER_TARGET_ENTITY_ID}' with data={data}, "
+            f"confidence={confidence:.3f}."
+        )
+    else:
+        logger.error(
+            f"Failed to update entity '{STUDY_ROOM_CAMERA_TARGET_ENTITY_ID}'. Status: {resp.status_code}, Error: {resp.text}"
+        )
+
+    return data
 
 
 if __name__ == "__main__":
