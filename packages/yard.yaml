@@ -69,8 +69,8 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shellyswitch25_6869e3_channel_1 # roof flood light #1
-          - switch.shellyswitch25_6869e3_channel_2 # roof flood light #2
+          - switch.shellyswitch25_6869e3_channel_1  # roof flood light #1
+          - switch.shellyswitch25_6869e3_channel_2  # roof flood light #2
 
   - alias: "Yard - Turn off path lights in the night"
     id: yard_turn_off_path_lights_in_the_night
@@ -82,10 +82,10 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.clinic_door_floodlight_switch_0 # clinic door
-          - switch.shellyplus2pm_d48afc581860_switch_1 # kitchen outdoor light
-          - switch.shellyplus2pm_fcb467a557a0_switch_0 # kids bathroom outdoor light
-          - switch.shelly1pmminig3_34b7dac88574_switch_0 # Parking and outdoor fan
+          - switch.clinic_door_floodlight_switch_0  # clinic door
+          - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
+          - switch.shellyplus2pm_fcb467a557a0_switch_0  # kids bathroom outdoor light
+          - switch.shelly1pmminig3_34b7dac88574_switch_0  # Parking and outdoor fan
 
   - alias: "Turn on kids bathroom path and clinic lights"
     id: yard_turn_on_kids_bathroom_path_clinic_lights
@@ -127,7 +127,7 @@ automation:
     action:
       - action: homeassistant.turn_on
         entity_id:
-          - switch.shellyplus2pm_fcb467a557a0_switch_0 # Bathroom door
+          - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
           - switch.clinic_door_floodlight_switch_0
 
   - alias: "Turn off kids bathroom path lights"
@@ -160,8 +160,8 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shellyplus2pm_fcb467a557a0_switch_0 # Bathroom door
-          - switch.clinic_door_floodlight_switch_0 # Clinic door
+          - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
+          - switch.clinic_door_floodlight_switch_0  # Clinic door
 
 
   - alias: "Turn on kitchen door light"
@@ -238,7 +238,7 @@ automation:
 
     action:
       - action: homeassistant.turn_off
-        entity_id: switch.shellyplus2pm_d48afc581860_switch_1 # Kitchen path flood light
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_1  # Kitchen path flood light
 
   - alias: "Turn off kids bathroom door path light when door is closed"
     id: yard_turn_on_kids_bathroom_door_path_light_when_door_is_closed
@@ -283,7 +283,7 @@ automation:
       - condition: numeric_state
         entity_id: sensor.meter_1018_monthly_forecast
         above: 55
-      - condition: template # once a week
+      - condition: template  # once a week
         value_template: "{{ (now() | as_timestamp) - (state_attr('automation.alert_on_high_expected_water_consumption', 'last_triggered') | default(0) | as_timestamp) > 604800 }}"
 
     action:
@@ -357,13 +357,13 @@ automation:
 
     condition:
       - condition: state
-        entity_id: switch.clinic_door_floodlight_switch_0 # clinic door
+        entity_id: switch.clinic_door_floodlight_switch_0  # clinic door
         state: "on"
 
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.clinic_door_floodlight_switch_0 # Clinic door
+          - switch.clinic_door_floodlight_switch_0  # Clinic door
 
   - alias: Turn off clinic floodlight during daylight hours
     id: yard_turn_off_clinic_door_light_during_daylight_hours

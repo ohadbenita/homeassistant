@@ -68,14 +68,14 @@ template:
 
 
   - sensor:
-    - name: Day of the week
-      unique_id: day_of_week
-      state: >
-        {{ ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"][now().weekday()][:3] | lower}}
+      - name: Day of the week
+        unique_id: day_of_week
+        state: >
+          {{ ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"][now().weekday()][:3] | lower}}
 
-    - name: ha_base_url
-      unique_id: ha_base_url
-      state: !secret base_url
+      - name: ha_base_url
+        unique_id: ha_base_url
+        state: !secret base_url
 
 rest_command:
   shelly_calibrate_cover:

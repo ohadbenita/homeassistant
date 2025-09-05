@@ -15,8 +15,6 @@ input_boolean:
 
   dishwasher_vacant:
     name: Dishwasher Vacant
-    initial: off
-
 
 input_datetime:
   dishwasher_announcement_time:

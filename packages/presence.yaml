@@ -37,7 +37,7 @@ sensor:
 
   - platform: history_stats
     name: Ketem inside today
-    entity_id: binary_sensor.ketem
+    entity_id: binary_sensor.ketem  # yamllint disable-line rule:indentation
     state: "on"
     type: time
     start: "{{ now().replace(hour=0, minute=0, second=0) }}"
@@ -51,27 +51,28 @@ sensor:
     start: "{{ now().replace(hour=0, minute=0, second=0) }}"
     end: "{{ now() }}"
 
+
 automation:
-- alias: "Alert: Ketem presence unchanged for 12 hours (away mode)"
-  id: presence_ketem_didnt_enter_or_exit_in_the_past_12_hours_away_mode
-  mode: single
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.ketem
-      for:
-        hours: 12
+  - alias: "Alert: Ketem presence unchanged for 12 hours (away mode)"
+    id: presence_ketem_didnt_enter_or_exit_in_the_past_12_hours_away_mode
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.ketem
+        for:
+          hours: 12
 
-  condition:
-    - condition: state
-      entity_id: input_boolean.away_mode
-      state: 'on'
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'on'
 
-  action:
-    - action: notify.ohad_telegram
-      data:
-        title: "Alert: Cat presence sensor unchanged"
-        message: >
-          *State:* `{{ states('binary_sensor.ketem') }}`
-          *Unchanged since:* `{{ relative_time(states.binary_sensor.ketem.last_changed) }}`
+    action:
+      - action: notify.ohad_telegram
         data:
-          parse_mode: markdown
+          title: "Alert: Cat presence sensor unchanged"
+          message: >
+            *State:* `{{ states('binary_sensor.ketem') }}`
+            *Unchanged since:* `{{ relative_time(states.binary_sensor.ketem.last_changed) }}`
+          data:
+            parse_mode: markdown

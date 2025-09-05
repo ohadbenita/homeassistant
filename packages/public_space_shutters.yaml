@@ -1,3 +1,4 @@
+---
 automation:
   - alias: 'Open public space shutters in the morning'
     id: public_space_open_shutters_morning

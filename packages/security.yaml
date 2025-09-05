@@ -243,7 +243,6 @@ automation:
                 volume: 1.0
 
 
-
   - alias: Turn everything off script execution failed
     id: security_turn_everything_off_script_failed
     mode: single

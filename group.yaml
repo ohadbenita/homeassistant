@@ -38,7 +38,7 @@ all_lights:
     - switch.backyard_flood_light_near_clinic
 all_ac:
   entities:
-    - climate.living_room_ac
+    - climate.living_room_ac_smartair
     - climate.ella_ac
     - climate.roi_room_ac
     - climate.adi_room_ac
@@ -46,7 +46,7 @@ all_ac:
     - climate.study_room_ac
 public_space_shutters:
   entities:
-    - cover.shelly2pmg3_8cbfea9a4548_cover_0 # living room middle window
+    - cover.shelly2pmg3_8cbfea9a4548_cover_0  # living room middle window
     - cover.shelly2pmg3_e4b32313d15c_cover_0  # living room left window
     - cover.living_room_right_window
     - cover.dining_room_left_window

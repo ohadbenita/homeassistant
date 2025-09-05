@@ -2,14 +2,3 @@
 - name: ohad_telegram
   platform: telegram
   chat_id: !secret telegram_homeassistant_notifications_chat_id
-
-# To start a new session go to http://172.16.0.9:3000/session/start/ha
-# - platform: wapi
-#   name: ohad_whatsapp_api
-#   session: ha
-#   url: http://localhost:3000/client/sendMessage
-
-- platform: greenapi
-  name: ohad_whatsapp_api
-  instance_id:  !secret green_api_instance_id
-  token:  !secret green_api_token

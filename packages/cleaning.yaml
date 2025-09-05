@@ -2,43 +2,43 @@
 input_boolean:
   clean_roi_room:
     name: Roi's Room
-    initial: off
+    initial: false
   clean_adi_room:
     name: Adi's Room
-    initial: off
+    initial: false
   clean_kitchen:
     name: Kitchen
-    initial: off
+    initial: false
   clean_study:
     name: Study
-    initial: off
+    initial: false
   clean_pantry:
     name: Pantry
-    initial: off
+    initial: false
   clean_corridor1:
     name: Corridor1
-    initial: off
+    initial: false
   clean_dining_room:
     name: Dining Room
-    initial: off
+    initial: false
   clean_kids_bathroom:
     name: Kids Bathroom
-    initial: off
+    initial: false
   clean_living_room_corridor:
     name: Living Room Corridor
-    initial: off
+    initial: false
   clean_guest_bathroom:
     name: Guest Bathroom
-    initial: off
+    initial: false
   clean_living_room:
     name: Living Room
-    initial: off
+    initial: false
   clean_entrance:
     name: Entrance
-    initial: off
+    initial: false
   clean_hall:
     name: Hall
-    initial: off
+    initial: false
 
 input_button:
   start_cleaning:
