@@ -58,16 +58,6 @@ automation:
             entity_id: sensor.ups_input_voltage
             above: 200
         continue_on_timeout: false
-      - action: switch.toggle
-        target:
-          entity_id: switch.gas_water_heater
-      - action: notify.ohad_whatsapp_api
-        data:
-          message: "Electricity power failure detected. The gas water heater has been reset, check that it's on"
-          title: Appliance alert
-          target: !secret rinat_benita_whatsapp_user_id
-          data:
-            media_url: {}
       - action: notify.ohad_telegram
         data_template:
           message: "Electricity power failure detected. The gas water heater has been reset, check that it's on"
@@ -108,10 +98,13 @@ automation:
     trigger:
       - platform: sun
         event: sunset
+
       - platform: homeassistant
         event: start
 
     action:
+      - delay: '00:00:20'
+
       - action: rest_command.analyze_gas_water_heater_display
 
 

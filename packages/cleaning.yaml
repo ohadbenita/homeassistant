@@ -78,7 +78,6 @@ automation:
         data_template:
           entity_id: vacuum.yulanda
           command: app_segment_clean
-          repeat: 2
           params: >
             {% set s = [] %}
             {% if is_state('input_boolean.clean_roi_room','on') %}{% set s = s + [16] %}{% endif %}

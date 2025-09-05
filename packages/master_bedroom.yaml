@@ -30,12 +30,13 @@ light:
               - switch.master_bedroom_light_and_fan_switch_1
               - switch.master_bedroom_spots
         turn_off:
-          action: homeassistant.turn_off
-          target:
-            entity_id:
-              - switch.shellyplus2pm_fcb4670e673c_switch_0
-              - switch.master_bedroom_light_and_fan_switch_1
-              - switch.master_bedroom_spots
+          - delay: "00:00:05"
+          - action: homeassistant.turn_off
+            target:
+              entity_id:
+                - switch.shellyplus2pm_fcb4670e673c_switch_0
+                - switch.master_bedroom_light_and_fan_switch_1
+                - switch.master_bedroom_spots
 
 
 template:

@@ -107,7 +107,7 @@ automation:
 
   - alias: "Ella Room - Turn AC off when no one is in the room"
     id: ella_room_no_presence_turn_ac_off
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_c17318_radar_target
@@ -199,19 +199,15 @@ automation:
                 entity_id: sensor.home_ella_benita_distance
                 below: 10000  # 10 km in meters
             sequence:
-              - action: notify.ohad_whatsapp_api
+              - action: notify.mobile_app_ellas_iphone
                 data:
                   message: "Ketem's GPS tracker is charged, please re-attach it"
                   title: Device notification
-                  target: !secret ella_benita_whatsapp_user_id
-                  data:
-                    media_url: {}
         default:
-          - action: notify.ohad_whatsapp_api
+          - action: notify.mobile_app_adidibenita
             data:
               message: 'הג׳יפיאס של כתם סיים להיטען, אנא חברי לה אותו בחזרה'
               title: Device notification
-              target: !secret adi_benita_whatsapp_user_id
 
 
   - alias: 'Ella room - Send a notification when Ketem tracker needs to be charged'
@@ -232,16 +228,12 @@ automation:
                 entity_id: sensor.home_ella_benita_distance
                 below: 10000  # 10 km in meters
             sequence:
-              - action: notify.ohad_whatsapp_api
+              - action: notify.mobile_app_ellas_iphone
                 data:
                   message: "Ketem's GPS tracker needs to be charged"
                   title: Device notification
-                  target: !secret ella_benita_whatsapp_user_id
-                  data:
-                    media_url: {}
         default:
-          - action: notify.ohad_whatsapp_api
+          - action: notify.mobile_app_adidibenita
             data:
               message: 'הסוללה בג׳יפיאס של כתם חלשה, אנא הטעיני אותו בהקדם'
               title: Device notification
-              target: !secret adi_benita_whatsapp_user_id

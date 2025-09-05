@@ -1,19 +1,13 @@
 ---
-template:
-  - sensor:
-      - name: "Living room AC Temperature"
-        unit_of_measurement: "°C"
-        state: "{{ state_attr('climate.living_room_ac', 'current_temperature') }}"
-        availability: "{{ state_attr('climate.living_room_ac', 'current_temperature') is not none }}"
-        device_class: temperature
-        icon: mdi:thermometer
-
-      - name: "Living room AC humidity"
-        unit_of_measurement: "%"
-        state: "{{ state_attr('climate.living_room_ac', 'current_humidity') }}"
-        availability: "{{ state_attr('climate.living_room_ac', 'current_humidity') is not none }}"
-        device_class: humidity
-        icon: mdi:water-percent
+climate:
+  - platform: smartir
+    name: Living room AC Smartair
+    unique_id: living_room_ac_smartair
+    device_code: 1343
+    controller_data: remote.living_room_broadlink
+    temperature_sensor: sensor.living_room_ac_temperature
+    humidity_sensor: sensor.living_room_ac_humidity
+    power_sensor: binary_sensor.living_room_ac_active
 
 sensor:
   - platform: history_stats
@@ -23,6 +17,14 @@ sensor:
     type: time
     start: "{{ today_at('00:00') }}"
     end: "{{ now() }}"
+
+template:
+  - binary_sensor:
+      - name: "Living Room AC Active"
+        unique_id: living_room_ac_active
+        device_class: power
+        state: >
+          {{ states('sensor.living_room_ac_power_meter_power')|float(0) > 20 }}
 
 light:
   - platform: template
@@ -79,7 +81,7 @@ automation:
     action:
       - action: climate.turn_off
         data_template:
-          entity_id: climate.living_room_ac
+          entity_id: climate.living_room_ac_smartair
 
 
   - alias: "Turn on living room couch light when TV light is turned on"
@@ -180,13 +182,13 @@ automation:
             sequence:
               - action: climate.set_hvac_mode
                 target:
-                  entity_id: climate.living_room_ac
+                  entity_id: climate.living_room_ac_smartair
                 data:
                   hvac_mode: 'cool'
         default:
           - service: climate.set_hvac_mode
             target:
-              entity_id: climate.living_room_ac
+              entity_id: climate.living_room_ac_smartair
             data:
               hvac_mode: 'heat'
 
@@ -203,7 +205,7 @@ automation:
     action:
       - action: climate.turn_off
         target:
-          entity_id: climate.living_room_ac
+          entity_id: climate.living_room_ac_smartair
 
 
   - alias: 'Living room fireplace switch - Increase AC temperature'
@@ -218,9 +220,9 @@ automation:
     action:
       - action: climate.set_temperature
         target:
-          entity_id: climate.living_room_ac
+          entity_id: climate.living_room_ac_smartair
         data:
-          temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float + 1 }}"
+          temperature: "{{ state_attr('climate.living_room_ac_smartair', 'temperature') | float + 1 }}"
 
 
   - alias: 'Living room fireplace switch - Decrease AC temperature'
@@ -235,9 +237,9 @@ automation:
     action:
       - action: climate.set_temperature
         target:
-          entity_id: climate.living_room_ac
+          entity_id: climate.living_room_ac_smartair
         data:
-          temperature: "{{ state_attr('climate.living_room_ac', 'temperature') | float - 1 }}"
+          temperature: "{{ state_attr('climate.living_room_ac_smartair', 'temperature') | float - 1 }}"
 
 
   - alias: Notify TV is playing for turning the lights off
@@ -306,7 +308,7 @@ automation:
 
     action:
       - action: climate.turn_on
-        entity_id: climate.living_room_ac
+        entity_id: climate.living_room_ac_smartair
 
 
   - alias: 'Shutdown AC if window is left open for more than 10 minutes'
@@ -321,9 +323,9 @@ automation:
 
     conditions:
       - condition: template
-        value_template: "{{ not is_state('climate.living_room_ac', 'off') }}"
+        value_template: "{{ not is_state('climate.living_room_ac_smartair', 'off') }}"
 
     action:
       - action: climate.turn_off
         target:
-          entity_id: climate.living_room_ac
+          entity_id: climate.living_room_ac_smartair

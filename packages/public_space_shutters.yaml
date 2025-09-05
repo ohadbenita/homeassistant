@@ -84,7 +84,7 @@ automation:
             {{ is_state('binary_sensor.dst', 'on') }}
           {% elif trigger.id == "sunset_trigger" %}
             {{ is_state('binary_sensor.dst', 'off') and
-              ( not is_state('climate.living_room_ac', 'on') or (states('sensor.openweathermap_feels_like_temperature')|int < 15)) }}
+              ( not is_state('climate.living_room_ac_smartair', 'on') or (states('sensor.openweathermap_feels_like_temperature')|int < 15)) }}
           {% else %}
             false
           {% endif %}
@@ -168,7 +168,7 @@ automation:
             {{ is_state('binary_sensor.dst', 'on') }}
           {% elif trigger.id == "sunset_trigger" %}
             {{ is_state('binary_sensor.dst', 'off') and
-               ( not is_state('climate.living_room_ac', 'on') or (states('sensor.openweathermap_feels_like_temperature')|int < 15)) }}
+               ( not is_state('climate.living_room_ac_smartair', 'on') or (states('sensor.openweathermap_feels_like_temperature')|int < 15)) }}
           {% else %}
             false
           {% endif %}

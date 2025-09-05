@@ -32,13 +32,10 @@ automation:
         entity_id: sensor.home_ella_benita_distance
         below: 10000  # 10 km in meters
     action:
-      - action: notify.ohad_whatsapp_api
+      - action: notify.mobile_app_ellas_iphone
         data:
           message: Washing machine cycle complete, please hang the clothes to dry
           title: Chore notification
-          target: !secret ella_benita_whatsapp_user_id
-          data:
-            media_url: {}
 
 
   - alias: Kids bathroom water Leak detection

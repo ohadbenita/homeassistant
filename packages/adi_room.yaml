@@ -8,6 +8,15 @@ template:
         device_class: temperature
         icon: mdi:thermometer
 
+  - binary_sensor:
+      - name: "Adi Room Occupancy"
+        unique_id: adi_room_occupancy
+        device_class: occupancy
+        state: >
+          {{
+            is_state('binary_sensor.occupancy_sensor_3012_occupancy', 'on')
+            or is_state('binary_sensor.occupancy_sensor_5775_occupancy', 'on')
+          }}
 
 sensor:
   - platform: derivative
@@ -74,7 +83,7 @@ automation:
     initial_state: false
     trigger:
       - platform: state
-        entity_id: binary_sensor.occupancy_sensor_3012_occupancy
+        entity_id: binary_sensor.adi_room_occupancy
         to: 'on'
 
       - platform: homeassistant
@@ -82,7 +91,7 @@ automation:
 
     condition:
       - condition: state
-        entity_id: binary_sensor.occupancy_sensor_3012_occupancy
+        entity_id: binary_sensor.adi_room_occupancy
         state: 'on'
 
     action:
@@ -92,25 +101,33 @@ automation:
           - switch.shelly1pmminig3_34b7da9275f0_switch_0  # Night light
 
 
-  - alias: "Turn off Adi room light when no motion is detected"
+  - alias: "Turn off Adi room appliances when no motion is detected"
     id: adi_room_turn_light_off_no_motion_detected
     initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.occupancy_sensor_3012_occupancy
+        entity_id: binary_sensor.adi_room_occupancy
+        from: 'on'
         to: 'off'
         for:
-          minutes: 15
+          minutes: 10
 
       - platform: homeassistant
         event: start
 
     condition:
       - condition: state
-        entity_id:
-          - binary_sensor.occupancy_sensor_3012_occupancy
-          - binary_sensor.apollo_msr_1_cb6db4_radar_target
+        entity_id: binary_sensor.adi_room_occupancy
         state: 'off'
+      - condition: template
+        value_template: >
+          {{ not (
+              is_state('switch.shellyplus2pm_fcb467a580a8_switch_0', 'off')
+              and is_state('switch.shellyplus2pm_fcb467a580a8_switch_1', 'off')
+              and is_state('switch.shelly1pmminig3_34b7da9275f0_switch_0', 'off')
+              and is_state('climate.adi_room_ac', 'off')
+            )
+          }}
 
     action:
       - action: homeassistant.turn_off
@@ -118,6 +135,7 @@ automation:
           - switch.shellyplus2pm_fcb467a580a8_switch_0    # light
           - switch.shellyplus2pm_fcb467a580a8_switch_1    # fan
           - switch.shelly1pmminig3_34b7da9275f0_switch_0  # Night light
+          - climate.adi_room_ac
 
 
   - alias: "Adi room entrance switch fan control"
@@ -192,6 +210,7 @@ automation:
                   - service: climate.turn_off
                     target:
                       entity_id: climate.adi_room_ac
+
 
   - alias: "Sync Adi night light with fan light"
     id: adi_room_sync_night_light_with_fan_light

@@ -447,6 +447,8 @@ automation:
         event: start
 
     action:
+      - delay: '00:00:20'
+
       - action: rest_command.analyze_laundry
 
   - alias: "Alert if laundry is out during the night"

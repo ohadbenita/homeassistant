@@ -36,6 +36,7 @@ template:
         state_class: total_increasing
         state: >
           {{
+            states('sensor.living_room_ac_power_meter_energy') | float(0) +
             states('sensor.athom_02_energy_total') | float(0) +
             states('sensor.charger_energy_active_import_register') | float(0) +
             states('sensor.dryer_plug_energy_total') | float(0) +
@@ -77,7 +78,7 @@ template:
             states('sensor.shelly1pmminig3_dcda0cead100_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_dcda0cafe368_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7dac88574_switch_0_energy') | float(0) +
-            state('sensor.shelly1pmminig3_54320451ae98_switch_0_energy') | float(0) +
+            states('sensor.shelly1pmminig3_54320451ae98_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da92c7a4_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da92adb0_switch_0_energy') | float(0) +
             states('sensor.shelly1pmminig3_34b7da9275f0_switch_0_energy') | float(0) +

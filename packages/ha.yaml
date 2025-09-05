@@ -33,16 +33,6 @@ input_boolean:
     icon: mdi:update
 
 
-binary_sensor:
-  - platform: rest
-    name: Whatsapp API Availability
-    unique_id: whatsapp_api_availability
-    resource: !secret green_api_availability_url
-    method: POST
-    value_template: "{{ value_json.existsWhatsapp | default(false) }}"
-    device_class: connectivity
-
-
 template:
   - binary_sensor:
       - name: "DST"
@@ -227,7 +217,7 @@ automation:
             'lock.kitchen_door',
             'lock.kids_bathroom_door',
             'switch.irrigation_l1',
-            'climate.living_room_ac',
+            'climate.living_room_ac_smartair',
             'climate.master_bedroom_ac',
             'climate.ella_ac',
             'cover.shellyplus2pm_c4d8d5579560_cover_0',
@@ -253,7 +243,7 @@ automation:
               'lock.kitchen_door',
               'lock.kids_bathroom_door',
               'switch.irrigation_l1',
-              'climate.living_room_ac',
+              'climate.living_room_ac_smartair',
               'climate.master_bedroom_ac',
               'climate.ella_ac',
               'cover.shellyplus2pm_c4d8d5579560_cover_0',
@@ -542,22 +532,6 @@ automation:
               data:
                 shelly_ip: "{{ repeat.item }}"
 
-  - alias: Notify Whatsapp API is down
-    id: ha_notify_whatsapp_api_is_down
-    description: Notify via Telegram when the API is down
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.whatsapp_api_availability
-        to: "off"
-    action:
-      - action: notify.ohad_telegram
-        data:
-          title: "API Monitoring Alert"
-          message: >
-            🚨 The API at `http://172.16.0.9:3000/client/getContacts/ha` is down!
-            Check https://github.com/t0mer/wapi-custom-notifier for instructions to re-setup
-
-
   - alias: Dismiss OCPP integration notifications
     id: ha_dismiss_ocpp_integration_notifications
     mode: parallel
@@ -600,7 +574,7 @@ automation:
     action:
       - action: >
           notify.mobile_app_{{
-            trigger.entity_id.split('.')[1].replace('_storage','')
+            trigger.entity_id.split('.')[1].replace('_storage','') if trigger.entity_id != 'sensor.iphone_storage' else 'adidibenita'
           }}
         data:
           message: >

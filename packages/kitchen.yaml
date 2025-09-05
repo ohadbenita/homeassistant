@@ -471,13 +471,10 @@ automation:
         data_template:
           message: "The pantry freezer door is open, close it as soon as possible"
 
-      - action: notify.ohad_whatsapp_api
+      - action: notify.mobile_app_rinats_iphone
         data:
           message: "Pantry freezer door is open, please close it"
           title: Appliance alert
-          target: !secret rinat_benita_whatsapp_user_id
-          data:
-            media_url: {}
 
       - action: input_boolean.turn_on
         entity_id: input_boolean.should_announce_pantry_freezer_door_closed
@@ -506,16 +503,13 @@ automation:
             (as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60
             | int }} minutes
 
-      - action: notify.ohad_whatsapp_api
+      - action: notify.ohad_telegram
         data:
           message: >
             The pantry freezer door has been closed after being open for {{
             (as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60
             | int }} minutes
           title: Appliance Alert
-          target: !secret rinat_benita_whatsapp_user_id
-          data:
-            media_url: {}
 
       - action: input_boolean.turn_off
         target:

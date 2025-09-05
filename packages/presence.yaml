@@ -35,6 +35,21 @@ sensor:
     timeout: 5
     away_timeout: 120
 
+  - platform: history_stats
+    name: Ketem inside today
+    entity_id: binary_sensor.ketem
+    state: "on"
+    type: time
+    start: "{{ now().replace(hour=0, minute=0, second=0) }}"
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Ketem outside today
+    entity_id: binary_sensor.ketem
+    state: "off"
+    type: time
+    start: "{{ now().replace(hour=0, minute=0, second=0) }}"
+    end: "{{ now() }}"
 
 automation:
 - alias: "Alert: Ketem presence unchanged for 12 hours (away mode)"
