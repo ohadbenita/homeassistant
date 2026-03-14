@@ -1,14 +1,12 @@
 ---
-binary_sensor:
-  - platform: template
-    sensors:
-      waiting_for_printer_availability:
-        friendly_name: "Waiting for printer availability"
-        value_template: >
-          {{
-            is_state('sensor.brother_hl_l2300d_series_using_brlaser_v6', 'printing') and
-            state_attr('sensor.brother_hl_l2300d_series_using_brlaser_v6', 'state_message') == 'Waiting for printer to become available.'
-          }}
+template:
+  binary_sensor:
+    - name: waiting_for_printer_availability
+      state: >
+        {{
+          is_state('sensor.brother_hl_l2300d_series_using_brlaser_v6', 'printing') and
+          state_attr('sensor.brother_hl_l2300d_series_using_brlaser_v6', 'state_message') == 'Waiting for printer to become available.'
+        }}
 
 
 automation:
@@ -22,6 +20,12 @@ automation:
           - binary_sensor.kids_hallway_02_occupancy
           - binary_sensor.occupancy_sensor_a206_occupancy
         to: 'on'
+
+      - platform: state
+        entity_id:
+          - switch.shellyplus2pm_fcb4670e68e8_switch_0
+          - switch.shellyplus2pm_fcb4670e68e8_switch_1
+        to: 'off'
 
       - platform: homeassistant
         event: start
@@ -50,6 +54,13 @@ automation:
 
       - condition: state
         entity_id: input_boolean.away_mode
+        state: 'off'
+
+      - condition: state
+        entity_id: switch.shellyplus2pm_fcb4670e68e8_switch_0  # Kitchen light
+        state: 'off'
+      - condition: state
+        entity_id: switch.shellyplus2pm_fcb4670e68e8_switch_1  # Kitchen light
         state: 'off'
 
     action:
@@ -167,7 +178,9 @@ automation:
                 volume: 1.0
 
 
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data_template:
           message: "Smoke has been detected in the hallway"
 
@@ -186,7 +199,9 @@ automation:
         from: 'on'
         to: 'off'
     action:
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data_template:
           message: "Smoke in the hallway is not detected anymore"
       - action: notify.mobile_app_ohadbenita
@@ -216,7 +231,22 @@ automation:
 
     action:
       - action: homeassistant.turn_on
-        entity_id: switch.main_hallway_printer
-
-      - action: homeassistant.turn_on
         entity_id: switch.main_hallway_printer_fingerbot
+
+
+  - alias: "Toggle basement stairs spots on switch change"
+    id: kids_hallway_basement_stairs_spots_toggle_on_switch_change
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.basement_stairs_spots_dummy_input_0
+        from: 'on'
+        to: 'off'
+      - platform: state
+        entity_id: binary_sensor.basement_stairs_spots_dummy_input_0
+        from: 'off'
+        to: 'on'
+
+    action:
+      - action: light.toggle
+        target:
+          entity_id: light.shellydimmer2_34945478921b

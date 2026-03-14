@@ -1,0 +1,89 @@
+---
+input_text:
+  req_tmdb_tv_id:
+    name: TMDB TV ID
+    icon: mdi:numeric
+    mode: text
+    max: 10
+
+  req_tv_seasons:
+    name: Seasons (comma-separated)
+    icon: mdi:format-list-numbered
+    mode: text
+    max: 120
+    initial: "1"   # ignored if "All seasons" is on
+
+input_boolean:
+  req_is_4k:
+    name: Request 4K
+    icon: mdi:television-4k
+
+  req_all_seasons:
+    name: All seasons
+    icon: mdi:playlist-check
+
+# ── REST command ─────────────────────────────────────────────────────────────
+rest_command:
+  jellyseerr_request_tv:
+    url: !secret jellyseerr_request_url  # e.g. http://172.16.0.9:5055/api/v1/request
+    method: POST
+    headers:
+      X-Api-Key: !secret jellyseerr_api_key
+      accept: application/json
+      content-type: application/json
+    payload: >-
+      {%- set tmdb = tmdb_id | int -%}
+      {%- set is4k_json = (is_4k | bool) | tojson -%}
+      {%- set all = request_all | bool -%}
+      {%- set raw = (seasons_text | default('1') | string) -%}
+      {%- set parts = raw.replace(' ','').split(',') if not all else [] -%}
+      {%- set seasons = parts | select('string') | map('int') | list -%}
+      {
+        "mediaType": "tv",
+        "mediaId": {{ tmdb }},
+        "is4k": {{ is4k_json }}{% if all %},
+        "requestAll": true{% else %},
+        "seasons": [{{ seasons | join(', ') }}]{% endif %}
+      }
+    verify_ssl: false
+    timeout: 30
+
+# ── Script wrapper ───────────────────────────────────────────────────────────
+script:
+  jellyseerr_request_tv_show:
+    alias: Request TV Show (Jellyseerr)
+    mode: single
+    sequence:
+      - variables:
+          tmdb_id: "{{ states('input_text.req_tmdb_tv_id') }}"
+          seasons_text: "{{ states('input_text.req_tv_seasons') }}"
+          is_4k: "{{ is_state('input_boolean.req_is_4k', 'on') }}"
+          request_all: "{{ is_state('input_boolean.req_all_seasons', 'on') }}"
+      - choose:
+          - conditions: >-
+              {{ tmdb_id | regex_match('^\d+$')
+                 and (request_all
+                      or seasons_text | regex_match('^\s*\d+(\s*,\s*\d+)*\s*$', ignorecase=False)) }}
+            sequence:
+              - action: rest_command.jellyseerr_request_tv
+                data:
+                  tmdb_id: "{{ tmdb_id }}"
+                  is_4k: "{{ is_4k }}"
+                  request_all: "{{ request_all }}"
+                  seasons_text: "{{ seasons_text }}"
+              - action: persistent_notification.create
+                data:
+                  title: "Jellyseerr"
+                  message: >-
+                    Request sent • TV TMDB={{ tmdb_id }}
+                    • 4K={{ is_4k }}
+                    • {{ 'All seasons' if request_all else 'Seasons: ' ~ seasons_text }}
+                  notification_id: jellyseerr_request_status
+        default:
+          - action: persistent_notification.create
+            data:
+              title: "Jellyseerr"
+              message: >-
+                Invalid input. TMDB must be digits. If "All seasons" is off,
+                provide comma-separated season numbers (e.g., 1,2,3).
+              notification_id: jellyseerr_request_status

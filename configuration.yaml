@@ -17,6 +17,8 @@ homeassistant:
   packages: !include_dir_named packages/
   auth_mfa_modules:
     - type: totp
+  allowlist_external_dirs:
+    - /config/www/snapshots
 
 recorder:
   purge_keep_days: 90
@@ -43,3 +45,13 @@ logger:
   default: info
   logs:
     reolink_aio.api: warning
+    surepy.client: warning
+    custom_components.ocpp: error
+    ocpp: error
+    custom_components.moonraker: critical
+    moonraker_api.websockets.websocketclient: critical
+    homeassistant.components.alexa.state_report: critical
+    homeassistant.components.ipp: critical
+    homeassistant.components.ring: critical
+    homeassistant.components.iss: critical
+    homeassistant.components.alexa.capabilities: critical

@@ -122,7 +122,7 @@ automation:
         entity_id: binary_sensor.roi_room_occupancy
         to: 'off'
         for:
-          minutes: 15
+          minutes: 5
 
       - platform: homeassistant
         event: start

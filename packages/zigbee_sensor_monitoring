@@ -1,0 +1,311 @@
+---
+group:
+  zigbee_trigger_sensors:
+    name: "Zigbee Trigger Sensors"
+    entities:
+      # === Doors ===
+      - binary_sensor.entrance_door_contact          # entrance door (security & entrance flows)
+      - binary_sensor.kitchen_door_contact           # kitchen door (yard flows)
+      - binary_sensor.kids_bathroom_door_contact     # kids bathroom door (yard flows)
+      # (If you later expose clinic door as a contact sensor entity, add here too.)
+
+      # === Windows (Dining Room) ===
+      - binary_sensor.dining_room_left_window_01_contact
+      - binary_sensor.dining_room_right_window_01_contact
+      - binary_sensor.dining_room_main_window_01_contact
+      - binary_sensor.dining_room_main_window_02_contact
+
+      # === Windows (Living Room) ===
+      - binary_sensor.living_room_middle_window_01_contact
+      - binary_sensor.living_room_middle_window_02_contact
+      - binary_sensor.living_room_right_window_contact
+      - binary_sensor.living_room_left_window_contact
+
+      # === Other rooms’ windows (Security pack) ===
+      - binary_sensor.study_window_contact
+      - binary_sensor.roi_window_contact
+      - binary_sensor.adi_window_contact
+
+      # === Already-covered motions/hazards (kept for completeness) ===
+      - binary_sensor.entrance_door_occupancy
+      - binary_sensor.entrance_indoor_occupancy
+      - binary_sensor.cloak_room_occupancy
+      - binary_sensor.kids_hallway_01_occupancy
+      - binary_sensor.kids_hallway_02_occupancy
+      - binary_sensor.occupancy_sensor_a206_occupancy
+      - binary_sensor.hallway_ceiling_smoke
+      - binary_sensor.kitchen_door_01_occupancy
+      - binary_sensor.kitchen_door_02_occupancy
+      - binary_sensor.kitchen_path_person
+      - binary_sensor.kids_bathroom_door_external_occupancy
+      - binary_sensor.occupancy_sensor_808b_occupancy
+      - binary_sensor.occupancy_sensor_a5d0_occupancy
+      - binary_sensor.kids_bathroom_occupancy
+      - binary_sensor.upstairs_floor_stairs_01_occupancy
+      - binary_sensor.upstairs_floor_stairs_03_occupancy
+      - binary_sensor.basement_stairs_01_occupancy
+      - binary_sensor.basement_stairs_02_occupancy
+      - binary_sensor.parking_stairs_01_occupancy
+      - binary_sensor.adi_room_occupancy
+
+input_boolean:
+  # Doors
+  zwd_entrance_door_contact:
+  zwd_kitchen_door_contact:
+  zwd_kids_bathroom_door_contact:
+  # Windows – Dining Room
+  zwd_dining_left_win_01:
+  zwd_dining_right_win_01:
+  zwd_dining_main_win_01:
+  zwd_dining_main_win_02:
+  # Windows – Living Room
+  zwd_living_middle_win_01:
+  zwd_living_middle_win_02:
+  zwd_living_right_win:
+  zwd_living_left_win:
+  # Study/Kids/Adi
+  zwd_study_window:
+  zwd_roi_window:
+  zwd_adi_window:
+
+
+input_boolean:
+  # Entrance
+  zwd_entrance_door_occ:
+  zwd_entrance_indoor_occ:
+  zwd_entrance_contact:
+
+  # Cloak room
+  zwd_cloak_room_occ:
+  zwd_breaker_panel_contact:
+
+  # Kids hallway (+ hazard)
+  zwd_kids_hallway_01:
+  zwd_kids_hallway_02:
+  zwd_a206:
+  zwd_hallway_smoke:
+
+  # Kids bathroom (raw motions, composite room occ, door, outside path)
+  zwd_kids_bath_occ_808b:
+  zwd_kids_bath_occ_a5d0:
+  zwd_kids_bath_occupancy:
+  zwd_kids_bath_door_contact:
+  zwd_kids_bath_ext_occ:
+
+  # Kitchen path / door
+  zwd_kitchen_door_01_occ:
+  zwd_kitchen_door_02_occ:
+  zwd_kitchen_door_contact:
+  zwd_kitchen_path_person:
+
+  # Stairs (upper + basement) + parking stairs
+  zwd_upstairs_stairs_01:
+  zwd_upstairs_stairs_03:
+  zwd_basement_stairs_01:
+  zwd_basement_stairs_02:
+  zwd_parking_stairs_01:
+
+  # Adi room
+  zwd_adi_room_occ:
+
+
+automation:
+  - alias: "ZWD: Alert (latched) when a monitored sensor is UNAVAILABLE"
+    id: zwd_alert_latched_unavailable
+    mode: queued
+    max: 25
+
+    # === TUNE ME ===
+    # Alert only if a sensor has been unavailable for this long:
+    # (Change minutes: 10 -> any value you prefer)
+    trigger:
+      - platform: template
+        value_template: >
+          {{ expand('group.zigbee_trigger_sensors')
+            | selectattr('state', 'eq', 'unavailable')
+            | list | count > 0 }}
+        for:
+          minutes: 10     # ← ALERT_FOR_MINUTES
+
+    variables:
+      # Map each monitored sensor → its latch boolean (must match your helpers)
+      latch_map: >
+        {{
+          {
+            # Entrance
+            'binary_sensor.entrance_door_occupancy': 'input_boolean.zwd_entrance_door_occ',
+            'binary_sensor.entrance_indoor_occupancy': 'input_boolean.zwd_entrance_indoor_occ',
+            'binary_sensor.entrance_door_contact': 'input_boolean.zwd_entrance_contact',
+
+            # Cloak room
+            'binary_sensor.cloak_room_occupancy': 'input_boolean.zwd_cloak_room_occ',
+            'binary_sensor.breaker_panel_01_contact': 'input_boolean.zwd_breaker_panel_contact',
+
+            # Kids hallway + hazard
+            'binary_sensor.kids_hallway_01_occupancy': 'input_boolean.zwd_kids_hallway_01',
+            'binary_sensor.kids_hallway_02_occupancy': 'input_boolean.zwd_kids_hallway_02',
+            'binary_sensor.occupancy_sensor_a206_occupancy': 'input_boolean.zwd_a206',
+            'binary_sensor.hallway_ceiling_smoke': 'input_boolean.zwd_hallway_smoke',
+
+            # Kids bathroom (raw motions, composite occ, door, external path)
+            'binary_sensor.occupancy_sensor_808b_occupancy': 'input_boolean.zwd_kids_bath_occ_808b',
+            'binary_sensor.occupancy_sensor_a5d0_occupancy': 'input_boolean.zwd_kids_bath_occ_a5d0',
+            'binary_sensor.kids_bathroom_occupancy': 'input_boolean.zwd_kids_bath_occupancy',
+            'binary_sensor.kids_bathroom_door_contact': 'input_boolean.zwd_kids_bath_door_contact',
+            'binary_sensor.kids_bathroom_door_external_occupancy': 'input_boolean.zwd_kids_bath_ext_occ',
+
+            # Kitchen door / path
+            'binary_sensor.kitchen_door_01_occupancy': 'input_boolean.zwd_kitchen_door_01_occ',
+            'binary_sensor.kitchen_door_02_occupancy': 'input_boolean.zwd_kitchen_door_02_occ',
+            'binary_sensor.kitchen_door_contact': 'input_boolean.zwd_kitchen_door_contact',
+            'binary_sensor.kitchen_path_person': 'input_boolean.zwd_kitchen_path_person',
+
+            # Stairs (upper + basement) + parking stairs
+            'binary_sensor.upstairs_floor_stairs_01_occupancy': 'input_boolean.zwd_upstairs_stairs_01',
+            'binary_sensor.upstairs_floor_stairs_03_occupancy': 'input_boolean.zwd_upstairs_stairs_03',
+            'binary_sensor.basement_stairs_01_occupancy': 'input_boolean.zwd_basement_stairs_01',
+            'binary_sensor.basement_stairs_02_occupancy': 'input_boolean.zwd_basement_stairs_02',
+            'binary_sensor.parking_stairs_01_occupancy': 'input_boolean.zwd_parking_stairs_01',
+
+            # Adi room
+            'binary_sensor.adi_room_occupancy': 'input_boolean.zwd_adi_room_occ',
+
+            # Doors & windows (if present in your setup)
+            'binary_sensor.dining_room_left_window_01_contact': 'input_boolean.zwd_dining_left_win_01',
+            'binary_sensor.dining_room_right_window_01_contact': 'input_boolean.zwd_dining_right_win_01',
+            'binary_sensor.dining_room_main_window_01_contact': 'input_boolean.zwd_dining_main_win_01',
+            'binary_sensor.dining_room_main_window_02_contact': 'input_boolean.zwd_dining_main_win_02',
+            'binary_sensor.living_room_middle_window_01_contact': 'input_boolean.zwd_living_middle_win_01',
+            'binary_sensor.living_room_middle_window_02_contact': 'input_boolean.zwd_living_middle_win_02',
+            'binary_sensor.living_room_right_window_contact': 'input_boolean.zwd_living_right_win',
+            'binary_sensor.living_room_left_window_contact': 'input_boolean.zwd_living_left_win',
+            'binary_sensor.study_window_contact': 'input_boolean.zwd_study_window',
+            'binary_sensor.roi_window_contact': 'input_boolean.zwd_roi_window',
+            'binary_sensor.adi_window_contact': 'input_boolean.zwd_adi_window'
+          }
+        }}
+
+      # Current list of unavailable sensors in the group
+      bad: >
+        {{ expand('group.zigbee_trigger_sensors')
+          | selectattr('state', 'eq', 'unavailable')
+          | map(attribute='entity_id') | list }}
+
+    action:
+      - repeat:
+          for_each: "{{ bad }}"
+          sequence:
+            - variables:
+                sensor: "{{ repeat.item }}"
+                latch: "{{ latch_map.get(sensor) }}"
+                since: >-
+                  {{ as_local(states[sensor].last_changed).strftime('%Y-%m-%d %H:%M') if states.get(sensor) else 'unknown' }}
+
+            # Skip if no latch is defined or it's already ON
+            - condition: template
+              value_template: "{{ latch is not none and is_state(latch, 'off') }}"
+
+            # Notify + latch ON
+            - action: notify.send_message
+              target:
+                entity_id: notify.telegram_bot_659000495_155103022
+              data:
+                message: >-
+                  ⚠️ *Zigbee watchdog*: `{{ sensor }}` has been *UNAVAILABLE*
+                  since {{ since }}.
+                parse_mode: markdown
+
+            - action: input_boolean.turn_on
+              target:
+                entity_id: "{{ latch }}"
+
+
+  # config/automations/alerts/zigbee_unavailable_watchdog_reset.yaml
+  # Purpose: Unlatch sensors that have been back online (on/off) for RECOVER_STABLE_MINUTES.
+  # Triggered every minute; checks each sensor individually. No waits inside (fire-and-forget).
+
+  - alias: "ZWD: Reset latch when sensor is back online & stable"
+    id: zwd_reset_latch_when_recovered
+    mode: queued
+    max: 10
+
+    variables:
+      RECOVER_STABLE_MINUTES: 5
+
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+
+    variables:
+      sensors: "{{ expand('group.zigbee_trigger_sensors') | map(attribute='entity_id') | list }}"
+      latch_map: >
+        {{  # keep identical to the map in the alert automation
+          {
+            'binary_sensor.entrance_door_occupancy': 'input_boolean.zwd_entrance_door_occ',
+            'binary_sensor.entrance_indoor_occupancy': 'input_boolean.zwd_entrance_indoor_occ',
+            'binary_sensor.entrance_door_contact': 'input_boolean.zwd_entrance_contact',
+            'binary_sensor.cloak_room_occupancy': 'input_boolean.zwd_cloak_room_occ',
+            'binary_sensor.breaker_panel_01_contact': 'input_boolean.zwd_breaker_panel_contact',
+            'binary_sensor.kids_hallway_01_occupancy': 'input_boolean.zwd_kids_hallway_01',
+            'binary_sensor.kids_hallway_02_occupancy': 'input_boolean.zwd_kids_hallway_02',
+            'binary_sensor.occupancy_sensor_a206_occupancy': 'input_boolean.zwd_a206',
+            'binary_sensor.hallway_ceiling_smoke': 'input_boolean.zwd_hallway_smoke',
+            'binary_sensor.occupancy_sensor_808b_occupancy': 'input_boolean.zwd_kids_bath_occ_808b',
+            'binary_sensor.occupancy_sensor_a5d0_occupancy': 'input_boolean.zwd_kids_bath_occ_a5d0',
+            'binary_sensor.kids_bathroom_occupancy': 'input_boolean.zwd_kids_bath_occupancy',
+            'binary_sensor.kids_bathroom_door_contact': 'input_boolean.zwd_kids_bath_door_contact',
+            'binary_sensor.kids_bathroom_door_external_occupancy': 'input_boolean.zwd_kids_bath_ext_occ',
+            'binary_sensor.kitchen_door_01_occupancy': 'input_boolean.zwd_kitchen_door_01_occ',
+            'binary_sensor.kitchen_door_02_occupancy': 'input_boolean.zwd_kitchen_door_02_occ',
+            'binary_sensor.kitchen_door_contact': 'input_boolean.zwd_kitchen_door_contact',
+            'binary_sensor.kitchen_path_person': 'input_boolean.zwd_kitchen_path_person',
+            'binary_sensor.upstairs_floor_stairs_01_occupancy': 'input_boolean.zwd_upstairs_stairs_01',
+            'binary_sensor.upstairs_floor_stairs_03_occupancy': 'input_boolean.zwd_upstairs_stairs_03',
+            'binary_sensor.basement_stairs_01_occupancy': 'input_boolean.zwd_basement_stairs_01',
+            'binary_sensor.basement_stairs_02_occupancy': 'input_boolean.zwd_basement_stairs_02',
+            'binary_sensor.parking_stairs_01_occupancy': 'input_boolean.zwd_parking_stairs_01',
+            'binary_sensor.adi_room_occupancy': 'input_boolean.zwd_adi_room_occ',
+            'binary_sensor.dining_room_left_window_01_contact': 'input_boolean.zwd_dining_left_win_01',
+            'binary_sensor.dining_room_right_window_01_contact': 'input_boolean.zwd_dining_right_win_01',
+            'binary_sensor.dining_room_main_window_01_contact': 'input_boolean.zwd_dining_main_win_01',
+            'binary_sensor.dining_room_main_window_02_contact': 'input_boolean.zwd_dining_main_win_02',
+            'binary_sensor.living_room_middle_window_01_contact': 'input_boolean.zwd_living_middle_win_01',
+            'binary_sensor.living_room_middle_window_02_contact': 'input_boolean.zwd_living_middle_win_02',
+            'binary_sensor.living_room_right_window_contact': 'input_boolean.zwd_living_right_win',
+            'binary_sensor.living_room_left_window_contact': 'input_boolean.zwd_living_left_win',
+            'binary_sensor.study_window_contact': 'input_boolean.zwd_study_window',
+            'binary_sensor.roi_window_contact': 'input_boolean.zwd_roi_window',
+            'binary_sensor.adi_window_contact': 'input_boolean.zwd_adi_window'
+          }
+        }}
+
+    action:
+      - repeat:
+          for_each: "{{ sensors }}"
+          sequence:
+            - variables:
+                sensor: "{{ repeat.item }}"
+                latch: "{{ latch_map.get(sensor) }}"
+            # Only consider sensors with a defined latch that is currently ON
+            - condition: template
+              value_template: "{{ latch is not none and is_state(latch, 'on') }}"
+
+            # Check it's back online (on/off) and stable for RECOVER_STABLE_MINUTES
+            - condition: template
+              value_template: >-
+                {% set s = states(sensor) %}
+                {% set age = as_timestamp(now()) - as_timestamp(states[sensor].last_changed) if states.get(sensor) else 0 %}
+                {{ s in ['on','off'] and age > (RECOVER_STABLE_MINUTES * 60) }}
+
+            # Unlatch + (optional) "back online" notification
+            - action: input_boolean.turn_off
+              target:
+                entity_id: "{{ latch }}"
+
+            - action: notify.send_message
+              target:
+                entity_id: notify.telegram_bot_659000495_155103022
+              data:
+                message: >-
+                  ✅ *Zigbee watchdog*: `{{ sensor }}` is back online and stable.
+                parse_mode: markdown

@@ -6,126 +6,119 @@ input_text:
 input_boolean:
   turn_everything_off_failed:
     name: Turn everything off failed
+  turn_everything_off_started:
+    name: Turn everything off started
 
+template:
+  binary_sensor:
+    - name: dining_room_main_window_contact
+      device_class: opening
+      state: >
+        {{ is_state('binary_sensor.dining_room_main_window_01_contact', 'on') or is_state('binary_sensor.dining_room_main_window_02_contact', 'on') }}
 
-binary_sensor:
-  - platform: template
-    sensors:
-      dining_room_main_window_contact:
-        friendly_name: "Dining room main window"
-        device_class: opening
-        value_template: >
-          {{ is_state('binary_sensor.dining_room_main_window_01_contact', 'on') or is_state('binary_sensor.dining_room_main_window_02_contact', 'on') }}
+    - name: living_room_middle_window_contact
+      device_class: opening
+      state: >
+        {{ is_state('binary_sensor.living_room_middle_window_01_contact', 'on') or is_state('binary_sensor.living_room_middle_window_02_contact', 'on') }}
 
-      living_room_middle_window_contact:
-        friendly_name: "Living room middle window"
-        device_class: opening
-        value_template: >
-          {{ is_state('binary_sensor.living_room_middle_window_01_contact', 'on') or is_state('binary_sensor.living_room_middle_window_02_contact', 'on') }}
+    - name: living_room_right_window_contact
+      device_class: opening
+      state: >
+        {{ is_state('binary_sensor.living_room_right_window_01_contact', 'on') or is_state('binary_sensor.living_room_right_window_02_contact', 'on') }}
 
-      living_room_right_window_contact:
-        friendly_name: "Living room right window"
-        device_class: opening
-        value_template: >
-          {{ is_state('binary_sensor.living_room_right_window_01_contact', 'on') or is_state('binary_sensor.living_room_right_window_02_contact', 'on') }}
+    - name: living_room_left_window_contact
+      device_class: opening
+      state: >
+        {{ is_state('binary_sensor.living_room_left_window_01_contact', 'on') or is_state('binary_sensor.living_room_left_window_02_contact', 'on') }}
 
-      living_room_left_window_contact:
-        friendly_name: "Living room left window"
-        device_class: opening
-        value_template: >
-          {{ is_state('binary_sensor.living_room_left_window_01_contact', 'on') or is_state('binary_sensor.living_room_left_window_02_contact', 'on') }}
+    - name: all_doors_and_windows
+      device_class: opening
+      state: >
+        {{
+          is_state('binary_sensor.kitchen_door_contact', 'on') or
+          is_state('binary_sensor.entrance_door_contact', 'on') or
+          is_state('binary_sensor.kids_bathroom_door_contact', 'on') or
+          is_state('binary_sensor.kitchen_window_01_contact', 'on') or
+          is_state('binary_sensor.dining_room_left_window_01_contact', 'on') or
+          is_state('binary_sensor.dining_room_right_window_01_contact', 'on') or
+          is_state('binary_sensor.dining_room_main_window_contact', 'on') or
+          is_state('binary_sensor.living_room_middle_window_contact', 'on') or
+          is_state('binary_sensor.living_room_right_window_contact', 'on') or
+          is_state('binary_sensor.living_room_left_window_contact', 'on') or
+          is_state('binary_sensor.study_window_contact', 'on') or
+          is_state('binary_sensor.roi_window_contact', 'on') or
+          is_state('binary_sensor.adi_window_contact', 'on')
+        }}
 
-      all_doors_and_windows:
-        friendly_name: "All Doors and Windows"
-        device_class: opening
-        value_template: >
-          {{
-            is_state('binary_sensor.kitchen_door_contact', 'on') or
-            is_state('binary_sensor.entrance_door_contact', 'on') or
-            is_state('binary_sensor.kids_bathroom_door_contact', 'on') or
-            is_state('binary_sensor.kitchen_window_01_contact', 'on') or
-            is_state('binary_sensor.dining_room_left_window_01_contact', 'on') or
-            is_state('binary_sensor.dining_room_right_window_01_contact', 'on') or
-            is_state('binary_sensor.dining_room_main_window_contact', 'on') or
-            is_state('binary_sensor.living_room_middle_window_contact', 'on') or
-            is_state('binary_sensor.living_room_right_window_contact', 'on') or
-            is_state('binary_sensor.living_room_left_window_contact', 'on') or
-            is_state('binary_sensor.study_window_contact', 'on') or
-            is_state('binary_sensor.roi_window_contact', 'on') or
-            is_state('binary_sensor.adi_window_contact', 'on')
-          }}
+    - name: all_windows
+      device_class: opening
+      state: >
+        {{
+          is_state('binary_sensor.dining_room_left_window_01_contact', 'on') or
+          is_state('binary_sensor.dining_room_right_window_01_contact', 'on') or
+          is_state('binary_sensor.dining_room_main_window_contact', 'on') or
+          is_state('binary_sensor.living_room_middle_window_contact', 'on') or
+          is_state('binary_sensor.living_room_right_window_contact', 'on') or
+          is_state('binary_sensor.living_room_left_window_contact', 'on') or
+          is_state('binary_sensor.study_window_contact', 'on') or
+          is_state('binary_sensor.roi_window_contact', 'on') or
+          is_state('binary_sensor.adi_window_contact', 'on')
+        }}
 
-      all_windows:
-        friendly_name: "All Windows"
-        device_class: opening
-        value_template: >
-          {{
-            is_state('binary_sensor.dining_room_left_window_01_contact', 'on') or
-            is_state('binary_sensor.dining_room_right_window_01_contact', 'on') or
-            is_state('binary_sensor.dining_room_main_window_contact', 'on') or
-            is_state('binary_sensor.living_room_middle_window_contact', 'on') or
-            is_state('binary_sensor.living_room_right_window_contact', 'on') or
-            is_state('binary_sensor.living_room_left_window_contact', 'on') or
-            is_state('binary_sensor.study_window_contact', 'on') or
-            is_state('binary_sensor.roi_window_contact', 'on') or
-            is_state('binary_sensor.adi_window_contact', 'on')
-          }}
+  lock:
+    - name: "All doors"
+      state: >
+        {{
+          is_state('lock.entrance_door', 'locked') and
+          is_state('lock.kids_bathroom_door', 'locked') and
+          is_state('lock.kitchen_door', 'locked') and
+          is_state('lock.clinic_door', 'locked')
+        }}
+      lock:
+        action: lock.lock
+        target:
+          entity_id:
+            - lock.entrance_door
+            - lock.kids_bathroom_door
+            - lock.kitchen_door
+            - lock.clinic_door
+      unlock:
+        action: lock.unlock
+        target:
+          entity_id:
+            - lock.entrance_door
+            - lock.kids_bathroom_door
+            - lock.kitchen_door
+            - lock.clinic_door
 
-
-lock:
-  - platform: template
-    name: "All doors"
-    value_template: >
-      {{ is_state('lock.entrance_door', 'locked') and
-         is_state('lock.kids_bathroom_door', 'locked') and
-         is_state('lock.kitchen_door', 'locked') and
-         is_state('lock.clinic_door', 'locked')
-         }}
-    lock:
-      action: lock.lock
-      target:
-        entity_id:
-          - lock.entrance_door
-          - lock.kids_bathroom_door
-          - lock.kitchen_door
-          - lock.clinic_door
-    unlock:
-      action: lock.unlock
-      target:
-        entity_id:
-          - lock.entrance_door
-          - lock.kids_bathroom_door
-          - lock.kitchen_door
-          - lock.clinic_door
-
-  - platform: template
-    name: "Home only doors"
-    value_template: >
-      {{ is_state('lock.entrance_door', 'locked') and
-         is_state('lock.kids_bathroom_door', 'locked') and
-         is_state('lock.kitchen_door', 'locked')
-         }}
-    lock:
-      action: lock.lock
-      target:
-        entity_id:
-          - lock.entrance_door
-          - lock.kids_bathroom_door
-          - lock.kitchen_door
-    unlock:
-      action: lock.unlock
-      target:
-        entity_id:
-          - lock.entrance_door
-          - lock.kids_bathroom_door
-          - lock.kitchen_door
+    - name: "Home only doors"
+      state: >
+        {{
+          is_state('lock.entrance_door', 'locked') and
+          is_state('lock.kids_bathroom_door', 'locked') and
+          is_state('lock.kitchen_door', 'locked')
+        }}
+      lock:
+        action: lock.lock
+        target:
+          entity_id:
+            - lock.entrance_door
+            - lock.kids_bathroom_door
+            - lock.kitchen_door
+      unlock:
+        action: lock.unlock
+        target:
+          entity_id:
+            - lock.entrance_door
+            - lock.kids_bathroom_door
+            - lock.kitchen_door
 
 
 automation:
   - alias: "Security - Camera snapshot on person trigger"
     id: security_camera_snapshot_on_person_trigger
     mode: queued
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
         entity_id: binary_sensor.main_entrance_person
@@ -149,7 +142,9 @@ automation:
           filename: "{{ states('input_text.person_detection_snapshot_filename') }}"
       - delay:
           seconds: 1
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           title: "Security - human presence detected"
           message: >-
@@ -216,7 +211,9 @@ automation:
         before: '07:00:00'
 
     action:
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           title: "Security - entrance door is open"
           message: >-
@@ -225,11 +222,8 @@ automation:
       - action: script.alexa_notification
         data:
           alexa_device: media_player.master_bedroom_echo
-          notification_type: announce
-          current_volume: >-
-            {{ state_attr('media_player.master_bedroom_echo', 'volume_level') }}
-          message: >-
-            The entrance door is open for 10 minutes, please close it.
+          volume: 0.4
+          message: The entrance door is open for 10 minutes, please close it.
 
       - action: notify.mobile_app_ohadbenita
         data:
@@ -255,7 +249,9 @@ automation:
           minutes: 5
 
     action:
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           message: 'Turn everything off automation failed to execute.'
 
@@ -302,16 +298,153 @@ automation:
               - action: lock.lock
                 data:
                   entity_id: lock.home_only_doors
-              - action: notify.ohad_telegram
+              - action: notify.send_message
+                target:
+                  entity_id: notify.telegram_bot_659000495_155103022
                 data:
                   title: "Security - home locked"
                   message: >-
                     The house has been locked as no one has been detected in the house and at least one door has been left unlocked
 
         default:
-          - action: notify.ohad_telegram
+          - action: notify.send_message
+            target:
+              entity_id: notify.telegram_bot_659000495_155103022
             data:
               title: "Security - house locking skipped"
               message: >-
                 The house has **NOT** been locked as no one has been detected in the house
               parse_mode: markdown
+
+  - alias: Alert when doors are open for 30 minutes
+    id: security_doors_open_alert
+    mode: single
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.kitchen_door_contact
+          - binary_sensor.entrance_door_contact
+          - binary_sensor.kids_bathroom_door_contact
+        to: 'on'
+        for: '00:30:00'
+    action:
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
+        data:
+          title: "Security - door left open"
+          message: >-
+            {{ trigger.to_state.name }} has been open for 30 minutes.
+          parse_mode: markdown
+
+
+  - alias: Clinic door lock unavailable -> power cycle + Telegram
+    id: clinic_door_lock_unavailable_power_cycle
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: lock.clinic_door
+        to: "unavailable"
+        for: "00:02:00"
+
+    action:
+      - action: button.press
+        target:
+          entity_id: button.study_usw_flex_port_4_power_cycle
+
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
+        data:
+          title: "Security - clinic door lock unavailable"
+          parse_mode: markdown
+          message: >-
+            {{ trigger.to_state.name }} has been *unavailable* for over 2 minutes.
+            Power-cycled: `button.study_usw_flex_port_4_power_cycle`
+
+
+  - alias: Entrance door lock unavailable -> reboot Nuki Hub + Telegram
+    id: entrance_door_lock_unavailable_reboot_nuki_hub
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: lock.entrance_door
+        to: "unavailable"
+        for: "00:02:00"
+
+    action:
+      - action: mqtt.publish
+        data:
+          topic: entrance-m5stack-nuki-hub/maintenance/reset
+          payload: "1"
+
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
+        data:
+          title: "Security - entrance door lock unavailable"
+          message: >-
+            {{ trigger.to_state.name }} has been *unavailable* for over 2 minutes.
+
+            Sent MQTT reboot:
+            `entrance-m5stack-nuki-hub/maintenance/reset` = `1`
+
+            Time:
+            {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+          parse_mode: markdown
+
+
+  - alias: Kitchen door lock unavailable -> reboot Nuki Hub + Telegram
+    id: kitchen_door_lock_unavailable_reboot_nuki_hub
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: lock.kitchen_door
+        to: "unavailable"
+        for: "00:02:00"
+
+    action:
+      - action: mqtt.publish
+        data:
+          topic: nuki-kitchen-door/maintenance/reset
+          payload: "1"
+
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
+        data:
+          title: "Security - kitchen door lock unavailable"
+          parse_mode: markdown
+          message: >-
+            {{ trigger.to_state.name }} has been *unavailable* for over 2 minutes.
+            Sent MQTT reboot: `nuki-kitchen-door/maintenance/reset` = `1`
+
+
+  - alias: Kids bathroom door lock unavailable -> reboot Nuki Hub + Telegram
+    id: kids_bathroom_door_lock_unavailable_reboot_nuki_hub
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: lock.kids_bathroom_door
+        to: "unavailable"
+        for: "00:02:00"
+
+    action:
+      - action: mqtt.publish
+        data:
+          topic: nuki-kids-bathroom/maintenance/reset
+          payload: "1"
+
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
+        data:
+          title: "Security - kids bathroom door lock unavailable"
+          parse_mode: markdown
+          message: >-
+            {{ trigger.to_state.name }} has been *unavailable* for over 2 minutes.
+            Sent MQTT reboot: `nuki-kids-bathroom/maintenance/reset` = `1`

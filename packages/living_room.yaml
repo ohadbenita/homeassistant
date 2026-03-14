@@ -19,40 +19,51 @@ sensor:
     end: "{{ now() }}"
 
 template:
-  - binary_sensor:
-      - name: "Living Room AC Active"
-        unique_id: living_room_ac_active
-        device_class: power
-        state: >
-          {{ states('sensor.living_room_ac_power_meter_power')|float(0) > 20 }}
+  binary_sensor:
+    - name: "Living Room AC Active"
+      unique_id: living_room_ac_active
+      device_class: power
+      state: >
+        {{ states('sensor.living_room_ac_power_meter_power')|float(0) > 0 }}
 
-light:
-  - platform: template
-    lights:
-      public_space_lights:
-        value_template: >-
-          {{
-            is_state('switch.shellyplus2pm_fcb4670e68e8_switch_0', 'on') and
-            is_state('switch.shellyplus2pm_fcb4670e68e8_switch_1', 'on') and
-            is_state('switch.shelly1pmminig3_3030f9eca0dc_switch_0', 'on') and
-            is_state('switch.shelly1pmminig3_34b7da92245c_switch_0', 'on')
-          }}
-        turn_on:
-          action: homeassistant.turn_on
-          data:
-            entity_id:
-              - switch.shelly1pmminig3_3030f9eca0dc_switch_0
-              - switch.shelly1pmminig3_34b7da92245c_switch_0
-              - switch.shellyplus2pm_fcb4670e68e8_switch_0
-              - switch.shellyplus2pm_fcb4670e68e8_switch_1
-        turn_off:
-          action: homeassistant.turn_off
-          data:
-            entity_id:
-              - switch.shelly1pmminig3_34b7da92245c_switch_0
-              - switch.shelly1pmminig3_3030f9eca0dc_switch_0
-              - switch.shellyplus2pm_fcb4670e68e8_switch_0
-              - switch.shellyplus2pm_fcb4670e68e8_switch_1
+  sensor:
+    - name: "Living room AC temperature rounded"
+      device_class: temperature
+      unit_of_measurement: "°C"
+      state: >
+        {{ states('sensor.living_room_ac_temperature') | int }}
+
+    - name: "Living room AC humidity rounded"
+      device_class: humidity
+      unit_of_measurement: "%"
+      state: >
+        {{ states('sensor.living_room_ac_humidity') | int }}
+
+  light:
+    - name: public_space_lights
+      state: >-
+        {{
+          is_state('switch.shellyplus2pm_fcb4670e68e8_switch_0', 'on') and
+          is_state('switch.shellyplus2pm_fcb4670e68e8_switch_1', 'on') and
+          is_state('switch.living_room_couch_light', 'on') and
+          is_state('switch.shelly1pmminig3_34b7da92245c_switch_0', 'on')
+        }}
+      turn_on:
+        action: homeassistant.turn_on
+        data:
+          entity_id:
+            - switch.living_room_couch_light
+            - switch.shelly1pmminig3_34b7da92245c_switch_0
+            - switch.shellyplus2pm_fcb4670e68e8_switch_0
+            - switch.shellyplus2pm_fcb4670e68e8_switch_1
+      turn_off:
+        action: homeassistant.turn_off
+        data:
+          entity_id:
+            - switch.shelly1pmminig3_34b7da92245c_switch_0
+            - switch.living_room_couch_light
+            - switch.shellyplus2pm_fcb4670e68e8_switch_0
+            - switch.shellyplus2pm_fcb4670e68e8_switch_1
 
 
 automation:
@@ -89,11 +100,11 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0  # TV light
+        entity_id: switch.living_room_couch_light  # Sofa & TV
         to: 'on'
     condition:
       - condition: state
-        entity_id: switch.shelly1pmminig3_34b7da92245c_switch_0  # Couch light
+        entity_id: switch.shelly1pmminig3_34b7da92245c_switch_0  # stove lights
         state: 'off'
     action:
       - action: homeassistant.turn_on
@@ -105,7 +116,7 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0  # TV light
+        entity_id: switch.living_room_couch_light  # TV light
         to: 'off'
     condition:
       - condition: state
@@ -130,7 +141,7 @@ automation:
           - conditions:
               - condition: template
                 value_template: >
-                  {% set switches = [states('switch.shellyplus2pm_fcb4670e68e8_switch_0'), states('switch.shellyplus2pm_fcb4670e68e8_switch_1'), states('switch.shelly1pmminig3_34b7da92245c_switch_0'), states('switch.shelly1pmminig3_3030f9eca0dc_switch_0')] %}
+                  {% set switches = [states('switch.shellyplus2pm_fcb4670e68e8_switch_0'), states('switch.shellyplus2pm_fcb4670e68e8_switch_1'), states('switch.shelly1pmminig3_34b7da92245c_switch_0'), states('switch.living_room_couch_light')] %}
                   {% set on_switches = switches | select('eq', 'on') | list %}
                   {{ on_switches | length > 2 }}
             sequence:
@@ -139,7 +150,7 @@ automation:
                   entity_id:
                     - switch.shellyplus2pm_fcb4670e68e8_switch_0
                     - switch.shellyplus2pm_fcb4670e68e8_switch_1
-                    - switch.shelly1pmminig3_3030f9eca0dc_switch_0
+                    - switch.living_room_couch_light
                     - switch.shelly1pmminig3_34b7da92245c_switch_0
         default:
           - action: switch.turn_on
@@ -148,7 +159,7 @@ automation:
                 - switch.shellyplus2pm_fcb4670e68e8_switch_0
                 - switch.shellyplus2pm_fcb4670e68e8_switch_1
                 - switch.shelly1pmminig3_34b7da92245c_switch_0
-                - switch.shelly1pmminig3_3030f9eca0dc_switch_0
+                - switch.living_room_couch_light
 
 
   - alias: 'Kitchen - turn everything off by double button press'
@@ -178,7 +189,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: input_number.daily_expected_max_temperature
-                above: 23
+                above: 28
             sequence:
               - action: climate.set_hvac_mode
                 target:
@@ -329,3 +340,54 @@ automation:
       - action: climate.turn_off
         target:
           entity_id: climate.living_room_ac_smartair
+
+
+  - alias: "Turn off living room Shelly switches at 1AM if no presence"
+    id: "turn_off_living_room_shelly_1am_no_presence"
+    mode: single
+
+    trigger:
+      - platform: time
+        at: "01:00:00"
+
+    condition:
+      - condition: template
+        value_template: >
+          {{
+            states('switch.shelly1pmminig3_34b7da92245c_switch_0') == 'on'
+            or states('switch.living_room_couch_light') == 'on'
+           }}
+
+      - condition: template
+        value_template: >
+          {{ states('binary_sensor.living_room_presence') == 'off' }}
+
+    action:
+      - action: switch.turn_off
+        target:
+          entity_id:
+            - switch.shelly1pmminig3_34b7da92245c_switch_0
+            - switch.living_room_couch_light
+
+
+  - alias: "Turn off kids bathroom lights at 1AM if no occupancy"
+    id: "turn_off_kids_bathroom_lights_1am_no_occupancy"
+    mode: single
+
+    trigger:
+      - platform: time
+        at: "01:00:00"
+
+    condition:
+      - condition: state
+        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
+        state: "on"
+
+      - condition: state
+        entity_id: binary_sensor.kids_bathroom_occupancy
+        state: "off"
+
+    action:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1

@@ -40,27 +40,30 @@ automation:
 
   - alias: Kids bathroom water Leak detection
     id: kids_bathroom_water_leak_detection
-    initial_state: true
+    initial_state: false
     trigger:
       - entity_id:
-          - binary_sensor.kids_bathroom_sink_water_leak
+          - binary_sensor.kids_bathroom_water_leak
+          - binary_sensor.washing_machine_water_leak
         platform: state
         to: 'on'
     action:
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data_template:
           message: "Water leak has been detected @ {{ trigger.from_state.attributes.friendly_name }} !!!"
 
 
   - alias: "Turn off kids bathroom lights when no motion is detected"
     id: kids_bathroom_turn_light_off_no_motion_detected
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.kids_bathroom_occupancy
         to: 'off'
         for:
-          minutes: 15
+          minutes: 5
 
       - platform: homeassistant
         event: start

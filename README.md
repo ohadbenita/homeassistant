@@ -105,4 +105,6 @@ The [Generative AI app](https://github.com/ohadbenita/homeassistant/blob/master/
 - [alexa_actionable_notifications.yaml](./scripts/alexa_actionable_notifications.yaml) → lets Alexa ask *“Do you want me to turn off the lights?”* and process yes/no responses.
 - [download_latest_timelapse.sh](https://github.com/ohadbenita/homeassistant/blob/master/scripts/download_latest_timelapse.sh) → grabs the latest 3D printer timelapse video and saves it into HA’s `/www` folder for quick playback.
 
----
+## Additional guides
+
+- [Raspberry Pi USB Camera → RTSP with MediaMTX](./docs/rpi-mediamtx-usb-camera.md)

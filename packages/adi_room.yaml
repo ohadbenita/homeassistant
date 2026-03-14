@@ -135,6 +135,7 @@ automation:
           - switch.shellyplus2pm_fcb467a580a8_switch_0    # light
           - switch.shellyplus2pm_fcb467a580a8_switch_1    # fan
           - switch.shelly1pmminig3_34b7da9275f0_switch_0  # Night light
+          - switch.adi_makeup_table_led
           - climate.adi_room_ac
 
 
@@ -167,7 +168,7 @@ automation:
             sequence:
               - action: switch.toggle
                 target:
-                  entity_id: switch.shellyplus2pm_fcb467a580a8_switch_1
+                  entity_id: switch.shellyplus2pm_fcb467a580a8_switch_0
 
           - conditions:
               - condition: state
@@ -176,7 +177,7 @@ automation:
             sequence:
               - action: switch.toggle
                 target:
-                  entity_id: switch.shellyplus2pm_fcb467a580a8_switch_0
+                  entity_id: switch.shellyplus2pm_fcb467a580a8_switch_1
 
           - conditions:
               - condition: state
@@ -233,7 +234,9 @@ automation:
           {% elif trigger.to_state.state == 'off' %}
             switch.turn_off
           {% endif %}
-        entity_id: switch.shelly1pmminig3_34b7da9275f0_switch_0
+        entity_id:
+          - switch.shelly1pmminig3_34b7da9275f0_switch_0
+          - switch.adi_makeup_table_led
 
 
   - alias: Shutdown Adi room AC 1 hour after target temperature has been reached

@@ -56,6 +56,12 @@ sensor:
     start: "{{ now().replace(day=1, hour=0, minute=0, second=0) - timedelta(days=30) }}"
     end: "{{ now() }}"
 
+input_datetime:
+  irrigation_disabled_until:
+    name: Irrigation disabled until
+    has_date: true
+    has_time: true
+
 
 script:
   irrigation_cycle:
@@ -124,10 +130,43 @@ script:
         target:
           entity_id: switch.irrigation_l6
 
+  irrigation_disable_add_48h:
+    alias: Irrigation disable - add 48h
+    mode: single
+    sequence:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.irrigation_disabled_until
+        data:
+          datetime: >-
+            {% set s = states('input_datetime.irrigation_disabled_until') %}
+            {% set now_ts = as_timestamp(now()) | float(0) %}
+            {% set s_ts = (as_timestamp(s) if s not in ['unknown','unavailable',''] else 0) | float(0) %}
+            {% set base = (s_ts if s_ts > now_ts else now_ts) | float(0) %}
+            {{ (base + (48*60*60)) | int | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
 
-timer:
-  irrigation_disable_timer:
-    restore: true
+  irrigation_disable_set_3h:
+    alias: Irrigation disable - set 3h
+    mode: single
+    sequence:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.irrigation_disabled_until
+        data:
+          datetime: >-
+            {{ ((as_timestamp(now()) | float(0)) + (3*60*60)) | int | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
+
+  irrigation_disable_enable_now:
+    alias: Irrigation disable - enable now
+    mode: single
+    sequence:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.irrigation_disabled_until
+        data:
+          datetime: >-
+            {{ (as_timestamp(now()) | float(0)) | int | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
+
 
 automation:
   - alias: Weekly Irrigation Cycle - trees and bushes
@@ -144,9 +183,14 @@ automation:
           - mon
           - wed
           - fri
-      - condition: state
-        entity_id: timer.irrigation_disable_timer
-        state: "idle"
+      - condition: template
+        value_template: >-
+          {% set s = states('input_datetime.irrigation_disabled_until') %}
+          {% if s in ['unknown','unavailable',''] %}
+            true
+          {% else %}
+            {{ (as_timestamp(now()) | float(0)) >= (as_timestamp(s) | float(0)) }}
+          {% endif %}
 
     action:
       - if:
@@ -159,9 +203,11 @@ automation:
               additional_switches:
                 - switch.irrigation_l4
                 - switch.irrigation_l5
-              irrigation_duration_minutes: 60
+              irrigation_duration_minutes: 45
         else:
-          - action: notify.ohad_telegram
+          - action: notify.send_message
+            target:
+              entity_id: notify.telegram_bot_659000495_155103022
             data:
               title: "Irrigation"
               message: "[Trees] Irrigation cycle skipped as it's probably going to rain soon"
@@ -176,9 +222,14 @@ automation:
         offset: "00:00:00"
 
     condition:
-      - condition: state
-        entity_id: timer.irrigation_disable_timer
-        state: "idle"
+      - condition: template
+        value_template: >-
+          {% set s = states('input_datetime.irrigation_disabled_until') %}
+          {% if s in ['unknown','unavailable',''] %}
+            true
+          {% else %}
+            {{ (as_timestamp(now()) | float(0)) >= (as_timestamp(s) | float(0)) }}
+          {% endif %}
 
     action:
       - if:
@@ -192,7 +243,9 @@ automation:
                 - switch.irrigation_l3
               irrigation_duration_minutes: 7
         else:
-          - action: notify.ohad_telegram
+          - action: notify.send_message
+            target:
+              entity_id: notify.telegram_bot_659000495_155103022
             data:
               title: "Irrigation"
               message: "[Flowers & herbs] Irrigation cycle skipped as it's probably going to rain soon"
@@ -231,7 +284,9 @@ automation:
           minutes: 2
         continue_on_timeout: false
 
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           message: 'Irrigation Watchdog had to stop the irrigation, please check the issue with the automations'
 
@@ -254,3 +309,19 @@ automation:
           entity_id: input_number.daily_expected_max_temperature
           value: >
             {{ daily_forecasts['weather.openweathermap']['forecast'][0].temperature }}
+
+
+  - alias: Alert on low garden fertilizer level
+    id: garden_fertilizer_low_level_alert
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.watering_nutrient_water_level_moisture
+        to: 'off'
+        for:
+          hours: 1
+    action:
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Fertilizer Refill Needed"
+          message: "The garden fertilizer tank is empty and needs refilling."

@@ -1,0 +1,205 @@
+---
+sensor:
+  - platform: statistics
+    name: ketem_feeder_weight_mean_15m
+    entity_id: sensor.cat_feeder_scale_cat_feeder_weight
+    state_characteristic: mean
+    max_age:
+      minutes: 15
+
+
+automation:
+  - alias: 'Ketem - Send a notification when Ketem tracker is charged'
+    id: ketem_notify_when_tracker_is_charged
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.ketem_tracker_battery
+        above: 99
+        for:
+          minutes: 5
+
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.home_ella_benita_distance
+                below: 10000  # 10 km in meters
+            sequence:
+              - action: notify.mobile_app_ellas_iphone
+                data:
+                  message: "Ketem's GPS tracker is charged, please re-attach it"
+                  title: Device notification
+        default:
+          - action: notify.mobile_app_adidibenita
+            data:
+              message: 'הג׳יפיאס של כתם סיים להיטען, אנא חברי לה אותו בחזרה'
+              title: Device notification
+
+
+  - alias: 'Ketem - Send a notification when Ketem tracker needs to be charged'
+    id: ketem_notify_when_tracker_needs_to_be_charged
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.ketem_tracker_battery
+        below: 15
+        for:
+          minutes: 5
+
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.home_ella_benita_distance
+                below: 10000  # 10 km in meters
+            sequence:
+              - action: notify.mobile_app_ellas_iphone
+                data:
+                  message: "Ketem's GPS tracker needs to be charged"
+                  title: Device notification
+        default:
+          - action: notify.mobile_app_adidibenita
+            data:
+              message: 'הסוללה בג׳יפיאס של כתם חלשה, אנא הטעיני אותו בהקדם'
+              title: Device notification
+
+
+  - id: ketem_fountain_filter_due
+    alias: Ketem Fountain – Filter almost due
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.dockstream_smart_fountain_remaining_filter_day
+        below: 1
+        for:
+          minutes: 5
+    variables:
+      filter_days: "{{ states('sensor.dockstream_smart_fountain_remaining_filter_day') }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.home_ella_benita_distance
+                below: 10000   # 10 km
+            sequence:
+              - action: notify.mobile_app_ellas_iphone
+                data:
+                  title: Device notification
+                  message: |
+                    🐾 Ketem Fountain: Filter nearly due.
+                    Remaining filter days: {{ filter_days }}
+        default:
+          - action: notify.mobile_app_adidibenita
+            data:
+              title: Device notification
+              message: |
+                🐾 הפילטר במזרקה של כתם דורש החלפה.
+                נותרו {{ filter_days }} ימים לסיום השימוש.
+
+
+  - id: ketem_fountain_low_water
+    alias: Ketem Fountain – Low water
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.dockstream_smart_fountain_remaining_water
+        below: 15
+        for:
+          minutes: 5
+    variables:
+      remaining_water: "{{ states('sensor.dockstream_smart_fountain_remaining_water') }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.home_ella_benita_distance
+                below: 10000   # 10 km
+            sequence:
+              - action: notify.mobile_app_ellas_iphone
+                data:
+                  title: Device notification
+                  message: |
+                    🐾 Ketem Fountain: Low water alert.
+                    Remaining water: {{ remaining_water }}%
+        default:
+          - action: notify.mobile_app_adidibenita
+            data:
+              title: Device notification
+              message: |
+                🐾 המים במזרקה של כתם עומדים להיגמר.
+                נותרו {{ remaining_water }}% מים בלבד.
+
+  - id: ketem_feeder_low_food
+    alias: Ketem Feeder – Low food
+    initial_state: true
+    mode: single
+
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.cat_feeder_scale_cat_feeder_weight
+        below: 100
+        for:
+          minutes: 5
+
+    variables:
+      feeder_weight: "{{ states('sensor.cat_feeder_scale_cat_feeder_weight') | int }}"
+
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.home_ella_benita_distance
+                below: 10000   # 10 km
+            sequence:
+              - action: notify.mobile_app_ellas_iphone
+                data:
+                  title: Device notification
+                  message: |
+                    🐾 Ketem feeder is running low.
+                    Remaining food: {{ feeder_weight }} g
+              - action: notify.send_message
+                target:
+                  entity_id: notify.telegram_bot_659000495_155103022
+                data:
+                  message: |
+                    🐾 Ketem feeder is running low.
+                    Remaining food: {{ feeder_weight }} g
+        default:
+          - action: notify.mobile_app_adidibenita
+            data:
+              title: Device notification
+              message: |
+                🐾 האוכל של כתם כמעט נגמר.
+                נותרו {{ feeder_weight }} גרם במתקן.
+          - action: notify.send_message
+            target:
+              entity_id: notify.telegram_bot_659000495_155103022
+            data:
+              message: |
+                🐾 Ketem feeder is running low.
+                Remaining food: {{ feeder_weight }} g
+
+
+  - id: ketem_close_lock_temporarily_when_we_go_out
+    alias: Ketem - close lock temporarily when we go out
+    initial_state: true
+    mode: queued
+
+    trigger:
+      - platform: state
+        entity_id: input_boolean.turn_everything_off_started
+        to: 'on'
+
+    action:
+      - action: lock.lock
+        entity_id: lock.entrance_door_locked_in
+
+      - delay: '00:05:00'
+
+      - action: lock.unlock
+        entity_id: lock.entrance_door_locked_in

@@ -1,15 +1,14 @@
 ---
-binary_sensor:
-  - platform: template
-    sensors:
-      entrance_sensors_off_for_2_minutes:
-        friendly_name: "Entrance sensors off for 2 Minutes"
-        delay_on: "00:02:00"
-        value_template: >
-          {{ is_state('binary_sensor.entrance_door_occupancy', 'off') and
-             is_state('binary_sensor.entrance_indoor_occupancy', 'off') and
-             is_state('binary_sensor.entrance_door_contact', 'off') }}
-
+template:
+  binary_sensor:
+    - name: "Entrance sensors off for 2 Minutes"
+      delay_on: "00:02:00"
+      state: >
+        {{
+          is_state('binary_sensor.entrance_door_occupancy', 'off') and
+          is_state('binary_sensor.entrance_indoor_occupancy', 'off') and
+          is_state('binary_sensor.entrance_door_contact', 'off')
+        }}
 
 automation:
   - alias: Alert on Nuki low battery
@@ -40,12 +39,25 @@ automation:
           - binary_sensor.entrance_indoor_occupancy
           - binary_sensor.entrance_door_contact
         to: 'on'
+
+      - platform: state
+        entity_id:
+          - switch.shellyplus2pm_fcb4670e68e8_switch_0
+          - switch.shellyplus2pm_fcb4670e68e8_switch_1
+        to: 'off'
+
       - platform: homeassistant
         event: start
 
     condition:
       condition: and
       conditions:
+        - condition: state
+          entity_id: switch.shellyplus2pm_fcb4670e68e8_switch_0  # Kitchen light
+          state: 'off'
+        - condition: state
+          entity_id: switch.shellyplus2pm_fcb4670e68e8_switch_1  # Kitchen light
+          state: 'off'
         - condition: state
           entity_id: input_boolean.away_mode
           state: 'off'
@@ -66,6 +78,7 @@ automation:
             - condition: state
               entity_id: binary_sensor.entrance_door_contact
               state: 'on'
+
 
     action:
       - action: homeassistant.turn_on

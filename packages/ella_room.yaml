@@ -23,6 +23,21 @@ template:
         icon: mdi:thermometer
 
 
+  - binary_sensor:
+      - name: "Ella room occupancy"
+        device_class: occupancy
+        state: >-
+          {% set s1 = states('binary_sensor.occupancy_sensor_6cc0_occupancy') %}
+          {% set s2 = states('binary_sensor.occupancy_sensor_7480_occupancy') %}
+          {% if 'unavailable' in [s1, s2] %}
+            'unavailable'
+          {% elif s1 == 'on' or s2 == 'on' %}
+            on
+          {% else %}
+            off
+          {% endif %}
+
+
 sensor:
   - platform: derivative
     source: sensor.ella_room_ac_temperature_difference
@@ -30,6 +45,7 @@ sensor:
     round: 1
     unit_time: min
     time_window: 10
+
 
 automation:
   - alias: Ella room shutdown AC 1 hour after target temperature has been reached
@@ -68,7 +84,7 @@ automation:
 
   - alias: "Ella Room - Set AC to night mode (summer)"
     id: ella_room_ac_night_automation
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: time
         at: "00:30:00"
@@ -107,13 +123,13 @@ automation:
 
   - alias: "Ella Room - Turn AC off when no one is in the room"
     id: ella_room_no_presence_turn_ac_off
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.apollo_msr_1_c17318_radar_target
+        entity_id: binary_sensor.ella_room_occupancy
         to: 'off'
         for:
-          minutes: 10
+          minutes: 15
 
     condition:
       condition: template
@@ -126,6 +142,24 @@ automation:
           entity_id: climate.ella_ac
 
 
+  - alias: "Ella Room - Turn lights off when no one is in the room"
+    id: ella_room_no_presence_turn_lights_off
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.ella_room_occupancy
+        to: 'off'
+        for:
+          minutes: 30
+
+    action:
+      - action: switch.turn_off
+        target:
+          entity_id:
+            - switch.shelly2pmg3_8cbfea9f54b0_switch_0
+            - switch.shelly2pmg3_8cbfea9f54b0_switch_1
+
+
   - alias: 'Ella room - Handle Bedside button actions'
     id: ella_room_bedside_button_actions
     initial_state: true
@@ -136,104 +170,181 @@ automation:
 
     action:
       - choose:
-          - conditions:
-              - condition: state
-                entity_id: sensor.ella_bedside_action
-                state: 'single'
-            sequence:
-              - action: switch.toggle
-                target:
-                  entity_id:
-                    - switch.shelly2pmg3_8cbfea9f54b0_switch_0
-                    - switch.shelly2pmg3_8cbfea9f54b0_switch_1
+        - conditions:
+            - condition: state
+              entity_id: sensor.ella_bedside_action
+              state: 'single'
+          sequence:
+            - choose:
+                - conditions:
+                    - condition: or
+                      conditions:
+                        - condition: state
+                          entity_id: switch.shelly2pmg3_8cbfea9f54b0_switch_0
+                          state: "on"
+                        - condition: state
+                          entity_id: switch.shelly2pmg3_8cbfea9f54b0_switch_1
+                          state: "on"
+                  sequence:
+                    - action: switch.turn_off
+                      target:
+                        entity_id:
+                          - switch.shelly2pmg3_8cbfea9f54b0_switch_0
+                          - switch.shelly2pmg3_8cbfea9f54b0_switch_1
+              default:
+                - action: switch.turn_on
+                  target:
+                    entity_id:
+                      - switch.shelly2pmg3_8cbfea9f54b0_switch_0
+                      - switch.shelly2pmg3_8cbfea9f54b0_switch_1
       - choose:
-          - conditions:
-              - condition: state
-                entity_id: sensor.ella_bedside_action
-                state: 'double'
-            sequence:
-              - choose:
-                  - conditions:
-                      - condition: state
-                        entity_id: climate.ella_ac
-                        state: 'off'
-                    sequence:
-                      - choose:
-                          - conditions:
-                              - condition: numeric_state
-                                entity_id: sensor.openweathermap_feels_like_temperature
-                                above: 23
-                            sequence:
-                              - service: climate.set_hvac_mode
-                                target:
-                                  entity_id: climate.ella_ac
-                                data:
-                                  hvac_mode: 'cool'
-                        default:
-                          - service: climate.set_hvac_mode
-                            target:
-                              entity_id: climate.ella_ac
-                            data:
-                              hvac_mode: 'heat'
-                default:
+        - conditions:
+            - condition: state
+              entity_id: sensor.ella_bedside_action
+              state: 'double'
+          sequence:
+            - choose:
+                - conditions:
+                    - condition: state
+                      entity_id: climate.ella_ac
+                      state: 'off'
+                  sequence:
+                    - choose:
+                        - conditions:
+                            - condition: numeric_state
+                              entity_id: sensor.openweathermap_feels_like_temperature
+                              above: 23
+                          sequence:
+                            - service: climate.set_hvac_mode
+                              target:
+                                entity_id: climate.ella_ac
+                              data:
+                                hvac_mode: 'cool'
+                      default:
+                        - service: climate.set_hvac_mode
+                          target:
+                            entity_id: climate.ella_ac
+                          data:
+                            hvac_mode: 'heat'
+              default:
                   - service: climate.turn_off
                     target:
                       entity_id: climate.ella_ac
 
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_bedside_action
+                state: 'hold'
+            sequence:
+              - variables:
+                  covers:
+                    - cover.ella_room_small_shutter
+                    - cover.ella_big_shutter
 
-  - alias: 'Ella room - Send a notification when Ketem tracker is charged'
-    id: ella_room_notify_when_tracker_is_charged
+              - action: cover.set_cover_position
+                target:
+                  entity_id: "{{ covers }}"
+                data:
+                  position: >
+                    {% set positions = covers | map('state_attr','current_position') | list %}
+                    {% set any_above_20 = positions | select('number') | select('gt', 20) | list | count > 0 %}
+                    {{ 20 if any_above_20 else 100 }}
+
+
+  - alias: Ella smoke detection on
+    id: ella_smoke_detection_on
     initial_state: true
-    mode: single
     trigger:
-      - platform: numeric_state
-        entity_id: sensor.ketem_tracker_battery
-        above: 99
-        for:
-          minutes: 5
+      - entity_id: binary_sensor.ella_smoke
+        platform: state
+        from: 'off'
+        to: 'on'
+
+    action:
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Hazards"
+          message: "Smoke has been detected in Ella's room"
+          data:
+            push:
+              sound:
+                name: "US-EN-Morgan-Freeman-Smartthings-Detected-Smoke.wav"
+                critical: 1
+                volume: 1.0
+
+      - action: notify.mobile_app_rinats_iphone
+        data:
+          title: "Hazards"
+          message: "Smoke has been detected in the Ella's room"
+          data:
+            push:
+              sound:
+                name: "US-EN-Morgan-Freeman-Smartthings-Detected-Smoke.wav"
+                critical: 1
+                volume: 1.0
+
+
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
+        data_template:
+          message: "Smoke has been detected in Ella's room"
+
+      - action: notify.mobile_app_ohadbenita
+        data_template:
+          title: "Hazards"
+          message: "Smoke has been detected in the Ella's room, density is {{states('sensor.ella_smoke_density')}}%"
+
+
+  - alias: Ella smoke detection off
+    id: ella_smoke_detection_off
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.ella_smoke
+        platform: state
+        from: 'on'
+        to: 'off'
+    action:
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
+        data_template:
+          message: "Smoke in Ella's room is not detected anymore"
+      - action: notify.mobile_app_ohadbenita
+        data_template:
+          title: "Hazards"
+          message: "Smoke is not detected in Ella's room, density is {{states('sensor.ella_smoke_density')}}%"
+
+
+  - alias: "Close Ella room covers on sunset"
+    id: ella_room_covers_on_sunset
+    mode: single
+    initial_state: true
+    trigger:
+      - platform: sun
+        event: sunset
 
     action:
       - choose:
           - conditions:
               - condition: numeric_state
-                entity_id: sensor.home_ella_benita_distance
-                below: 10000  # 10 km in meters
+                entity_id: cover.ella_big_shutter
+                attribute: current_position
+                above: 55
             sequence:
-              - action: notify.mobile_app_ellas_iphone
+              - service: cover.set_cover_position
                 data:
-                  message: "Ketem's GPS tracker is charged, please re-attach it"
-                  title: Device notification
-        default:
-          - action: notify.mobile_app_adidibenita
-            data:
-              message: 'הג׳יפיאס של כתם סיים להיטען, אנא חברי לה אותו בחזרה'
-              title: Device notification
-
-
-  - alias: 'Ella room - Send a notification when Ketem tracker needs to be charged'
-    id: ella_room_notify_when_tracker_needs_to_be_charged
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: numeric_state
-        entity_id: sensor.ketem_tracker_battery
-        below: 15
-        for:
-          minutes: 5
-
-    action:
+                  entity_id: cover.ella_big_shutter
+                  position: 55
       - choose:
           - conditions:
               - condition: numeric_state
-                entity_id: sensor.home_ella_benita_distance
-                below: 10000  # 10 km in meters
+                entity_id: cover.ella_room_small_shutter
+                attribute: current_position
+                above: 45
             sequence:
-              - action: notify.mobile_app_ellas_iphone
+              - action: cover.set_cover_position
                 data:
-                  message: "Ketem's GPS tracker needs to be charged"
-                  title: Device notification
-        default:
-          - action: notify.mobile_app_adidibenita
-            data:
-              message: 'הסוללה בג׳יפיאס של כתם חלשה, אנא הטעיני אותו בהקדם'
-              title: Device notification
+                  entity_id: cover.ella_room_small_shutter
+                  position: 45

@@ -1,4 +1,34 @@
 ---
+
+template:
+  - sensor:
+      - name: "Study room cover position"
+        unique_id: study_room_cover_position
+        unit_of_measurement: "%"
+        state: >
+          {{ state_attr('cover.study_room', 'current_position') }}
+        availability: >
+          {{ state_attr('cover.study_room','current_position') is number
+             or states('cover.study_room') in ['open','closed'] }}
+
+  - binary_sensor:
+      - name: "Study room cover moving"
+        unique_id: study_room_cover_moving
+        state: >
+          {% set change = states('sensor.study_room_cover_position_stats') %}
+          {{ change | int(0) != 0 }}
+
+sensor:
+  - platform: statistics
+    name: study_room_cover_position_stats
+    entity_id: sensor.study_room_cover_position
+    state_characteristic: change
+    max_age:
+      seconds: 3
+    sampling_size: 5
+    precision: 0
+
+
 automation:
   - alias: "Study Room - Turn lights off when no one is in the room"
     id: study_room_turn_ac_and_lights_off
@@ -27,35 +57,29 @@ automation:
 
 
   - alias: "Study Room - Turn on the lights when motion is detected"
-    initial_state: true
     id: study_room_turn_lights_on_motion_detected
     trigger:
       - platform: state
         entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
         to: 'on'
+      - platform: numeric_state
+        entity_id: sensor.apollo_msr_1_ce7700_radar_still_distance
+        below: 370
 
     condition:
+      - condition: numeric_state
+        entity_id: sensor.apollo_msr_1_ce7700_radar_still_distance
+        below: 370
       - condition: state
         entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
         state: 'off'
-      - condition: not
-        conditions:
+      - condition: state
+        entity_id: binary_sensor.apollo_msr_1_ce7700_radar_target
+        state: 'on'
+      - not:
           - condition: state
             entity_id: sensor.creality_ender_v3_ke_current_print_state
             state: 'printing'
-      - condition: time
-        weekday:
-          - sun
-          - mon
-          - tue
-          - wed
-          - thu
-        after: '08:00:00'
-        before: '20:00:00'
-      - condition: state
-        entity_id: binary_sensor.jewish_calendar_issur_melacha_in_effect
-        state: 'off'
-
     action:
       - action: homeassistant.turn_on
         entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
@@ -86,6 +110,34 @@ automation:
       - action: homeassistant.turn_off
         entity_id: climate.study_room_ac
 
+
+  - alias: Study Skadis light - follow occupancy
+    description: Turn the study Skadis light on/off based on occupancy sensor.
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.occupancy_sensor_b978_occupancy
+        to:
+          - "on"
+          - "off"
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.occupancy_sensor_b978_occupancy
+                state: "on"
+            sequence:
+              - action: light.turn_on
+                entity_id: light.study_skadis_led_driver
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.occupancy_sensor_b978_occupancy
+                state: "off"
+            sequence:
+              - action: light.turn_off
+                entity_id: light.study_skadis_led_driver
 
   # DISABLED since the sensor has been removed
   # - alias: "Study room - Turn on AC when temperature is above threshold"
@@ -191,58 +243,7 @@ automation:
         data_template:
           entity_id: cover.study_room
           position: >-
-            {{ max(state_attr('cover.study_room', 'current_position') | int, 45) }}
-
-
-  - alias: "Study Room - Toggle light by switch"
-    initial_state: true
-    id: study_room_toggle_light_by_switch
-    trigger:
-      - platform: state
-        entity_id: sensor.study_room_01_action
-        to: 'open'
-
-    action:
-      - action: switch.toggle
-        entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
-
-
-  - alias: "Study Room - Toggle AC by switch"
-    initial_state: true
-    id: study_room_toggle_ac_by_switch
-    trigger:
-      - platform: state
-        entity_id: sensor.study_room_01_action
-        to: 'close'
-
-    action:
-      - if:
-          - condition: state
-            entity_id: climate.study_room_ac
-            state: 'off'
-        then:
-          - choose:
-              - conditions:
-                  - condition: state
-                    entity_id: binary_sensor.dst
-                    state: 'on'
-                sequence:
-                  - action: climate.set_hvac_mode
-                    data:
-                      entity_id: climate.study_room_ac
-                      hvac_mode: 'cool'
-              - conditions:
-                  - condition: state
-                    entity_id: binary_sensor.dst
-                    state: 'off'
-                sequence:
-                  - action: climate.set_hvac_mode
-                    data:
-                      entity_id: climate.study_room_ac
-                      hvac_mode: 'heat'
-
-      - action: climate.toggle
-        entity_id: climate.study_room_ac
+            {{ max(state_attr('cover.study_room', 'current_position') | int, 25) }}
 
 
   - alias: Turn off Bike Charger when charging is complete
@@ -263,7 +264,9 @@ automation:
     action:
       - action: switch.turn_off
         entity_id: switch.study_room_e_bike_charger
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           title: Appliances
           message: Bike charge cycle is completed
@@ -275,14 +278,24 @@ automation:
     mode: single
     trigger:
       - platform: state
-        entity_id: sensor.study_room_3d_printer_stand_action
+        entity_id: sensor.study_desk_remote_action
 
     action:
       - choose:
           - conditions:
+              - condition: template
+                value_template: >
+                  {{ trigger.to_state.state in ['button_1_single','button_2_single']
+                    and is_state('binary_sensor.study_room_cover_moving','on') }}
+            sequence:
+              - action: cover.stop_cover
+                target:
+                  entity_id: cover.study_room
+
+          - conditions:
               - condition: state
-                entity_id: sensor.study_room_3d_printer_stand_action
-                state: 'button_1_single'
+                entity_id: sensor.study_desk_remote_action
+                state: 'button_2_single'
             sequence:
               - action: cover.set_cover_position
                 data_template:
@@ -292,8 +305,8 @@ automation:
 
           - conditions:
               - condition: state
-                entity_id: sensor.study_room_3d_printer_stand_action
-                state: 'button_2_single'
+                entity_id: sensor.study_desk_remote_action
+                state: 'button_1_single'
             sequence:
               - action: cover.set_cover_position
                 data:
@@ -302,8 +315,8 @@ automation:
 
           - conditions:
               - condition: state
-                entity_id: sensor.study_room_3d_printer_stand_action
-                state: 'button_1_double'
+                entity_id: sensor.study_desk_remote_action
+                state: 'button_2_double'
             sequence:
               - action: switch.turn_on
                 target:
@@ -311,9 +324,64 @@ automation:
 
           - conditions:
               - condition: state
-                entity_id: sensor.study_room_3d_printer_stand_action
-                state: 'button_2_double'
+                entity_id: sensor.study_desk_remote_action
+                state: 'button_1_double'
             sequence:
               - action: switch.turn_off
                 target:
                   entity_id: switch.creality_printer
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.study_desk_remote_action
+                state: 'button_2_hold'
+            sequence:
+              - action: lock.lock
+                entity_id: lock.home_only_doors
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.study_desk_remote_action
+                state: 'button_4_double'
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: numeric_state
+                        entity_id: sensor.openweathermap_feels_like_temperature
+                        above: 23
+                    sequence:
+                      - service: climate.set_hvac_mode
+                        target:
+                          entity_id: climate.study_room_ac
+                        data:
+                          hvac_mode: 'cool'
+                default:
+                  - service: climate.set_hvac_mode
+                    target:
+                      entity_id: climate.study_room_ac
+                    data:
+                      hvac_mode: 'heat'
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.study_desk_remote_action
+                state: 'button_3_double'
+            sequence:
+              - action: climate.turn_off
+                entity_id: climate.study_room_ac
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.study_desk_remote_action
+                state: 'button_4_single'
+            sequence:
+              - action: switch.turn_on
+                entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.study_desk_remote_action
+                state: 'button_3_single'
+            sequence:
+              - action: switch.turn_off
+                entity_id: switch.shellyplus1pm_e465b8f12024_switch_0

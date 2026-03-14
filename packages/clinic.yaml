@@ -75,3 +75,116 @@ automation:
         data:
           entity_id: input_number.monthly_kwh_offset
           value: "{{ states('sensor.clinic_aggregated_energy_consumption') | float(0) }}"
+
+  - alias: Clinic Door — Turn Off Flood Light After 5 Minutes Locked
+    id: clinic_door_turn_off_flood_light_after_locked_5m
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: lock.clinic_door
+        to: locked
+        for:
+          minutes: 5
+
+    condition:
+      - condition: state
+        entity_id: switch.clinic_door_flood_light
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
+
+    action:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.clinic_door_flood_light
+
+
+  - alias: Clinic Door — Turn on Flood Light when door is unlocked after sunset
+    id: clinic_door_turn_on_flood_light_when_door_is_unlocked_after_sunset
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: lock.clinic_door
+        from: locked
+        to: unlocked
+      - platform: state
+        entity_id: lock.clinic_door
+        from: unlocking
+        to: unlocked
+
+    condition:
+      - condition: sun
+        after: sunset
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
+
+    action:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.clinic_door_flood_light
+
+  - alias: Clinic smoke detection on
+    id: clinic_smoke_detection_on
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.clinic_smoke
+        platform: state
+        from: 'off'
+        to: 'on'
+
+    action:
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Hazards"
+          message: "Smoke has been detected in the clinic"
+          data:
+            push:
+              sound:
+                name: "US-EN-Morgan-Freeman-Smartthings-Detected-Smoke.wav"
+                critical: 1
+                volume: 1.0
+
+      - action: notify.mobile_app_rinats_iphone
+        data:
+          title: "Hazards"
+          message: "Smoke has been detected in the clinic"
+          data:
+            push:
+              sound:
+                name: "US-EN-Morgan-Freeman-Smartthings-Detected-Smoke.wav"
+                critical: 1
+                volume: 1.0
+
+
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
+        data_template:
+          message: "Smoke has been detected in the clinic"
+
+      - action: notify.mobile_app_ohadbenita
+        data_template:
+          title: "Hazards"
+          message: "Smoke has been detected in the clinic, density is {{states('sensor.clinic_smoke_density')}}%"
+
+
+  - alias: Clinic smoke detection off
+    id: clinic_smoke_detection_off
+    initial_state: true
+    trigger:
+      - entity_id: binary_sensor.clinic_smoke
+        platform: state
+        from: 'on'
+        to: 'off'
+    action:
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
+        data_template:
+          message: "Smoke in the clinic is not detected anymore"
+      - action: notify.mobile_app_ohadbenita
+        data_template:
+          title: "Hazards"
+          message: "Smoke is not detected in the clinic, density is {{states('sensor.clinic_smoke_density')}}%"

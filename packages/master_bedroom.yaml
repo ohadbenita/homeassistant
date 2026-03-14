@@ -12,55 +12,57 @@ input_boolean:
     icon: mdi:sleep
 
 
-light:
-  - platform: template
-    lights:
-      master_bedroom_lights:
-        value_template: >-
-          {{
-            is_state('switch.master_bedroom_spots', 'on') and
-            is_state('switch.master_bedroom_light_and_fan_switch_1', 'on') and
-            is_state('switch.shellyplus2pm_fcb4670e673c_switch_0', 'on')
-          }}
-        turn_on:
-          action: homeassistant.turn_on
+template:
+  sensor:
+    - name: "Master Bedroom AC Temperature"
+      unit_of_measurement: "°C"
+      state: "{{ state_attr('climate.master_bedroom_ac', 'current_temperature') }}"
+      availability: "{{ state_attr('climate.master_bedroom_ac', 'current_temperature') is not none }}"
+      device_class: temperature
+      icon: mdi:thermometer
+
+    - name: "Master Bedroom AC humidity"
+      unit_of_measurement: "%"
+      state: "{{ state_attr('climate.master_bedroom_ac', 'current_humidity') }}"
+      availability: "{{ state_attr('climate.master_bedroom_ac', 'current_humidity') is not none }}"
+      device_class: humidity
+      icon: mdi:water-percent
+
+    - name: "Master bedroom AC room temperature difference"
+      unit_of_measurement: "°C"
+      state: "{{ (state_attr('climate.master_bedroom_ac', 'current_temperature') - state_attr('climate.master_bedroom_ac', 'temperature')) | abs }}"
+      availability: "{{ state_attr('climate.master_bedroom_ac', 'current_temperature') is not none }}"
+      device_class: temperature
+      icon: mdi:thermometer
+
+  light:
+    - name: master_bedroom_lights
+      state: >-
+        {{
+          is_state('switch.master_bedroom_spots', 'on') and
+          is_state('switch.shellyplus2pm_fcb4670e673c_switch_0', 'on')
+        }}
+      turn_on:
+        action: homeassistant.turn_on
+        target:
+          entity_id:
+            - switch.shellyplus2pm_fcb4670e673c_switch_0
+            - switch.master_bedroom_spots
+      turn_off:
+        - delay: "00:00:05"
+        - action: homeassistant.turn_off
           target:
             entity_id:
               - switch.shellyplus2pm_fcb4670e673c_switch_0
-              - switch.master_bedroom_light_and_fan_switch_1
               - switch.master_bedroom_spots
-        turn_off:
-          - delay: "00:00:05"
-          - action: homeassistant.turn_off
-            target:
-              entity_id:
-                - switch.shellyplus2pm_fcb4670e673c_switch_0
-                - switch.master_bedroom_light_and_fan_switch_1
-                - switch.master_bedroom_spots
 
-
-template:
-  - sensor:
-      - name: "Master Bedroom AC Temperature"
-        unit_of_measurement: "°C"
-        state: "{{ state_attr('climate.master_bedroom_ac', 'current_temperature') }}"
-        availability: "{{ state_attr('climate.master_bedroom_ac', 'current_temperature') is not none }}"
-        device_class: temperature
-        icon: mdi:thermometer
-
-      - name: "Master Bedroom AC humidity"
-        unit_of_measurement: "%"
-        state: "{{ state_attr('climate.master_bedroom_ac', 'current_humidity') }}"
-        availability: "{{ state_attr('climate.master_bedroom_ac', 'current_humidity') is not none }}"
-        device_class: humidity
-        icon: mdi:water-percent
-
-      - name: "Master bedroom AC room temperature difference"
-        unit_of_measurement: "°C"
-        state: "{{ (state_attr('climate.master_bedroom_ac', 'current_temperature') - state_attr('climate.master_bedroom_ac', 'temperature')) | abs }}"
-        availability: "{{ state_attr('climate.master_bedroom_ac', 'current_temperature') is not none }}"
-        device_class: temperature
-        icon: mdi:thermometer
+  binary_sensor:
+    - name: "Master bedroom light state"
+      unique_id: master_bedroom_main_light_state
+      device_class: power
+      state: >
+        {% set v = states('sensor.master_bedroom_main_light_power_meter_power') %}
+        {{ v not in ['unknown', 'unavailable', 'none', ''] and v | float(0) > 10 }}
 
 
 sensor:
@@ -100,6 +102,9 @@ automation:
         entity_id: binary_sensor.master_bedroom_wardrobe_contact
         from: 'on'
         to: 'off'
+        for:
+          seconds: 10
+
       - platform: homeassistant
         event: start
     condition:
@@ -111,96 +116,29 @@ automation:
         entity_id: switch.shelly1pmminig3_34b7da8da318_switch_0
 
 
-  - alias: 'Open shutters in the morning when the alarm goes off'
-    id: master_bedroom_shutters_open_alarm_goes_off
-    trigger:
-      - platform: state
-        entity_id: input_datetime.ohad_iphone_alarm
-
-    condition:
-      - condition: template
-        value_template: >
-          {% set alarm_time = states('input_datetime.ohad_iphone_alarm') %}
-          {% set current_time = now().strftime('%Y-%m-%d %H:%M:00') %}
-          {% set current_time_obj = strptime(current_time, '%Y-%m-%d %H:%M:%S') %}
-          {% set alarm_time_obj = strptime(alarm_time, '%Y-%m-%d %H:%M:%S') %}
-          {{ (alarm_time_obj - current_time_obj).total_seconds() <= 600 }}
-      - condition: state
-        entity_id: input_boolean.away_mode
-        state: 'off'
-
-    action:
-      - delay: '00:10:00'
-
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.master_bedroom_main_window
-        data:
-          position: 85
-
-
-  - alias: 'Close master bedroom shutters at night'
-    id: master_bedroom_shutters_close_night
-    initial_state: false
-    trigger:
-      - platform: time
-        at: '23:00:00'
-
-    condition:
-      - condition: state
-        entity_id: input_boolean.away_mode
-        state: 'off'
-
-    action:
-      - action: cover.set_cover_position
-        target:
-          entity_id:
-            - cover.master_bedroom_main_window
-        data:
-          position: 20
-
-
   - alias: "Toggle spots on switch change"
     id: master_bedroom_spots_toggle_on_switch_change
     initial_state: true
     trigger:
       - platform: state
         entity_id: switch.shellyplus2pm_fcb4670e673c_switch_1
+        from: 'on'
+        to: 'off'
+      - platform: state
+        entity_id: switch.shellyplus2pm_fcb4670e673c_switch_1
+        from: 'off'
+        to: 'on'
+
+    # condition:
+    #   - condition: time
+    #     before: '23:00:00'
+    #     after: '08:00:00'
+
     action:
       - action: switch.toggle
         target:
           entity_id: switch.master_bedroom_spots
 
-
-  - alias: 'Master bedroom bedside switch 01 - turn on main light'
-    id: master_bedroom_bedside_switch_01_turn_on_main_light
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.master_bedroom_bedside_01_action
-        to: 'button_2_single'
-
-    action:
-      - action: switch.turn_on
-        target:
-          entity_id: switch.master_bedroom_light_and_fan_switch_0
-
-
-  - alias: 'Master bedroom bedside switch 01 - turn off main light'
-    id: master_bedroom_bedside_switch_01_turn_off_main_light
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.master_bedroom_bedside_01_action
-        to: 'button_1_single'
-
-    action:
-      - action: switch.turn_off
-        target:
-          entity_id: switch.master_bedroom_light_and_fan_switch_0
 
 
   - alias: 'Master bedroom bedside switch 01 - open shutters'
@@ -219,7 +157,7 @@ automation:
         target:
           entity_id:
             - cover.master_bedroom_main_window
-            - cover.shellyplus2pm_c4d8d5582a90  # right
+            - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter  # right
             - cover.shellyplus2pm_e465b8f38f54  # left
 
 
@@ -239,7 +177,7 @@ automation:
         target:
           entity_id:
             - cover.master_bedroom_main_window
-            - cover.shellyplus2pm_c4d8d5582a90  # right
+            - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter  # right
             - cover.shellyplus2pm_e465b8f38f54  # left
 
 
@@ -271,6 +209,35 @@ automation:
             data:
               hvac_mode: 'heat'
 
+  - alias: 'Master bedroom bedside switch 06 - turn on living room AC'
+    id: master_bedroom_bedside_switch_06_turn_on_living_room_ac
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_bedside_01_action
+        to: 'button_6_single'
+
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: input_number.daily_expected_max_temperature
+                above: 23
+            sequence:
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: climate.living_room_ac_smartair
+                data:
+                  hvac_mode: 'cool'
+        default:
+          - service: climate.set_hvac_mode
+            target:
+              entity_id: climate.living_room_ac_smartair
+            data:
+              hvac_mode: 'heat'
+
+
 
   - alias: 'Master bedroom bedside switch 01 - turn off AC'
     id: master_bedroom_bedside_switch_01_turn_off_ac
@@ -286,20 +253,6 @@ automation:
         target:
           entity_id: climate.master_bedroom_ac
 
-
-  - alias: 'Master bedroom bedside switch 02 - toggle main light'
-    id: master_bedroom_bedside_switch_02_toggle_main_light
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.master_bedroom_bedside_02_action
-        to: '1_single'
-
-    action:
-      - action: switch.toggle
-        target:
-          entity_id: switch.master_bedroom_light_and_fan_switch_0
 
 
   - alias: 'Master bedroom bedside switch 02 - toggle AC'
@@ -333,7 +286,7 @@ automation:
         target:
           entity_id:
             - cover.master_bedroom_main_window
-            - cover.shellyplus2pm_c4d8d5582a90  # right
+            - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter  # right
             - cover.shellyplus2pm_e465b8f38f54  # left
 
 
@@ -353,7 +306,7 @@ automation:
         target:
           entity_id:
             - cover.master_bedroom_main_window
-            - cover.shellyplus2pm_c4d8d5582a90  # right
+            - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter  # right
             - cover.shellyplus2pm_e465b8f38f54  # left
 
 
@@ -424,28 +377,28 @@ automation:
         entity_id: climate.master_bedroom_ac
 
 
-  # - alias: "Master bedroom turn off sleep mode"
-  #   id: master_bedroom_turn_off_sleep_mode
-  #   initial_state: true
-  #   trigger:
-  #     - platform: event
-  #       event_type: state_changed
-  #       event_data:
-  #         entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-  #   condition:
-  #     - condition: template
-  #       value_template: >
-  #         {{ not trigger.event.data.new_state.context.user_id and not trigger.event.data.new_state.context.parent_id }}
-  #     - condition: state
-  #       entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
-  #       state: 'on'
-  #     - condition: state
-  #       entity_id: input_boolean.master_bedroom_sleep_mode
-  #       state: 'on'
+  - alias: 'Close master bedroom shutters at night'
+    id: master_bedroom_shutters_close_at_night
+    initial_state: true
+    trigger:
+      - platform: time
+        at: '21:00:00'
 
-  #   action:
-  #     - action: input_boolean.turn_off
-  #       entity_id: input_boolean.master_bedroom_sleep_mode
+    action:
+      - action: cover.set_cover_position
+        data:
+          position: 10
+        target:
+          entity_id: cover.master_bedroom_main_window
+
+      - action: cover.set_cover_position
+        data:
+          position: 35
+        target:
+          entity_id:
+            - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter  # right
+            - cover.shellyplus2pm_e465b8f38f54  # left
+
 
 
   - alias: Shutdown AC 1 hour after target temperature has been reached
@@ -511,7 +464,7 @@ automation:
                   scene_id: master_bedroom_covers_before_humidity
                   snapshot_entities:
                     - cover.shellyplus2pm_e465b8f38f54
-                    - cover.shellyplus2pm_c4d8d5582a90
+                    - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter
 
               # 2) Check and partially close covers if they're above 45
               - choose:
@@ -528,13 +481,13 @@ automation:
               - choose:
                   - conditions:
                       - condition: numeric_state
-                        entity_id: cover.shellyplus2pm_c4d8d5582a90
+                        entity_id: cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter
                         attribute: current_position
                         above: 45
                     sequence:
                       - service: cover.set_cover_position
                         data:
-                          entity_id: cover.shellyplus2pm_c4d8d5582a90
+                          entity_id: cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter
                           position: 45
 
           # Low humidity branch
@@ -560,6 +513,15 @@ automation:
       - platform: sun
         event: sunset
 
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_switches_i4_left_side_input_2
+        from: 'on'
+        to: 'off'
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_switches_i4_left_side_input_2
+        from: 'off'
+        to: 'on'
+
     action:
       - choose:
           - conditions:
@@ -575,31 +537,31 @@ automation:
       - choose:
           - conditions:
               - condition: numeric_state
-                entity_id: cover.shellyplus2pm_c4d8d5582a90
+                entity_id: cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter
                 attribute: current_position
                 above: 45
             sequence:
-              - service: cover.set_cover_position
+              - action: cover.set_cover_position
                 data:
-                  entity_id: cover.shellyplus2pm_c4d8d5582a90
+                  entity_id: cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter
                   position: 45
       - choose:
           - conditions:
               - condition: numeric_state
                 entity_id: cover.master_bedroom_main_window
                 attribute: current_position
-                above: 30
+                above: 55
             sequence:
-              - service: cover.set_cover_position
+              - action: cover.set_cover_position
                 data:
                   entity_id: cover.master_bedroom_main_window
-                  position: 30
+                  position: 55
 
 
   - alias: "Open covers to 100% when school is in session"
     id: master_bedroom_open_covers_on_a_school_day
     description: "At 8 AM, open covers to 100% if it's not school vacation"
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: time
         at: "08:00:00"
@@ -620,7 +582,7 @@ automation:
       - action: cover.set_cover_position
         target:
           entity_id:
-            - cover.shellyplus2pm_c4d8d5582a90
+            - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter
             - cover.shellyplus2pm_e465b8f38f54
         data:
           position: 100
@@ -632,6 +594,12 @@ automation:
     trigger:
       - platform: state
         entity_id: binary_sensor.master_bedroom_switches_i4_left_side_input_3
+        from: 'on'
+        to: 'off'
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_switches_i4_left_side_input_3
+        from: 'off'
+        to: 'on'
 
     condition:
       - condition: template
@@ -641,3 +609,113 @@ automation:
     action:
       - action: light.toggle
         entity_id: light.master_bedroom_lights
+
+
+  - alias: Warn if vacuum mop/water not ready when leaving dock (Muhammad S8)
+    id: master_bedroom_vacuum_mop_warning
+    description: >
+      When vacuum.muhammad_s8 leaves the dock, build one coherent TTS sentence describing
+      all mop/water issues, announce it on the Master Bedroom Echo, then wait 5 seconds
+      and pause the robot.
+    mode: queued
+    max: 5
+
+    trigger:
+      - platform: state
+        entity_id: vacuum.muhammad_s8
+        to: cleaning
+
+    variables:
+      mop_attached: "{{ is_state('binary_sensor.muhammad_s8_mop_attached', 'on') }}"
+      water_shortage: "{{ is_state('binary_sensor.muhammad_s8_water_shortage', 'on') }}"
+      water_box_attached: "{{ is_state('binary_sensor.muhammad_s8_water_box_attached', 'on') }}"
+
+      problems: >-
+        {%- set items = [] -%}
+        {%- if not mop_attached -%}
+          {%- set items = items + ['the mop is not attached'] -%}
+        {%- endif -%}
+        {%- if water_shortage -%}
+          {%- set items = items + ['there is a water shortage'] -%}
+        {%- endif -%}
+        {%- if not water_box_attached -%}
+          {%- set items = items + ['the water box is not attached'] -%}
+        {%- endif -%}
+        {{ items }}
+
+      message: >-
+        {%- set items = problems -%}
+        {%- if items | length == 0 -%}
+          {{ '' }}
+        {%- elif items | length == 1 -%}
+          {{ 'Attention: ' ~ items[0] ~ '.' }}
+        {%- elif items | length == 2 -%}
+          {{ 'Attention: ' ~ items[0] ~ ' and ' ~ items[1] ~ '.' }}
+        {%- else -%}
+          {{ 'Attention: ' ~ (items[0:-1] | join(', ')) ~ ', and ' ~ items[-1] ~ '.' }}
+        {%- endif -%}
+
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ problems | length > 0 }}"
+            sequence:
+              - action: vacuum.pause
+                target:
+                  entity_id: vacuum.muhammad_s8
+
+              - delay: "00:00:05"
+
+              - action: script.alexa_notification
+                data:
+                  alexa_device: media_player.master_bedroom_echo
+                  volume: 0.4
+                  message: >-
+                    {{ message }}, I'm sending Muhammad to its dock
+
+              - delay: "00:00:05"
+
+              - action: vacuum.return_to_base
+                target:
+                  entity_id: vacuum.muhammad_s8
+
+              - wait_for_trigger:
+                  - platform: state
+                    entity_id: vacuum.muhammad_s8
+                    to: cleaning
+                timeout: "00:15:00"
+                continue_on_timeout: true
+
+              # NEW: if it wasn't started again, start it anyway
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ not wait.trigger }}"
+                    sequence:
+                      - action: vacuum.start
+                        target:
+                          entity_id: vacuum.muhammad_s8
+
+  # - alias: "Master bedroom turn off sleep mode"
+  #   id: master_bedroom_turn_off_sleep_mode
+  #   initial_state: true
+  #   trigger:
+  #     - platform: event
+  #       event_type: state_changed
+  #       event_data:
+  #         entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+  #   condition:
+  #     - condition: template
+  #       value_template: >
+  #         {{ not trigger.event.data.new_state.context.user_id and not trigger.event.data.new_state.context.parent_id }}
+  #     - condition: state
+  #       entity_id: switch.shelly1pmminig3_34b7da8eef08_switch_0
+  #       state: 'on'
+  #     - condition: state
+  #       entity_id: input_boolean.master_bedroom_sleep_mode
+  #       state: 'on'
+
+  #   action:
+  #     - action: input_boolean.turn_off
+  #       entity_id: input_boolean.master_bedroom_sleep_mode

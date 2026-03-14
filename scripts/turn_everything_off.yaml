@@ -3,39 +3,71 @@ turn_everything_off:
   alias: 'Turn Everything Off Script'
   sequence:
     - action: input_boolean.turn_on
-      entity_id: input_boolean.turn_everything_off_failed
+      entity_id:
+        - input_boolean.turn_everything_off_started
+        - input_boolean.turn_everything_off_failed
+
+    - variables:
+        funny_suffix: >-
+          {{ [
+            "see you soon.",
+            "stay safe.",
+            "don't break anything.",
+            "behave yourselves.",
+            "no parties.",
+            "keep it quiet.",
+            "no drama.",
+            "stay cozy.",
+            "lights out.",
+            "house asleep."
+          ] | random }}
 
     - action: script.alexa_notification
       data:
         alexa_device: media_player.kitchen_echo
-        notification_type: announce
-        current_volume: >-
-          {{ state_attr('media_player.kitchen_echo', 'volume_level') | float(0.25) }}
-        message: >-
-          Closing all shutters now, will turn off the lights & lock the doors in 20 seconds.
+        volume: 0.45
+        message: "Goodbye, {{ funny_suffix }}"
 
+    # Compute the shutter target position once using the existing rules:
+    # - If sun is above horizon AND next sunset is >= 3h away -> position 15
+    # - Otherwise -> position 0
+    - variables:
+        target_pos: >-
+          {% set sun_state = states('sun.sun') %}
+          {% set next_setting = state_attr('sun.sun','next_setting') %}
+          {% if sun_state == 'above_horizon'
+                and next_setting is not none
+                and (as_timestamp(next_setting) - as_timestamp(now())) >= 3 * 3600 %}
+            45
+          {% else %}
+            45
+          {% endif %}
+
+    # 1) First set ONLY the small shutters
     - action: cover.set_cover_position
+      target:
+        entity_id: group.public_space_small_shutters
       data:
-        position: 0
-      target:
-        entity_id: group.public_space_shutters
+        position: "{{ target_pos | int }}"
 
-    - action: homeassistant.turn_off
-      target:
-        entity_id:
-          - group.all_ac
-          - group.all_lights
-
+    # 2) Wait for either:
+    #    - The entrance door is closed for 60s
+    #    - OR no one is home for 10s
     - wait_for_trigger:
-      - platform: state  # yamllint disable-line rule:indentation
-        entity_id: binary_sensor.entrance_door_contact
-        to: 'off'
-        for:
-          seconds: 30
-
-      timeout: "00:03:00"
+        - platform: state
+          entity_id: binary_sensor.entrance_door_contact
+          to: 'off'
+          for:
+            seconds: 60
+        - platform: numeric_state
+          entity_id: sensor.people_at_home
+          below: 1
+          for:
+            seconds: 10
+      timeout: "00:05:00"
       continue_on_timeout: true
 
+    # Lock doors
     - action: lock.lock
       target:
         entity_id:
@@ -43,5 +75,30 @@ turn_everything_off:
           - lock.kitchen_door
           - lock.kids_bathroom_door
 
+    # 3) Now set ALL public-space shutters using the same computed target
+    - action: cover.set_cover_position
+      target:
+        entity_id: group.public_space_shutters
+      data:
+        position: "{{ target_pos | int }}"
+
+    # 3) Now set ALL second-floor shutters using the same computed target
+    - action: cover.set_cover_position
+      target:
+        entity_id: group.second_floor_shutters
+      data:
+        position: "{{ target_pos | int }}"
+
+    # Turn off AC and lights
+    - action: homeassistant.turn_off
+      continue_on_error: true
+      target:
+        entity_id:
+          - group.all_ac
+          - group.all_lights
+
     - action: input_boolean.turn_off
       entity_id: input_boolean.turn_everything_off_failed
+
+    - action: input_boolean.turn_off
+      entity_id: input_boolean.turn_everything_off_started

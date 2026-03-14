@@ -32,12 +32,13 @@ template:
       - name: "3D Print Estimated Completion Time"
         unit_of_measurement: "hours"
         state: >
-          {% set current_progress = states('sensor.creality_ender_v3_ke_progress') | float %}
-          {% set active_time = states('sensor.3d_print_active_time') | float %}
+          {% set current_progress = states('sensor.creality_ender_v3_ke_progress') | float(0) %}
+          {% set active_time = states('sensor.3d_print_active_time') | float(0) %}
+
           {% if current_progress > 0 and active_time > 0 %}
-            {{ (100 - current_progress) / (current_progress / active_time) }}
+            {{ ((100 - current_progress) * active_time / current_progress) | round(2) }}
           {% else %}
-            unknown
+            0
           {% endif %}
 
 automation:
@@ -81,12 +82,14 @@ automation:
     action:
       - action: camera.snapshot
         data:
-          entity_id: camera.creality_ender_v3_ke
+          entity_id: camera.study_rpi3b_creality_nebula
           filename: "/config/www/snapshots/3d_printer_snapshot.jpg"
 
       - delay: '00:00:02'
 
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           message: "The 3D print has completed"
           data:
@@ -105,17 +108,54 @@ automation:
     action:
       - action: camera.snapshot
         data:
-          entity_id: camera.creality_ender_v3_ke
+          entity_id: camera.study_rpi3b_creality_nebula
           filename: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
       - delay: '00:00:02'
 
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           message: "The 3D print has come to an error. Here's a snapshot"
           data:
             photo:
               - file: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
                 caption: "The 3D print has come to an error. Here's a snapshot"
+
+
+  - alias: '3D print completed light notification'
+    id: 3d_printer_completed_light_notification
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.creality_ender_v3_ke_current_print_state
+        from: printing
+        to: complete
+
+    action:
+      - action: light.turn_off
+        target:
+          entity_id: light.study_ender_led_driver
+      - delay:
+          seconds: 2
+
+      - repeat:
+          count: 10
+          sequence:
+            - action: light.turn_on
+              target:
+                entity_id: light.study_ender_led_driver
+              data:
+                effect: breathe
+                brightness_pct: 100
+
+            - delay:
+                seconds: 10
+
+      - action: light.turn_off
+        target:
+          entity_id: light.study_ender_led_driver
+
 
   - alias: 'Ask if printer should be shut down after print is done'
     id: 3d_printer_actionable_notification_shutdown_printer_and_turn_lights_off
@@ -126,7 +166,7 @@ automation:
         from: printing
         to: complete
         for:
-          minutes: 15
+          minutes: 5
 
     action:
       - action: script.activate_alexa_actionable_notification
@@ -156,6 +196,7 @@ automation:
         entity_id:
           - switch.creality_printer
           - switch.shellyplus1pm_e465b8f12024_switch_0
+          - light.study_ender_led_driver
 
 
   - alias: 'Alert on a possible printing fault'
@@ -164,17 +205,21 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.creality_ender_v3_ke_current_print_state
-        to: paused
+        to:
+          - paused
+          - error
 
     action:
       - action: camera.snapshot
         data:
-          entity_id: camera.creality_ender_v3_ke
+          entity_id: camera.study_rpi3b_creality_nebula
           filename: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
 
       - delay: '00:00:02'
 
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           message: "A possible issue has been detected in the current 3D print"
           data:
@@ -183,45 +228,17 @@ automation:
                 caption: "A possible issue has been detected in the current 3D print"
 
 
-  - alias: 'Ask if lights should be turned off after printing starts'
-    id: 3d_print_actionable_notification_ask_if_light_should_be_turned_off_when_printing_starts
+  - alias: '3D Print Init'
+    id: 3d_print_init
     initial_state: true
     trigger:
       - platform: state
         entity_id: sensor.creality_ender_v3_ke_current_print_state
-        to: printing
-
-    condition:
-      - condition: state
-        entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
-        state: 'on'
+        to: 'printing'
 
     action:
-      - action: script.activate_alexa_actionable_notification
-        data:
-          text: 'A new 3D print has started, should I keep the light on?'
-          event_id: 'actionable_notification_study_printing_starts'
-          alexa_device: 'media_player.study_room'
-
-
-  - alias: '3D print turn lights off when printing starts'
-    id: 3d_printer_turn_lights_off_when_printing_starts
-    trigger:
-      - platform: event
-        event_type: alexa_actionable_notification
-        event_data:
-          event_id: actionable_notification_study_printing_starts
-          event_response_type: ResponseNone
-
-      - platform: event
-        event_type: alexa_actionable_notification
-        event_data:
-          event_id: actionable_notification_study_printing_starts
-          event_response_type: ResponseNo
-
-    action:
-      - action: homeassistant.turn_off
-        entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
+      - action: light.turn_on
+        entity_id: light.study_ender_led_driver
 
 
   - alias: Study room Toggle light when door opens or closes during 3D print
@@ -260,24 +277,32 @@ automation:
                   entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
 
 
-  - alias: "Send Timelapse Link via Telegram After Print Completes"
-    description: "Downloads the latest .mp4 timelapse and sends a link via Telegram when a print completes."
-    trigger:
-      - platform: state
-        entity_id: sensor.creality_ender_v3_ke_current_print_state
-        from: printing
-        to: complete
-        for:
-          minutes: 5
-    action:
-      - action: shell_command.download_latest_mp4_timelapse
+  # - alias: "3D Print Complete – Send Timelapse and Turn Off Fan"
+  #   id: 3d_print_complete
+  #   description: "Downloads the latest .mp4 timelapse, sends a Telegram link when a print completes, and turns off the exhaust fan if it's on."
+  #   trigger:
+  #     - platform: state
+  #       entity_id: sensor.creality_ender_v3_ke_current_print_state
+  #       from: printing
+  #       to: complete
+  #       for:
+  #         minutes: 1
 
-      - delay: '00:05:00'
+  #   action:
+  #     - action: switch.turn_off
+  #       target:
+  #         entity_id: switch.weto_03
 
-      - action: notify.ohad_telegram
-        data_template:
-          message: "Your latest 3D print timelapse is ready!"
-          data:
-            video:
-              - file: "/config/www/3d_print_latest_timelapse.mp4"
-                caption: "Latest Timelapse"
+  #     - delay: "00:10:00"
+
+  #     - action: shell_command.download_latest_mp4_timelapse
+
+  #     - action: notify.send_message
+  #       target:
+  #         entity_id: notify.telegram_bot_659000495_155103022
+  #       data:
+  #         message: "Your latest 3D print timelapse is ready!"
+  #         data:
+  #           video:
+  #             - file: "/config/www/3d_print_latest_timelapse.mp4"
+  #               caption: "Latest Timelapse"

@@ -12,6 +12,15 @@ automation:
         from: 'off'
         to: 'on'
 
+    condition:
+      - condition: template
+        value_template: >
+          {{
+            state_attr(this.entity_id, 'last_triggered') is none
+            or
+            (now() - state_attr(this.entity_id, 'last_triggered')).total_seconds() > 5
+          }}
+
     action:
       - action: homeassistant.turn_on
         entity_id: switch.shelly1pmminig3_34b7da8c3e68_switch_0

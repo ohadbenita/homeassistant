@@ -1,0 +1,69 @@
+---
+automation:
+  - alias: Mirror balcony switches both ways
+    id: second_floor_mirror_balcony_switches_both_ways
+    mode: queued
+    max: 5
+
+    trigger:
+      # Master bedroom balcony light → Ella balcony light
+      - platform: state
+        entity_id: switch.shelly1pmminig3_34b7da92adb0_switch_0
+        from: "off"
+        to: "on"
+        id: master_balcony_on
+      - platform: state
+        entity_id: switch.shelly1pmminig3_34b7da92adb0_switch_0
+        from: "on"
+        to: "off"
+        id: master_balcony_off
+
+      # Ella balcony light → Master bedroom balcony light
+      - platform: state
+        entity_id: switch.ella_balcony_light
+        from: "off"
+        to: "on"
+        id: ella_balcony_on
+      - platform: state
+        entity_id: switch.ella_balcony_light
+        from: "on"
+        to: "off"
+        id: ella_balcony_off
+
+    action:
+      - choose:
+          # Master bedroom balcony ON → Ella balcony ON
+          - conditions:
+              - condition: trigger
+                id: master_balcony_on
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.ella_balcony_light
+
+          # Master bedroom balcony OFF → Ella balcony OFF
+          - conditions:
+              - condition: trigger
+                id: master_balcony_off
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.ella_balcony_light
+
+          # Ella balcony ON → Master bedroom balcony ON
+          - conditions:
+              - condition: trigger
+                id: ella_balcony_on
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.shelly1pmminig3_34b7da92adb0_switch_0
+
+          # Ella balcony OFF → Master bedroom balcony OFF
+          - conditions:
+              - condition: trigger
+                id: ella_balcony_off
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.shelly1pmminig3_34b7da92adb0_switch_0

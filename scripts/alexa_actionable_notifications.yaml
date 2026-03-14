@@ -1,37 +1,52 @@
 ---
 alexa_notification:
-  description: 'Send a notification through an Alexa device while saving and restoring volume settings'
+  description: "Send Alexa notification and restore volume"
+  mode: queued
+  max: 10
   fields:
     alexa_device:
-      description: 'Alexa device you want to save volume settings for'
-      example: 'media_player.bedroom_echo'
-    notification_type:
-      description: 'The type of notification to send (tts/announce)'
-      example: 'tts'
-    current_volume:
-      description: 'The current volume of the media player'
-      example: 0.35
+      description: "Alexa device (media_player.*)"
+      example: "media_player.study_room"
+      required: true
     message:
-      description: 'The message to send to the device'
-      example: 'some important message'
+      description: "Message to send"
+      example: "The garage door has been open for 10 minutes."
+      required: true
+    volume:
+      description: "Temporary volume (0-1)"
+      example: 0.25
+      default: 0.25
+
   sequence:
+    - variables:
+        mp: "{{ alexa_device }}"
+        original_volume: "{{ state_attr(mp, 'volume_level') | float(0.25) }}"
+        temp_volume: "{{ volume | float(0.25) }}"
+
     - action: media_player.volume_set
-      data_template:
-        entity_id: '{{ alexa_device }}'
-        volume_level: 0.25
+      continue_on_error: true
+      target:
+        entity_id: "{{ mp }}"
+      data:
+        volume_level: "{{ temp_volume }}"
 
     - action: notify.alexa_media
-      data_template:
-        data:
-          type: '{{ notification_type }}'
-        target:
-          - '{{ alexa_device }}'
-        message: '{{ message }}'
+      continue_on_error: true
+      data:
+        message: "{{ message }}"
+        title: "{{ message }}"
+        target: "{{ mp }}"
+
+    - delay:
+        seconds: 1
 
     - action: media_player.volume_set
-      data_template:
-        entity_id: '{{ alexa_device }}'
-        volume_level: '{{ current_volume | float(0.25) }}'
+      continue_on_error: true
+      target:
+        entity_id: "{{ mp }}"
+      data:
+        volume_level: "{{ original_volume }}"
+
 
 activate_alexa_actionable_notification:
   description: 'Activates an actionable notification on a specific echo device'

@@ -52,27 +52,127 @@ sensor:
     end: "{{ now() }}"
 
 
+template:
+  - sensor:
+      - name: "People at Home"
+        unique_id: people_at_home
+        state: >
+          {{ expand([
+              'person.ohad_benita',
+              'person.rinat_benita',
+              'person.ella_benita',
+              'person.roi_benita',
+              'person.adi_benita'
+            ])
+            | selectattr('state', 'eq', 'home')
+            | list
+            | count }}
+        attributes:
+          persons_home: >
+            {{ expand([
+                'person.ohad_benita',
+                'person.rinat_benita',
+                'person.ella_benita',
+                'person.roi_benita',
+                'person.adi_benita'
+              ])
+              | selectattr('state', 'eq', 'home')
+              | map(attribute='entity_id')
+              | list }}
+
+
 automation:
-  - alias: "Alert: Ketem presence unchanged for 12 hours (away mode)"
-    id: presence_ketem_didnt_enter_or_exit_in_the_past_12_hours_away_mode
+  - alias: "Alert: Ketem presence unchanged for 20 hours (away mode)"
+    id: presence_ketem_didnt_enter_or_exit_in_the_past_20_hours_away_mode
     mode: single
+
     trigger:
       - platform: state
         entity_id: binary_sensor.ketem
         for:
-          hours: 12
+          hours: 20
 
     condition:
       - condition: state
         entity_id: input_boolean.away_mode
-        state: 'on'
+        state: "on"
 
     action:
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
-          title: "Alert: Cat presence sensor unchanged"
-          message: >
-            *State:* `{{ states('binary_sensor.ketem') }}`
-            *Unchanged since:* `{{ relative_time(states.binary_sensor.ketem.last_changed) }}`
+          title: "Ketem notifications"
+          message: >-
+            Status: {% if is_state('binary_sensor.ketem', 'off') %}Away{% else %}Home{% endif %}
+            Unchanged since: {{ relative_time(states.binary_sensor.ketem.last_changed) }}
           data:
             parse_mode: markdown
+
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Ketem notifications"
+          message: >-
+            Status: {% if is_state('binary_sensor.ketem', 'off') %}Away{% else %}Home{% endif %},
+            unchanged since {{ relative_time(states.binary_sensor.ketem.last_changed) }}
+          data:
+            push:
+              sound:
+                name: default
+                critical: 1
+                volume: 1.0
+
+      - action: notify.mobile_app_ellas_iphone
+        data:
+          title: "Ketem notifications"
+          message: >-
+            Status: {% if is_state('binary_sensor.ketem', 'off') %}Away{% else %}Home{% endif %},
+            unchanged since {{ relative_time(states.binary_sensor.ketem.last_changed) }}
+          data:
+            push:
+              sound:
+                name: default
+                critical: 1
+                volume: 1.0
+
+      # Roi
+      - action: notify.mobile_app_rois_iphone
+        data:
+          title: "Ketem notifications"
+          message: >-
+            Status: {% if is_state('binary_sensor.ketem', 'off') %}Away{% else %}Home{% endif %},
+            unchanged since {{ relative_time(states.binary_sensor.ketem.last_changed) }}
+          data:
+            push:
+              sound:
+                name: default
+                critical: 1
+                volume: 1.0
+
+      # Adi (Hebrew)
+      - action: notify.mobile_app_adidibenita
+        data:
+          title: "התראות קטם"
+          message: >-
+            מצב: {% if is_state('binary_sensor.ketem', 'off') %}מחוץ לבית{% else %}בבית{% endif %},
+            ללא שינוי מאז {{ relative_time(states.binary_sensor.ketem.last_changed) }}
+          data:
+            push:
+              sound:
+                name: default
+                critical: 1
+                volume: 1.0
+
+      # Rinat
+      - action: notify.mobile_app_rinats_iphone
+        data:
+          title: "Ketem notifications"
+          message: >-
+            Status: {% if is_state('binary_sensor.ketem', 'off') %}Away{% else %}Home{% endif %},
+            unchanged since {{ relative_time(states.binary_sensor.ketem.last_changed) }}
+          data:
+            push:
+              sound:
+                name: default
+                critical: 1
+                volume: 1.0

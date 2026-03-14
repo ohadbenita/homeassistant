@@ -5,55 +5,49 @@ template:
       device_class: door
       unique_id: "post_office_open_status"
       state: >-
-        {% set wd = now().isoweekday() %}
+        {% set wd = now().isoweekday() %}  {# 1=Mon .. 7=Sun #}
         {% set t = now().strftime('%H:%M') %}
-        {% set is_holiday = (states('binary_sensor.israel_workday_sensor') == 'off') %}
-        {#
-          Sunday => wd=7 => 13:00-18:00
-          Monday => wd=1 => 11:00-15:00
-          Tuesday => wd=2 => 13:00-18:00
-          Wednesday => wd=3 => 11:00-15:00
-          Thursday => wd=4 => 11:00-15:00
-          Friday => wd=5 => 09:00-12:00
-          Saturday => wd=6 => closed
-        #}
+        {% set is_holiday = is_state('binary_sensor.jewish_calendar_issur_melacha_in_effect', 'on') %}
 
-        {# If it's a holiday or Saturday => closed #}
-        {% if is_holiday or wd == 6 %}
+        {# Working hours (Asia/Jerusalem local):
+           Sun (7) & Thu (4): 13:00-18:00
+           Mon-Wed (1-3):     11:00-15:00
+           Fri (5):           09:00-12:00
+           Sat (6) & holidays: closed
+        #}
+        {% set hours = {
+          1: ['11:00','15:00'],
+          2: ['11:00','15:00'],
+          3: ['11:00','15:00'],
+          4: ['13:00','18:00'],
+          5: ['09:00','12:00'],
+          7: ['13:00','18:00']
+        } %}
+        {% set window = hours.get(wd) %}
+
+        {% if is_holiday or wd == 6 or window is none %}
           false
-        {% elif wd == 7 and '13:00' <= t < '18:00' %}
-          true
-        {% elif wd == 1 and '11:00' <= t < '15:00' %}
-          true
-        {% elif wd == 2 and '13:00' <= t < '18:00' %}
-          true
-        {% elif wd == 3 and '11:00' <= t < '15:00' %}
-          true
-        {% elif wd == 4 and '11:00' <= t < '15:00' %}
-          true
-        {% elif wd == 5 and '09:00' <= t < '12:00' %}
-          true
         {% else %}
-          false
+          {{ (window[0] <= t) and (t < window[1]) }}
         {% endif %}
+
 
   sensor:
     - name: "Post Office Next Close"
       unique_id: "post_office_next_close"
       state: >-
         {% set wd = now().isoweekday() %}
-        {% set t = now().strftime('%H:%M') %}
         {% set is_open = states('binary_sensor.post_office_open') == 'on' %}
 
         {% if not is_open %}
           Closed
         {% else %}
           {# We are currently open => show today’s closing time #}
-          {% if wd == 7 %} 18:00
+          {% if   wd == 7 %} 18:00
           {% elif wd == 1 %} 15:00
-          {% elif wd == 2 %} 18:00
+          {% elif wd == 2 %} 15:00
           {% elif wd == 3 %} 15:00
-          {% elif wd == 4 %} 15:00
+          {% elif wd == 4 %} 18:00
           {% elif wd == 5 %} 12:00
           {% else %}
             Unknown
@@ -63,16 +57,40 @@ template:
     - name: "Post Office Next Open"
       unique_id: "post_office_next_open"
       state: >-
-        {#
-          If closed, figure out the next day/time it opens
-          This example just shows the next day’s start time
-          (or “open now” if it’s currently open).
-        #}
+        {# If closed, compute the next opening time. Skips Saturdays and treats "holiday today" as closed.
+           Note: future holidays are not excluded here because the workday sensor is "today"-scoped. #}
+        {% set wd = now().isoweekday() %}
+        {% set t = now().strftime('%H:%M') %}
         {% set is_open = states('binary_sensor.post_office_open') == 'on' %}
+        {% set is_holiday = (states('binary_sensor.israel_workday_sensor') == 'off') %}
+
+        {% set hours = {
+          1: ['11:00','15:00'],
+          2: ['11:00','15:00'],
+          3: ['11:00','15:00'],
+          4: ['13:00','18:00'],
+          5: ['09:00','12:00'],
+          7: ['13:00','18:00']
+        } %}
+
         {% if is_open %}
           Open now
         {% else %}
-          {# Simplify: if we’re past closing today, next open might be tomorrow or next day with valid hours. #}
-          {# Real logic would skip over Saturday or holidays. #}
-          Next open time depends on your exact logic
+          {% set today_window = hours.get(wd) %}
+          {# If today has hours, not Saturday or holiday, and we're before open -> return today's open #}
+          {% if today_window is not none and wd != 6 and not is_holiday and t < today_window[0] %}
+            {{ today_window[0] }}
+          {% else %}
+            {# Otherwise, find the next non-Saturday day with a window #}
+            {% set next_open = None %}
+            {% for i in range(1, 8) %}
+              {% set d = ((wd + i - 1) % 7) + 1 %}
+              {% if d != 6 and hours.get(d) is not none %}
+                {% set _ = namespace(time=next_open) %}
+                {% set next_open = hours.get(d)[0] %}
+                {% break %}
+              {% endif %}
+            {% endfor %}
+            {{ next_open if next_open is not none else 'Unknown' }}
+          {% endif %}
         {% endif %}

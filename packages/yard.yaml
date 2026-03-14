@@ -10,33 +10,25 @@ script:
             - switch.shellyswitch25_6869e3_channel_1
             - switch.shellyswitch25_6869e3_channel_2
             - switch.shelly1pmminig3_34b7dac88574_switch_0
-            - switch.clinic_door_floodlight_switch_0
+            - switch.clinic_door_flood_light
             - switch.shelly1pmminig3_34b7dac9ea68_switch_0
-      - wait_template: >-
-          {{ is_state('switch.clinic_door_floodlight_switch_0', 'off') }}
-        timeout:
-          minutes: 1
-        continue_on_timeout: false
+            - switch.clinic_door_flood_light
 
-      - action: homeassistant.turn_on
-        target:
-          entity_id:
-            - switch.clinic_door_floodlight_switch_0
 
-light:
-  - platform: template
-    lights:
-      all_yard_lights:
-        value_template: >-
+template:
+  - light:
+      - name: all_yard_lights
+        state: >-
           {{
             is_state('switch.shellyplus2pm_fcb467a557a0_switch_0', 'on') and
             is_state('switch.shellyplus2pm_d48afc581860_switch_1', 'on') and
             is_state('switch.shellyswitch25_6869e3_channel_1', 'on') and
             is_state('switch.shellyswitch25_6869e3_channel_2', 'on') and
             is_state('switch.shelly1pmminig3_34b7dac88574_switch_0', 'on') and
-            is_state('switch.clinic_door_floodlight_switch_0', 'on') and
+            is_state('switch.clinic_door_flood_light', 'on') and
             is_state('switch.shelly1pmminig3_34b7dac9ea68_switch_0', 'on') and
-            is_state('switch.backyard_flood_light_near_clinic', 'on')
+            is_state('switch.backyard_flood_light_near_clinic', 'on') and
+            is_state('switch.clinic_door_flood_light', 'on')
           }}
         turn_on:
           action: script.turn_on_all_yard_lights
@@ -49,14 +41,73 @@ light:
               - switch.shellyswitch25_6869e3_channel_1
               - switch.shellyswitch25_6869e3_channel_2
               - switch.shelly1pmminig3_34b7dac88574_switch_0
-              - switch.clinic_door_floodlight_switch_0
+              - switch.clinic_door_flood_light
               - switch.shelly1pmminig3_34b7dac9ea68_switch_0
               - switch.backyard_flood_light_near_clinic
+              - switch.clinic_door_flood_light
+
+  - sensor:
+      - name: "LPG Auto Switcher Dashboard"
+        unique_id: lpg_auto_switcher_dashboard
+        state: >-
+          {% set s = states('sensor.lpg_auto_switcher') %}
+          {% set conf = state_attr('sensor.lpg_auto_switcher', 'confidence') %}
+          {% set last = state_attr('automation.lpg_timercamera_wake_flow_snapshot_analyze_hibernate', 'last_triggered') %}
+          {% set last_s = as_local(last).strftime('%Y-%m-%d %H:%M:%S') if last else 'Never' %}
+          {{ s }} | conf={{ conf if conf is not none else 'n/a' }} | last={{ last_s }}
+        attributes:
+          lpg_state: "{{ states('sensor.lpg_auto_switcher') }}"
+          confidence: "{{ state_attr('sensor.lpg_auto_switcher', 'confidence') }}"
+          is_red: "{{ state_attr('sensor.lpg_auto_switcher', 'is_red') }}"
+          updated_at: "{{ state_attr('sensor.lpg_auto_switcher', 'updated_at') }}"
+          automation_entity: "automation.lpg_timercamera_wake_flow_snapshot_analyze_hibernate"
+          last_triggered: >-
+            {% set last = state_attr('automation.lpg_timercamera_wake_flow_snapshot_analyze_hibernate', 'last_triggered') %}
+            {{ as_local(last).isoformat() if last else none }}
+          last_triggered_human: >-
+            {% set last = state_attr('automation.lpg_timercamera_wake_flow_snapshot_analyze_hibernate', 'last_triggered') %}
+            {{ as_local(last).strftime('%Y-%m-%d %H:%M:%S') if last else 'Never' }}
+          hours_since_last_trigger: >-
+            {% set last = state_attr('automation.lpg_timercamera_wake_flow_snapshot_analyze_hibernate', 'last_triggered') %}
+            {% if last %}
+              {{ ((as_timestamp(now()) - as_timestamp(last)) / 3600) | round(1) }}
+            {% else %}
+              {{ none }}
+            {% endif %}
+
 
 rest_command:
   analyze_laundry:
     url: !secret analyze_laundry_image_url
     method: GET
+  analyze_laundry_init:
+    url: !secret analyze_laundry_image_url_init
+    method: GET
+  analyze_lpg_auto_switcher:
+    url: !secret analyze_lpg_auto_switcher_url
+    method: GET
+    timeout: 30
+  analyze_lpg_auto_switcher_init:
+    url: !secret analyze_lpg_auto_switcher_url_init
+    method: GET
+    timeout: 30
+
+
+input_number:
+  lpg_timercam_sleep_minutes:
+    name: LPG TimerCam Sleep Minutes
+    min: 1
+    max: 10080   # up to 7 days
+    step: 1
+    unit_of_measurement: min
+    mode: box
+
+
+input_boolean:
+  yard_light_automations_bypass:
+    name: Yard light automation bypass
+    initial: false
+
 
 automation:
   - alias: "Yard - Turn off roof lights in the night"
@@ -65,6 +116,11 @@ automation:
     trigger:
       - platform: time
         at: "23:00:00"
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
 
     action:
       - action: homeassistant.turn_off
@@ -79,10 +135,15 @@ automation:
       - platform: time
         at: "22:00:00"
 
+    condition:
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
+
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.clinic_door_floodlight_switch_0  # clinic door
+          - switch.clinic_door_flood_light # clinic door
           - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # kids bathroom outdoor light
           - switch.shelly1pmminig3_34b7dac88574_switch_0  # Parking and outdoor fan
@@ -96,6 +157,7 @@ automation:
         entity_id:
           - binary_sensor.kids_bathroom_door_contact
           - binary_sensor.kitchen_path_person
+          - binary_sensor.kitchen_path_to_pergola_person
           - binary_sensor.kids_bathroom_door_external_occupancy
         to: "on"
       - platform: homeassistant
@@ -121,14 +183,21 @@ automation:
               entity_id: binary_sensor.kids_bathroom_door_contact
               state: "on"
             - condition: state
-              entity_id: binary_sensor.kids_bathroom_door_external_occupancy
+              entity_id: binary_sensor.kitchen_path_person
               state: "on"
+            - condition: state
+              entity_id: binary_sensor.kitchen_path_to_pergola_person
+              state: "on"
+
+            # - condition: state
+            #   entity_id: binary_sensor.kids_bathroom_door_external_occupancy
+            #   state: "on"
 
     action:
       - action: homeassistant.turn_on
         entity_id:
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
-          - switch.clinic_door_floodlight_switch_0
+          - switch.clinic_door_flood_light
 
   - alias: "Turn off kids bathroom path lights"
     id: yard_turn_off_kids_bathroom_path_light
@@ -139,10 +208,11 @@ automation:
         entity_id:
           - binary_sensor.kids_bathroom_door_contact
           - binary_sensor.kitchen_path_person
+          - binary_sensor.kitchen_path_to_pergola_person
           - binary_sensor.kids_bathroom_door_external_occupancy
         to: "off"
         for:
-          minutes: 5
+          minutes: 2
       - platform: homeassistant
         event: start
 
@@ -154,14 +224,20 @@ automation:
         entity_id: binary_sensor.kitchen_path_person
         state: "off"
       - condition: state
+        entity_id: binary_sensor.kitchen_path_to_pergola_person
+        state: "off"
+      - condition: state
         entity_id: binary_sensor.kids_bathroom_door_external_occupancy
+        state: "off"
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
         state: "off"
 
     action:
       - action: homeassistant.turn_off
         entity_id:
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
-          - switch.clinic_door_floodlight_switch_0  # Clinic door
+          - switch.clinic_door_flood_light  # Clinic door
 
 
   - alias: "Turn on kitchen door light"
@@ -171,9 +247,10 @@ automation:
     trigger:
       - platform: state
         entity_id:
-          - binary_sensor.kitchen_door_01_occupancy
-          - binary_sensor.kitchen_door_02_occupancy
+          # - binary_sensor.kitchen_door_02_occupancy
           - binary_sensor.kitchen_door_contact
+          - binary_sensor.kitchen_path_person
+          - binary_sensor.kitchen_path_to_pergola_person
         to: "on"
       - platform: homeassistant
         event: start
@@ -181,6 +258,9 @@ automation:
     condition:
       condition: and
       conditions:
+        - condition: state
+          entity_id: input_boolean.yard_light_automations_bypass
+          state: "off"
         - condition: or
           conditions:
             - condition: sun
@@ -191,19 +271,23 @@ automation:
               after_offset: "-00:15:00"
         - condition: or
           conditions:
-            - condition: state
-              entity_id: binary_sensor.kitchen_door_01_occupancy
-              state: "on"
-            - condition: state
-              entity_id: binary_sensor.kitchen_door_02_occupancy
-              state: "on"
+            # - condition: state
+            #   entity_id: binary_sensor.kitchen_door_02_occupancy
+            #   state: "on"
             - condition: state
               entity_id: binary_sensor.kitchen_door_contact
+              state: "on"
+            - condition: state
+              entity_id: binary_sensor.kitchen_path_person
+              state: "on"
+            - condition: state
+              entity_id: binary_sensor.kitchen_path_to_pergola_person
               state: "on"
 
     action:
       - action: homeassistant.turn_on
         entity_id: switch.shellyplus2pm_d48afc581860_switch_1
+
 
   - alias: "Turn off kitchen door light"
     id: yard_turn_off_kitchen_door_light
@@ -212,12 +296,13 @@ automation:
     trigger:
       - platform: state
         entity_id:
-          - binary_sensor.kitchen_door_01_occupancy
           - binary_sensor.kitchen_door_02_occupancy
           - binary_sensor.kitchen_door_contact
+          - binary_sensor.kitchen_path_person
+          - binary_sensor.kitchen_path_to_pergola_person
         to: "off"
         for:
-          minutes: 5
+          minutes: 2
 
       - platform: homeassistant
         event: start
@@ -230,10 +315,13 @@ automation:
         entity_id: binary_sensor.kitchen_door_contact
         state: "off"
       - condition: state
-        entity_id: binary_sensor.kitchen_door_01_occupancy
+        entity_id: binary_sensor.kitchen_path_person
         state: "off"
       - condition: state
-        entity_id: binary_sensor.kitchen_door_02_occupancy
+        entity_id: binary_sensor.kitchen_path_to_pergola_person
+        state: "off"
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
         state: "off"
 
     action:
@@ -263,6 +351,9 @@ automation:
       - condition: state
         entity_id: binary_sensor.kitchen_path_person
         state: "off"
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
 
     action:
       - action: homeassistant.turn_off
@@ -287,7 +378,9 @@ automation:
         value_template: "{{ (now() | as_timestamp) - (state_attr('automation.alert_on_high_expected_water_consumption', 'last_triggered') | default(0) | as_timestamp) > 604800 }}"
 
     action:
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           title: "Alert: High water consumption forecast"
           message: >-
@@ -311,7 +404,7 @@ automation:
             sequence:
               - action: homeassistant.turn_on
                 target:
-                  entity_id: switch.clinic_door_floodlight_switch_0
+                  entity_id: switch.clinic_door_flood_light
 
           - conditions:
               - condition: state
@@ -320,7 +413,7 @@ automation:
             sequence:
               - action: homeassistant.turn_off
                 target:
-                  entity_id: switch.clinic_door_floodlight_switch_0
+                  entity_id: switch.clinic_door_flood_light
 
           - conditions:
               - condition: state
@@ -330,7 +423,7 @@ automation:
               - action: switch.turn_on
                 target:
                   entity_id:
-                    - switch.clinic_door_floodlight_switch_0
+                    - switch.clinic_door_flood_light
                     - switch.shellyplus2pm_fcb467a557a0_switch_0
 
           - conditions:
@@ -341,7 +434,7 @@ automation:
               - action: switch.turn_off
                 target:
                   entity_id:
-                    - switch.clinic_door_floodlight_switch_0
+                    - switch.clinic_door_flood_light
                     - switch.shellyplus2pm_fcb467a557a0_switch_0
 
   - alias: "Turn off clinic door flood light when the door is locked"
@@ -357,19 +450,19 @@ automation:
 
     condition:
       - condition: state
-        entity_id: switch.clinic_door_floodlight_switch_0  # clinic door
+        entity_id: switch.clinic_door_flood_light  # clinic door
         state: "on"
 
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.clinic_door_floodlight_switch_0  # Clinic door
+          - switch.clinic_door_flood_light  # Clinic door
 
   - alias: Turn off clinic floodlight during daylight hours
     id: yard_turn_off_clinic_door_light_during_daylight_hours
     trigger:
       - platform: state
-        entity_id: switch.clinic_door_floodlight_switch_0
+        entity_id: switch.clinic_door_flood_light
         to: "on"
         for:
           minutes: 2
@@ -383,7 +476,7 @@ automation:
 
     action:
       - action: homeassistant.turn_off
-        entity_id: switch.clinic_door_floodlight_switch_0
+        entity_id: switch.clinic_door_flood_light
 
   - alias: Sunset and Sunrise house sign control
     id: yard_house_sign_control
@@ -443,13 +536,211 @@ automation:
     trigger:
       - platform: sun
         event: sunset
-      - platform: homeassistant
-        event: start
+
+    condition:
+      - alias: "Alert only if humidity is high"
+        condition: numeric_state
+        entity_id: sensor.openweathermap_humidity
+        above: 65
 
     action:
       - delay: '00:00:20'
 
       - action: rest_command.analyze_laundry
+
+
+  - alias: "Analyze laundry - init"
+    id: yard_analyze_laundry_init
+    initial_state: true
+    trigger:
+      - platform: homeassistant
+        event: start
+
+    action:
+      - action: rest_command.analyze_laundry_init
+
+
+# =========================
+# LPG TimerCamera automations
+# =========================
+
+  - alias: "Analyze LPG Auto Switcher - init"
+    id: yard_analyze_lpg_auto_switcher_init
+    initial_state: true
+    trigger:
+      - platform: homeassistant
+        event: start
+
+    action:
+      - action: rest_command.analyze_lpg_auto_switcher_init
+
+
+  - alias: LPG TimerCamera - Wake Flow (Snapshot + Analyze + Hibernate)
+    id: lpg_timercamera_wake_flow
+    mode: single
+
+    trigger:
+      - platform: event
+        event_type: esphome.lpg_cam_event
+        event_data:
+          event: ready
+
+    action:
+      # Give ESPHome camera a moment to produce the first frame
+      - delay: "00:00:03"
+
+      # Retry snapshot up to 5 times (first frame often fails)
+      - repeat:
+          count: 1
+          sequence:
+            - action: camera.snapshot
+              continue_on_error: true
+              data:
+                entity_id: camera.lpg_timercamera
+                filename: "/config/www/snapshots/lpg_auto_switcher_snapshot.jpg"
+
+            - delay: "00:00:02"
+
+            # If the snapshot succeeded, stop retrying.
+            # We can't reliably check the file exists without extra integrations,
+            # so we use a cheap heuristic: camera must be available and not unavailable.
+
+      # Run analysis (even if snapshot failed; your server can handle missing/old file)
+      - action: rest_command.analyze_lpg_auto_switcher
+        continue_on_error: true
+
+      # Always hibernate so deadman is only a fallback
+      - action: esphome.lpg_timercamera_hibernate
+        data:
+          duration: 3600
+          wakeup: >
+            {{
+              (
+                as_datetime(states('sensor.sun_next_noon')) + timedelta(days=1)
+              ).strftime('%Y-%m-%dT%H:%M:%S')
+            }}
+          # wakeup: >
+          #   {{
+          #     (
+          #       as_datetime(states('sensor.sun_next_noon'))
+          #     ).strftime('%Y-%m-%dT%H:%M:%S')
+          #   }}
+
+
+  - alias: "Alert: LPG auto-switcher indicator is red"
+    id: lpg_alert_auto_switcher_indicator_red
+    initial_state: true
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: sensor.lpg_auto_switcher
+        to: "on"
+
+    action:
+      # Reuse the last captured snapshot (don’t take a second one)
+      - action: telegram_bot.send_photo
+        data:
+          target:
+            - !secret telegram_homeassistant_notifications_chat_id
+          file: "/config/www/snapshots/lpg_auto_switcher_snapshot.jpg"
+          caption: >-
+            🚨 **LPG Auto-Switcher Alert**
+
+            The indicator window appears **RED**
+            _(likely switched to the reserve tank)._
+
+            **Confidence:** {{ state_attr('sensor.lpg_auto_switcher', 'confidence') }}
+
+            🔴 **Action required:**
+            [Order a new LPG tank now](https://www.pazgas.co.il/he/login_page/?requestOrigin=gasOrder)
+
+            📹 [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.lpg_timercamera?token={{ state_attr('camera.lpg_timercamera', 'access_token') }})
+          parse_mode: markdown
+
+
+  - alias: "Alert: LPG camera battery is low"
+    id: lpg_alert_camera_battery_low
+    initial_state: true
+    mode: single
+
+    # Check battery when device wakes (fresh reading)
+    trigger:
+      - platform: event
+        event_type: esphome.lpg_cam_event
+        event_data:
+          event: ready
+
+    condition:
+      - condition: numeric_state
+        entity_id: sensor.lpg_timercamera_battery_voltage
+        below: 3.55
+
+      # No more than once per day
+      - condition: template
+        value_template: >
+          {% set last = state_attr('automation.alert_lpg_camera_battery_is_low', 'last_triggered') %}
+          {{ last is none or (now() - last).total_seconds() > 86400 }}
+
+    action:
+      - action: telegram_bot.send_message
+        data:
+          target:
+            - !secret telegram_homeassistant_notifications_chat_id
+          message: >-
+            🔋 **LPG Camera Battery Low**
+
+            Battery voltage is **{{ states('sensor.lpg_timercamera_battery_voltage') }} V**.
+
+            Please charge the LPG camera to keep LPG monitoring active.
+          parse_mode: markdown
+
+
+  - alias: "Alert: LPG snapshot/analyze automation hasn't run in 72 hours"
+    id: lpg_alert_snapshot_analyze_hibernate_not_run_72h
+    initial_state: true
+    mode: single
+
+    trigger:
+      - platform: time
+        at: "09:00:00"   # pick your daily time
+
+    condition:
+      - condition: template
+        value_template: >-
+          {% set last = state_attr('automation.lpg_timercamera_wake_flow_snapshot_analyze_hibernate', 'last_triggered') %}
+          {{ last is none or (as_timestamp(now()) - as_timestamp(last)) >= 72*3600 }}
+
+    action:
+      # Reuse the last captured snapshot (don’t take a second one)
+      - action: telegram_bot.send_photo
+        data:
+          target:
+            - !secret telegram_homeassistant_notifications_chat_id
+          file: "/config/www/snapshots/lpg_auto_switcher_snapshot.jpg"
+          caption: >-
+            🚨 **LPG Watchdog Alert**
+
+            The automation **lpg_timercamera_wake_flow_snapshot_analyze_hibernate**
+            hasn’t triggered for **72h+**.
+
+            {% set last = state_attr('automation.lpg_timercamera_wake_flow_snapshot_analyze_hibernate', 'last_triggered') %}
+            {% if last %}
+            **Last triggered:** {{ as_local(last).strftime('%Y-%m-%d %H:%M:%S') }}
+            {% else %}
+            **Last triggered:** Never
+            {% endif %}
+
+            **Now:** {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+
+            🔎 **Suggested checks:**
+            • Camera availability / tokens
+            • Upstream trigger still firing
+            • Automation traces / logs
+
+            📹 [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.lpg_timercamera?token={{ state_attr('camera.lpg_timercamera', 'access_token') }})
+          parse_mode: markdown
+
 
   - alias: "Alert if laundry is out during the night"
     id: yard_alert_if_laundry_is_out
@@ -466,7 +757,7 @@ automation:
       - alias: "Alert only if humidity is high"
         condition: numeric_state
         entity_id: sensor.openweathermap_humidity
-        above: 50
+        above: 65
 
     action:
       - action: camera.snapshot
@@ -476,7 +767,9 @@ automation:
 
       - delay: '00:00:02'
 
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           title: "Alert: Laundry is out"
           message: >-
@@ -519,7 +812,9 @@ automation:
 
     action:
       - action: homeassistant.turn_on
-        entity_id: switch.backyard_flood_light_near_clinic
+        entity_id:
+          - switch.backyard_flood_light_near_clinic
+          - switch.clinic_door_flood_light
 
 
   - alias: "Turn backyard light when no one is detected"
@@ -543,4 +838,29 @@ automation:
 
     action:
       - action: homeassistant.turn_off
-        entity_id: switch.backyard_flood_light_near_clinic
+        entity_id:
+          - switch.backyard_flood_light_near_clinic
+          - switch.clinic_door_flood_light
+
+
+  - alias: Yard - Turn off roof light 1 when no person is detected
+    id: yard_turn_off_roof_light_1_no_person_detected
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.main_entrance_person
+        to: 'off'
+        for: '00:15:00'
+
+    condition:
+      - condition: state
+        entity_id: switch.shellyswitch25_6869e3_channel_1
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
+
+    action:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.shellyswitch25_6869e3_channel_1

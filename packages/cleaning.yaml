@@ -1,5 +1,9 @@
----
+# packages/roborock_segment_cleaning.yaml
+
 input_boolean:
+  # ---------------------------------------------------------------------------
+  # Downstairs / vacuum.yulanda (Main floor)
+  # ---------------------------------------------------------------------------
   clean_roi_room:
     name: Roi's Room
     initial: false
@@ -39,22 +43,188 @@ input_boolean:
   clean_hall:
     name: Hall
     initial: false
+  clean_with_delay:
+    name: Delay start
+    initial: false
+
+  # ---------------------------------------------------------------------------
+  # Upstairs / vacuum.muhammad_s8 (Upper floor)
+  # ---------------------------------------------------------------------------
+  clean_upper_master_bedroom:
+    name: Master bedroom
+    initial: false
+  clean_upper_master_bathroom:
+    name: Master Bathroom
+    initial: false
+  clean_upper_closet:
+    name: Closet
+    initial: false
+  clean_upper_hallway:
+    name: Hallway
+    initial: false
+  clean_upper_ella_room:
+    name: Ella’s room
+    initial: false
+  clean_upper_stairs:
+    name: Stairs
+    initial: false
+
+  # S8-scoped delay toggle so it won't interfere with downstairs
+  clean_upper_with_delay_s8:
+    name: Delay start (Upper floor / S8)
+    initial: false
+
 
 input_button:
+  # Downstairs
   start_cleaning:
     name: Start Cleaning
 
+  # Upstairs / S8
+  start_cleaning_upper_s8:
+    name: Start Cleaning (Upper floor / S8)
+
+
+timer:
+  # Downstairs
+  roborock_clean_delay:
+    name: Roborock clean delay
+
+  # Upstairs / S8
+  roborock_clean_delay_upper_s8:
+    name: Roborock clean delay (Upper floor / S8)
+
+
+script:
+  # ---------------------------------------------------------------------------
+  # Downstairs delay scripts (existing names)
+  # ---------------------------------------------------------------------------
+  roborock_delay_30m:
+    alias: "Roborock delay 30m"
+    mode: single
+    sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.clean_with_delay
+      - action: timer.start
+        target:
+          entity_id: timer.roborock_clean_delay
+        data:
+          duration: "00:30:00"
+
+  roborock_delay_1h:
+    alias: "Roborock delay 1h"
+    mode: single
+    sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.clean_with_delay
+      - action: timer.start
+        target:
+          entity_id: timer.roborock_clean_delay
+        data:
+          duration: "01:00:00"
+
+  roborock_delay_2h:
+    alias: "Roborock delay 2h"
+    mode: single
+    sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.clean_with_delay
+      - action: timer.start
+        target:
+          entity_id: timer.roborock_clean_delay
+        data:
+          duration: "02:00:00"
+
+  roborock_cancel_delay:
+    alias: "Roborock cancel scheduled cleaning"
+    mode: single
+    sequence:
+      - action: timer.cancel
+        target:
+          entity_id: timer.roborock_clean_delay
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.clean_with_delay
+
+  # ---------------------------------------------------------------------------
+  # Upstairs / S8 delay scripts (unique names with s8)
+  # ---------------------------------------------------------------------------
+  roborock_upper_s8_delay_30m:
+    alias: "Roborock upper S8 delay 30m"
+    mode: single
+    sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.clean_upper_with_delay_s8
+      - action: timer.start
+        target:
+          entity_id: timer.roborock_clean_delay_upper_s8
+        data:
+          duration: "00:30:00"
+
+  roborock_upper_s8_delay_1h:
+    alias: "Roborock upper S8 delay 1h"
+    mode: single
+    sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.clean_upper_with_delay_s8
+      - action: timer.start
+        target:
+          entity_id: timer.roborock_clean_delay_upper_s8
+        data:
+          duration: "01:00:00"
+
+  roborock_upper_s8_delay_2h:
+    alias: "Roborock upper S8 delay 2h"
+    mode: single
+    sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.clean_upper_with_delay_s8
+      - action: timer.start
+        target:
+          entity_id: timer.roborock_clean_delay_upper_s8
+        data:
+          duration: "02:00:00"
+
+  roborock_upper_s8_cancel_delay:
+    alias: "Roborock cancel scheduled cleaning (Upper floor / S8)"
+    mode: single
+    sequence:
+      - action: timer.cancel
+        target:
+          entity_id: timer.roborock_clean_delay_upper_s8
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.clean_upper_with_delay_s8
+
+
 automation:
-  - alias: 'Clean selected areas with Roborock'
+  # ---------------------------------------------------------------------------
+  # Downstairs / vacuum.yulanda
+  # ---------------------------------------------------------------------------
+  - alias: "Clean selected areas with Roborock"
     description: >
-      Gather all checked areas, send one segment‐clean command
-      with a YAML list of segments, then reset the toggles.
+      If Delay start is off -> clean immediately.
+      If Delay start is on  -> start a timer; when it finishes, clean.
+    mode: single
+
     trigger:
       - platform: state
         entity_id: input_button.start_cleaning
+        id: button
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.roborock_clean_delay
+        id: timer_done
 
     action:
-      # 1) Only proceed if at least one helper is on
+      # Only proceed if at least one helper is on
       - condition: template
         value_template: >
           {% set s = [] %}
@@ -73,64 +243,132 @@ automation:
           {% if is_state('input_boolean.clean_hall','on') %}{% set s = s + [29] %}{% endif %}
           {{ s | length > 0 }}
 
-      # 2) Send one vacuum command with the full segments list
-      - action: vacuum.send_command
-        data_template:
-          entity_id: vacuum.yulanda
-          command: app_segment_clean
-          params: >
-            {% set s = [] %}
-            {% if is_state('input_boolean.clean_roi_room','on') %}{% set s = s + [16] %}{% endif %}
-            {% if is_state('input_boolean.clean_adi_room','on') %}{% set s = s + [17] %}{% endif %}
-            {% if is_state('input_boolean.clean_kitchen','on') %}{% set s = s + [18] %}{% endif %}
-            {% if is_state('input_boolean.clean_study','on') %}{% set s = s + [19] %}{% endif %}
-            {% if is_state('input_boolean.clean_pantry','on') %}{% set s = s + [20] %}{% endif %}
-            {% if is_state('input_boolean.clean_corridor1','on') %}{% set s = s + [21] %}{% endif %}
-            {% if is_state('input_boolean.clean_dining_room','on') %}{% set s = s + [23] %}{% endif %}
-            {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set s = s + [24] %}{% endif %}
-            {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set s = s + [25] %}{% endif %}
-            {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set s = s + [26] %}{% endif %}
-            {% if is_state('input_boolean.clean_living_room','on') %}{% set s = s + [27] %}{% endif %}
-            {% if is_state('input_boolean.clean_entrance','on') %}{% set s = s + [28] %}{% endif %}
-            {% if is_state('input_boolean.clean_hall','on') %}{% set s = s + [29] %}{% endif %}
-            {{ s }}
+      - choose:
+          # Button pressed + delay enabled -> start timer and exit
+          - conditions:
+              - condition: trigger
+                id: button
+              - condition: state
+                entity_id: input_boolean.clean_with_delay
+                state: "on"
+            sequence:
+              - action: timer.start
+                target:
+                  entity_id: timer.roborock_clean_delay
 
-      # 3) Turn off every helper that was on
-      - action: input_boolean.turn_off
-        data_template:
-          entity_id: >
-            {% set o = [] %}
-            {% if is_state('input_boolean.clean_roi_room','on') %}{% set o = o + ['input_boolean.clean_roi_room'] %}{% endif %}
-            {% if is_state('input_boolean.clean_adi_room','on') %}{% set o = o + ['input_boolean.clean_adi_room'] %}{% endif %}
-            {% if is_state('input_boolean.clean_kitchen','on') %}{% set o = o + ['input_boolean.clean_kitchen'] %}{% endif %}
-            {% if is_state('input_boolean.clean_study','on') %}{% set o = o + ['input_boolean.clean_study'] %}{% endif %}
-            {% if is_state('input_boolean.clean_pantry','on') %}{% set o = o + ['input_boolean.clean_pantry'] %}{% endif %}
-            {% if is_state('input_boolean.clean_corridor1','on') %}{% set o = o + ['input_boolean.clean_corridor1'] %}{% endif %}
-            {% if is_state('input_boolean.clean_dining_room','on') %}{% set o = o + ['input_boolean.clean_dining_room'] %}{% endif %}
-            {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set o = o + ['input_boolean.clean_kids_bathroom'] %}{% endif %}
-            {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set o = o + ['input_boolean.clean_living_room_corridor'] %}{% endif %}
-            {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set o = o + ['input_boolean.clean_guest_bathroom'] %}{% endif %}
-            {% if is_state('input_boolean.clean_living_room','on') %}{% set o = o + ['input_boolean.clean_living_room'] %}{% endif %}
-            {% if is_state('input_boolean.clean_entrance','on') %}{% set o = o + ['input_boolean.clean_entrance'] %}{% endif %}
-            {% if is_state('input_boolean.clean_hall','on') %}{% set o = o + ['input_boolean.clean_hall'] %}{% endif %}
-            {{ o }}
+        default:
+          # Timer finished OR button pressed with delay OFF -> do the cleaning
+          - action: vacuum.send_command
+            data:
+              entity_id: vacuum.yulanda
+              command: app_segment_clean
+              params: >
+                {% set s = [] %}
+                {% if is_state('input_boolean.clean_roi_room','on') %}{% set s = s + [16] %}{% endif %}
+                {% if is_state('input_boolean.clean_adi_room','on') %}{% set s = s + [17] %}{% endif %}
+                {% if is_state('input_boolean.clean_kitchen','on') %}{% set s = s + [18] %}{% endif %}
+                {% if is_state('input_boolean.clean_study','on') %}{% set s = s + [19] %}{% endif %}
+                {% if is_state('input_boolean.clean_pantry','on') %}{% set s = s + [20] %}{% endif %}
+                {% if is_state('input_boolean.clean_corridor1','on') %}{% set s = s + [21] %}{% endif %}
+                {% if is_state('input_boolean.clean_dining_room','on') %}{% set s = s + [23] %}{% endif %}
+                {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set s = s + [24] %}{% endif %}
+                {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set s = s + [25] %}{% endif %}
+                {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set s = s + [26] %}{% endif %}
+                {% if is_state('input_boolean.clean_living_room','on') %}{% set s = s + [27] %}{% endif %}
+                {% if is_state('input_boolean.clean_entrance','on') %}{% set s = s + [28] %}{% endif %}
+                {% if is_state('input_boolean.clean_hall','on') %}{% set s = s + [29] %}{% endif %}
+                {{ s }}
 
+          # Turn off every helper that was on
+          - action: input_boolean.turn_off
+            data:
+              entity_id: >
+                {% set o = [] %}
+                {% if is_state('input_boolean.clean_roi_room','on') %}{% set o = o + ['input_boolean.clean_roi_room'] %}{% endif %}
+                {% if is_state('input_boolean.clean_adi_room','on') %}{% set o = o + ['input_boolean.clean_adi_room'] %}{% endif %}
+                {% if is_state('input_boolean.clean_kitchen','on') %}{% set o = o + ['input_boolean.clean_kitchen'] %}{% endif %}
+                {% if is_state('input_boolean.clean_study','on') %}{% set o = o + ['input_boolean.clean_study'] %}{% endif %}
+                {% if is_state('input_boolean.clean_pantry','on') %}{% set o = o + ['input_boolean.clean_pantry'] %}{% endif %}
+                {% if is_state('input_boolean.clean_corridor1','on') %}{% set o = o + ['input_boolean.clean_corridor1'] %}{% endif %}
+                {% if is_state('input_boolean.clean_dining_room','on') %}{% set o = o + ['input_boolean.clean_dining_room'] %}{% endif %}
+                {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set o = o + ['input_boolean.clean_kids_bathroom'] %}{% endif %}
+                {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set o = o + ['input_boolean.clean_living_room_corridor'] %}{% endif %}
+                {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set o = o + ['input_boolean.clean_guest_bathroom'] %}{% endif %}
+                {% if is_state('input_boolean.clean_living_room','on') %}{% set o = o + ['input_boolean.clean_living_room'] %}{% endif %}
+                {% if is_state('input_boolean.clean_entrance','on') %}{% set o = o + ['input_boolean.clean_entrance'] %}{% endif %}
+                {% if is_state('input_boolean.clean_hall','on') %}{% set o = o + ['input_boolean.clean_hall'] %}{% endif %}
+                {{ o }}
 
-  # maps:
-  #   - flag: 0
-  #     name: Main floor
-  #     rooms:
-  #       "16": Roi’s room
-  #       "17": Adi’s room
-  #       "18": Kitchen
-  #       "19": Study
-  #       "20": Pantry
-  #       "21": Corridor1
-  #       "22": Guest bedroom (clinic)
-  #       "23": Dining room
-  #       "24": Kids bathroom
-  #       "25": Living room corridor
-  #       "26": Bathroom
-  #       "27": Living room
-  #       "28": Entrance
-  #       "29": Hall
+  # ---------------------------------------------------------------------------
+  # Upstairs / vacuum.muhammad_s8 (Upper floor)
+  # ---------------------------------------------------------------------------
+  - alias: "Clean selected upper areas with Roborock S8"
+    description: >
+      If Delay start is off -> clean immediately.
+      If Delay start is on  -> start a timer; when it finishes, clean.
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: input_button.start_cleaning_upper_s8
+        id: button
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.roborock_clean_delay_upper_s8
+        id: timer_done
+
+    action:
+      # Only proceed if at least one helper is on
+      - condition: template
+        value_template: >
+          {% set s = [] %}
+          {% if is_state('input_boolean.clean_upper_master_bedroom','on') %}{% set s = s + [16] %}{% endif %}
+          {% if is_state('input_boolean.clean_upper_master_bathroom','on') %}{% set s = s + [17] %}{% endif %}
+          {% if is_state('input_boolean.clean_upper_closet','on') %}{% set s = s + [18] %}{% endif %}
+          {% if is_state('input_boolean.clean_upper_hallway','on') %}{% set s = s + [19] %}{% endif %}
+          {% if is_state('input_boolean.clean_upper_ella_room','on') %}{% set s = s + [20] %}{% endif %}
+          {% if is_state('input_boolean.clean_upper_stairs','on') %}{% set s = s + [22] %}{% endif %}
+          {{ s | length > 0 }}
+
+      - choose:
+          # Button pressed + delay enabled -> start timer and exit
+          - conditions:
+              - condition: trigger
+                id: button
+              - condition: state
+                entity_id: input_boolean.clean_upper_with_delay_s8
+                state: "on"
+            sequence:
+              - action: timer.start
+                target:
+                  entity_id: timer.roborock_clean_delay_upper_s8
+
+        default:
+          # Timer finished OR button pressed with delay OFF -> do the cleaning
+          - action: vacuum.send_command
+            data:
+              entity_id: vacuum.muhammad_s8
+              command: app_segment_clean
+              params: >
+                {% set s = [] %}
+                {% if is_state('input_boolean.clean_upper_master_bedroom','on') %}{% set s = s + [16] %}{% endif %}
+                {% if is_state('input_boolean.clean_upper_master_bathroom','on') %}{% set s = s + [17] %}{% endif %}
+                {% if is_state('input_boolean.clean_upper_closet','on') %}{% set s = s + [18] %}{% endif %}
+                {% if is_state('input_boolean.clean_upper_hallway','on') %}{% set s = s + [19] %}{% endif %}
+                {% if is_state('input_boolean.clean_upper_ella_room','on') %}{% set s = s + [20] %}{% endif %}
+                {% if is_state('input_boolean.clean_upper_stairs','on') %}{% set s = s + [22] %}{% endif %}
+                {{ s }}
+
+          # Turn off every helper that was on
+          - action: input_boolean.turn_off
+            data:
+              entity_id: >
+                {% set o = [] %}
+                {% if is_state('input_boolean.clean_upper_master_bedroom','on') %}{% set o = o + ['input_boolean.clean_upper_master_bedroom'] %}{% endif %}
+                {% if is_state('input_boolean.clean_upper_master_bathroom','on') %}{% set o = o + ['input_boolean.clean_upper_master_bathroom'] %}{% endif %}
+                {% if is_state('input_boolean.clean_upper_closet','on') %}{% set o = o + ['input_boolean.clean_upper_closet'] %}{% endif %}
+                {% if is_state('input_boolean.clean_upper_hallway','on') %}{% set o = o + ['input_boolean.clean_upper_hallway'] %}{% endif %}
+                {% if is_state('input_boolean.clean_upper_ella_room','on') %}{% set o = o + ['input_boolean.clean_upper_ella_room'] %}{% endif %}
+                {% if is_state('input_boolean.clean_upper_stairs','on') %}{% set o = o + ['input_boolean.clean_upper_stairs'] %}{% endif %}
+                {{ o }}

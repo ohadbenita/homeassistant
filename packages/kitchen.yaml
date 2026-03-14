@@ -1,9 +1,8 @@
 ---
-binary_sensor:
-  - platform: template
-    sensors:
-      dishwasher_active:
-        value_template: "{{ states('sensor.athom_02_energy_power') | float > 5 }}"
+template:
+  binary_sensor:
+    - name: dishwasher_active
+      state: "{{ states('sensor.dishwasher_socket_power') | float(0) > 10 }}"
 
 
 input_boolean:
@@ -42,7 +41,9 @@ automation:
         platform: state
         to: 'on'
     action:
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data_template:
           message: "Water leak has been detected @ {{ trigger.from_state.attributes.friendly_name }} !!!"
 
@@ -78,7 +79,9 @@ automation:
                 volume: 1.0
 
 
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data_template:
           message: "Smoke has been detected in the kitchen"
 
@@ -96,7 +99,9 @@ automation:
         from: 'on'
         to: 'off'
     action:
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data_template:
           message: "Smoke in the kitchen is not detected anymore"
       - action: notify.mobile_app_ohadbenita
@@ -109,43 +114,61 @@ automation:
     id: kitchen_pantry_lights_on_motion_detected
     initial_state: true
     trigger:
-      - entity_id: binary_sensor.pantry_occupancy
+      - entity_id:
+          # - binary_sensor.occupancy_sensor_77b5_occupancy
+          - binary_sensor.kitchen_door_contact
+          - binary_sensor.pantry_to_kitchen_door_contact
         platform: state
         from: 'off'
-        to: 'on'
-      - platform: state
-        entity_id: binary_sensor.kitchen_door_contact
         to: 'on'
 
     condition:
       - condition: state
         entity_id: input_boolean.away_mode
         state: 'off'
+      - condition: numeric_state
+        entity_id: sensor.people_at_home
+        above: 0
 
     action:
       - action: homeassistant.turn_on
-        entity_id:
-          - switch.shellyplus2pm_d48afc581860_switch_0  # indoor light
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_0  # indoor light
 
 
   - alias: Pantry lights - turn off when no motion detected
     id: kitchen_pantry_lights_off_no_motion
     initial_state: true
     trigger:
-      - entity_id: binary_sensor.pantry_occupancy
-        platform: state
+      # - platform: state
+      #   entity_id: binary_sensor.occupancy_sensor_77b5_occupancy
+      #   to: 'off'
+      #   for:
+      #     minutes: 5
+
+      - platform: state
+        entity_id:
+          - binary_sensor.pantry_to_kitchen_door_contact
+          - binary_sensor.kitchen_door_contact
         to: 'off'
         for:
-          minutes: 2
+          seconds: 10
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.pantry_to_kitchen_door_contact
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.kitchen_door_contact
+        state: 'off'
+
     action:
       - action: homeassistant.turn_off
-        entity_id:
-          - switch.shellyplus2pm_d48afc581860_switch_0  # indoor light
+        entity_id: switch.shellyplus2pm_d48afc581860_switch_0  # indoor light
 
 
   - alias: 'Turn on kitchen lights upon first movement in the morning'
     id: kitchen_turn_on_light_morning_first_movement
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.kids_hallway_01_occupancy
@@ -213,11 +236,8 @@ automation:
       - action: script.alexa_notification
         data:
           alexa_device: media_player.kitchen_echo
-          notification_type: announce
-          current_volume: >-
-            {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
-          message: >-
-            I just sent Yulanda to its dock
+          volume: 0.4
+          message: I just sent Yulanda to its dock
 
 
   - alias: Tami4 button - Send Yulanda to clean the kitchen
@@ -247,11 +267,8 @@ automation:
       - action: script.alexa_notification
         data:
           alexa_device: media_player.kitchen_echo
-          notification_type: announce
-          current_volume: >-
-            {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
-          message: >-
-            I just sent Yulanda to clean the kitchen
+          volume: 0.4
+          message: I just sent Yulanda to clean the kitchen
 
 
   - alias: Tami4 button - Send Yulanda to clean Roi room
@@ -281,11 +298,8 @@ automation:
       - action: script.alexa_notification
         data:
           alexa_device: media_player.kitchen_echo
-          notification_type: announce
-          current_volume: >-
-            {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
-          message: >-
-            I just sent Yulanda to clean Roi's room
+          volume: 0.4
+          message: I just sent Yulanda to clean Roee's room
 
 
   - alias: Tami4 button - Send Yulanda to clean Adi room
@@ -315,11 +329,8 @@ automation:
       - action: script.alexa_notification
         data:
           alexa_device: media_player.kitchen_echo
-          notification_type: announce
-          current_volume: >-
-            {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
-          message: >-
-            I just sent Yulanda to clean Adi's room
+          current_volume: 0.4
+          message: I just sent Yulanda to clean Adi's room
 
   - alias: Tami4 button - Send Yulanda to clean the public space
     id: kitchen_yulanda_clean_public_space
@@ -355,16 +366,14 @@ automation:
       - action: script.alexa_notification
         data:
           alexa_device: media_player.kitchen_echo
-          notification_type: announce
-          current_volume: >-
-            {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
-          message: >-
-            I just sent Yulanda to clean the living room, dining room, kitchen & hallway
+          volume: 0.4
+          message: I just sent Yulanda to clean the living room, dining room, kitchen & hallway
 
 
   - alias: Tami4 button - Toggle vacuum intensity
     id: kitchen_yulanda_toggle_vacuum_intensity
     initial_state: true
+
     trigger:
       - platform: state
         entity_id: sensor.kitchen_tami4_action
@@ -377,82 +386,44 @@ automation:
 
     action:
       - choose:
+
+          # --- CASE 1: Climate is ON → turn OFF ---
+          - conditions:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: climate.living_room_ac_smartair
+                    state: 'off'
+            sequence:
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: climate.living_room_ac_smartair
+                data:
+                  hvac_mode: 'off'
+
+          # --- CASE 2: Climate is OFF → apply your logic ---
           - conditions:
               - condition: state
-                entity_id: vacuum.yulanda
-                attribute: fan_speed
-                state: quiet
+                entity_id: climate.living_room_ac_smartair
+                state: 'off'
             sequence:
-              - repeat:
-                  while:
-                    - condition: template
-                      value_template: "{{ state_attr('vacuum.yulanda', 'fan_speed') != 'balanced' }}"
-                  sequence:
-                    - action: vacuum.set_fan_speed
-                      target:
-                        entity_id: vacuum.yulanda
-                      data:
-                        fan_speed: balanced
-                    - delay: 00:00:30  # Small delay before checking again
-
-          - conditions:
-              - condition: state
-                entity_id: vacuum.yulanda
-                attribute: fan_speed
-                state: balanced
-            sequence:
-              - repeat:
-                  while:
-                    - condition: template
-                      value_template: "{{ state_attr('vacuum.yulanda', 'fan_speed') != 'max' }}"
-                  sequence:
-                    - action: vacuum.set_fan_speed
-                      target:
-                        entity_id: vacuum.yulanda
-                      data:
-                        fan_speed: max
-                    - delay: 00:00:30
-
-          - conditions:
-              - condition: state
-                entity_id: vacuum.yulanda
-                attribute: fan_speed
-                state: max
-            sequence:
-              - repeat:
-                  while:
-                    - condition: template
-                      value_template: "{{ state_attr('vacuum.yulanda', 'fan_speed') != 'quiet' }}"
-                  sequence:
-                    - action: vacuum.set_fan_speed
-                      target:
-                        entity_id: vacuum.yulanda
-                      data:
-                        fan_speed: quiet
-
-        default:
-          - repeat:
-              while:
-                - condition: template
-                  value_template: "{{ state_attr('vacuum.yulanda', 'fan_speed') != 'balanced' }}"
-              sequence:
-                - action: vacuum.set_fan_speed
-                  target:
-                    entity_id: vacuum.yulanda
-                  data:
-                    fan_speed: balanced
-                - delay: 00:00:02  # Small delay before checking again
-
-      - delay: 00:00:05
-
-      - action: script.alexa_notification
-        data:
-          alexa_device: media_player.kitchen_echo
-          notification_type: tts
-          current_volume: >-
-            {{ state_attr('media_player.kitchen_echo', 'volume_level') }}
-          message: >-
-            Yulanda's fan speed is set to {{ state_attr('vacuum.yulanda', 'fan_speed') }}
+              - choose:
+                  - conditions:
+                      - condition: numeric_state
+                        entity_id: input_number.daily_expected_max_temperature
+                        above: 28
+                    sequence:
+                      - action: climate.set_hvac_mode
+                        target:
+                          entity_id: climate.living_room_ac_smartair
+                        data:
+                          hvac_mode: 'cool'
+                default:
+                  - action: climate.set_hvac_mode
+                    target:
+                      entity_id: climate.living_room_ac_smartair
+                    data:
+                      hvac_mode: 'heat'
 
 
   - alias: Pantry freezer open detection
@@ -465,7 +436,9 @@ automation:
         for:
           minutes: 5
     action:
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data_template:
           message: "The pantry freezer door is open, close it as soon as possible"
 
@@ -494,18 +467,22 @@ automation:
         state: 'on'
 
     action:
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           message: >-
             The pantry freezer door has been closed after being open for {{
-            (as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60
+            ((as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60)
             | int }} minutes
 
-      - action: notify.ohad_telegram
+      - action: notify.send_message
+        target:
+          entity_id: notify.telegram_bot_659000495_155103022
         data:
           message: >
             The pantry freezer door has been closed after being open for {{
-            (as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60
+            ((as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60)
             | int }} minutes
           title: Appliance Alert
 
@@ -543,58 +520,6 @@ automation:
                   entity_id: number.roborock_s8_maxv_ultra_volume
                   value: 5
         default: []
-
-
-  - alias: 'Kitchen counter - Handle button actions'
-    id: kitchen_counter_button_actions
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.kitchen_counter_01_action
-
-    condition:
-      - condition: state
-        entity_id: input_boolean.away_mode
-        state: 'off'
-
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: sensor.kitchen_counter_01_action
-                state: 'button_1_single'
-            sequence:
-              - action: homeassistant.turn_on
-                entity_id:
-                  - switch.shellyplus2pm_fcb4670e68e8_switch_0
-                  - switch.shellyplus2pm_fcb4670e68e8_switch_1
-
-          - conditions:
-              - condition: state
-                entity_id: sensor.kitchen_counter_01_action
-                state: 'button_2_single'
-            sequence:
-              - action: homeassistant.turn_off
-                entity_id:
-                  - switch.shellyplus2pm_fcb4670e68e8_switch_0
-                  - switch.shellyplus2pm_fcb4670e68e8_switch_1
-
-          - conditions:
-              - condition: state
-                entity_id: sensor.kitchen_counter_01_action
-                state: 'button_1_double'
-            sequence:
-              - action: homeassistant.turn_on
-                entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0
-
-          - conditions:
-              - condition: state
-                entity_id: sensor.kitchen_counter_01_action
-                state: 'button_2_double'
-            sequence:
-              - action: homeassistant.turn_off
-                entity_id: switch.shelly1pmminig3_3030f9eca0dc_switch_0
 
 
   - alias: 'Pantry hallway switch - Handle button actions'
@@ -646,7 +571,7 @@ automation:
       - condition: template
         value_template: >
           {{ as_timestamp(now())
-            - as_timestamp(state_attr('automation.kitchen_set_dishwasher_announcement_time','last_triggered'))
+            - as_timestamp(state_attr('automation.set_dishwasher_announcement_time','last_triggered'))
             | int > 7200 }}
       - condition: template
         value_template: >
@@ -692,6 +617,20 @@ automation:
         entity_id: input_boolean.dishwasher_message_scheduled
         state: 'on'
     action:
+      - repeat:
+          count: 10
+          sequence:
+            - action: switch.turn_on
+              target:
+                entity_id: switch.weto_03
+            - delay:
+                milliseconds: 2
+            - action: switch.turn_off
+              target:
+                entity_id: switch.weto_03
+            - delay:
+                seconds: 2
+
       # 2.a Set up unique action IDs to avoid conflicts
       - variables:
           # action_start: "{{ 'START_' ~ context.id }}"
@@ -749,10 +688,9 @@ automation:
               - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.dishwasher_vacant
-      # 2.e Reset the scheduled flag
-      - action: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.dishwasher_message_scheduled
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.dishwasher_message_scheduled
 
   # 3. When the 1 h timer finishes, remind Roi and notify Ohad
   - alias: Announce Dishwasher Timer Ended
@@ -802,6 +740,175 @@ automation:
                 data:
                   title: Chore notifications
                   message: "Roi didn't clear the dishwasher after one hour"
+
+
+  - alias: "Kitchen - Turn off kitchen lights at 1AM if no presence"
+    id: "kitchen_turn_off_kitchen_lights_1am_no_presence"
+    mode: single
+
+    trigger:
+      - platform: time
+        at: "01:00:00"
+
+    condition:
+      - condition: template
+        value_template: >
+          {{ states('switch.shellyplus2pm_fcb4670e68e8_switch_0') == 'on'
+            or states('switch.shellyplus2pm_fcb4670e68e8_switch_1') == 'on' }}
+
+      - condition: template
+        value_template: >
+          {% set sensors = [
+            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1',
+            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_2',
+            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_3',
+            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_4',
+            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_5',
+            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_6',
+            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_7',
+            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_8',
+            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_9',
+            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_10'
+          ] %}
+          {{ sensors
+            | map('states')
+            | select('eq', 'on')
+            | list
+            | length == 0 }}
+
+    action:
+      - action: switch.turn_off
+        target:
+          entity_id:
+            - switch.shellyplus2pm_fcb4670e68e8_switch_0
+            - switch.shellyplus2pm_fcb4670e68e8_switch_1
+
+
+  - alias: "Kitchen - Shutter button actions"
+    id: kitchen_shutter_button_actions
+    initial_state: true
+    mode: queued
+    max: 3
+    trigger:
+      - platform: state
+        entity_id: sensor.kitchen_shutter_action
+
+    action:
+      - choose:
+          # Button 1 single: open fully
+          - conditions:
+              - condition: state
+                entity_id: sensor.kitchen_shutter_action
+                state: "button_1_single"
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: cover.kitchen_window
+                data:
+                  position: 100
+
+          # Button 2 single: close fully
+          - conditions:
+              - condition: state
+                entity_id: sensor.kitchen_shutter_action
+                state: "button_2_single"
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: cover.kitchen_window
+                data:
+                  position: 0
+
+          # Button 1 double: +20% (cap at 100)
+          - conditions:
+              - condition: state
+                entity_id: sensor.kitchen_shutter_action
+                state: "button_1_double"
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: cover.kitchen_window
+                data:
+                  position: >
+                    {% set cur = state_attr('cover.kitchen_window', 'current_position') | int(0) %}
+                    {% set nxt = cur + 20 %}
+                    {{ [nxt, 100] | min }}
+
+          # Button 2 double: -20% (floor at 0)
+          - conditions:
+              - condition: state
+                entity_id: sensor.kitchen_shutter_action
+                state: "button_2_double"
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: cover.kitchen_window
+                data:
+                  position: >
+                    {% set cur = state_attr('cover.kitchen_window', 'current_position') | int(0) %}
+                    {% set nxt = cur - 20 %}
+                    {{ [nxt, 0] | max }}
+
+  - alias: Kitchen night light
+    id: kitchen_night_light_fp2_main_off
+    mode: queued
+    max: 5
+    initial_state: false
+
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
+        to: "on"
+      - platform: state
+        entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
+        to: "off"
+        for:
+          seconds: 10
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
+                state: "on"
+              - condition: state
+                entity_id: switch.shellyplus2pm_fcb4670e68e8_switch_0
+                state: "off"
+              - condition: state
+                entity_id: switch.shellyplus2pm_fcb4670e68e8_switch_1
+                state: "off"
+              - condition: state
+                entity_id: sun.sun
+                state: below_horizon
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.weto_03
+
+          # Presence no longer detected -> turn off night light
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
+                state: "off"
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.weto_03
+
+
+  - alias: Kitchen Stop Kitchen Echo When Turn Everything Off Starts
+    id: kitchen_stop_echo_when_turn_everything_off_starts
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: input_boolean.turn_everything_off_started
+        to: "on"
+
+    action:
+      - action: media_player.media_stop
+        target:
+          entity_id: media_player.kitchen_echo
 
 
   # - alias: Set Dishwasher Announcement Time
