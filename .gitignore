@@ -20,3 +20,5 @@ tts
 z2m
 automations.yaml
 /.idea
+.ha_run.lock
+.cache
