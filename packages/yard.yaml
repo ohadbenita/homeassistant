@@ -143,10 +143,11 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.clinic_door_flood_light # clinic door
+          - switch.clinic_door_flood_light  # clinic door
           - switch.shellyplus2pm_d48afc581860_switch_1  # kitchen outdoor light
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # kids bathroom outdoor light
           - switch.shelly1pmminig3_34b7dac88574_switch_0  # Parking and outdoor fan
+
 
   - alias: "Turn on kids bathroom path and clinic lights"
     id: yard_turn_on_kids_bathroom_path_clinic_lights

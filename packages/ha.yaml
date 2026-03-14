@@ -610,7 +610,6 @@ automation:
           notification_id: "{{ trigger.notification.notification_id }}"
 
 
-
   - id: ha_notify_iphone_storage_low
     alias: "Notify iPhone Storage Low"
     mode: single

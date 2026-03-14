@@ -140,7 +140,6 @@ automation:
           entity_id: switch.master_bedroom_spots
 
 
-
   - alias: 'Master bedroom bedside switch 01 - open shutters'
     id: master_bedroom_bedside_switch_01_open_shutters
     initial_state: true
@@ -238,7 +237,6 @@ automation:
               hvac_mode: 'heat'
 
 
-
   - alias: 'Master bedroom bedside switch 01 - turn off AC'
     id: master_bedroom_bedside_switch_01_turn_off_ac
     initial_state: true
@@ -252,7 +250,6 @@ automation:
       - action: climate.turn_off
         target:
           entity_id: climate.master_bedroom_ac
-
 
 
   - alias: 'Master bedroom bedside switch 02 - toggle AC'
@@ -398,7 +395,6 @@ automation:
           entity_id:
             - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter  # right
             - cover.shellyplus2pm_e465b8f38f54  # left
-
 
 
   - alias: Shutdown AC 1 hour after target temperature has been reached

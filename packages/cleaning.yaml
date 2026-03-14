@@ -1,5 +1,4 @@
-# packages/roborock_segment_cleaning.yaml
-
+---
 input_boolean:
   # ---------------------------------------------------------------------------
   # Downstairs / vacuum.yulanda (Main floor)
