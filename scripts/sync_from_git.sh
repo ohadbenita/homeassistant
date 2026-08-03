@@ -80,6 +80,8 @@ reload_home_assistant() {
 }
 
 main() {
+  local last_command=""
+
   if [[ -e "$LOCK_FILE" ]]; then
     log "Sync already running or stale lock exists: $LOCK_FILE"
     write_status "failed" "Sync already running or stale lock exists." "$(git rev-parse --short HEAD)"
@@ -87,7 +89,7 @@ main() {
   fi
 
   trap 'rm -f "$LOCK_FILE"; [[ -n "${WORKTREE_DIR:-}" ]] && rm -rf "$WORKTREE_DIR"' EXIT
-  trap 'write_status "failed" "Sync failed unexpectedly." "$(git rev-parse --short HEAD 2>/dev/null || true)"' ERR
+  trap 'last_command=$BASH_COMMAND; write_status "failed" "Sync failed while running: $last_command" "$(git rev-parse --short HEAD 2>/dev/null || true)"' ERR
   printf '%s\n' "$$" > "$LOCK_FILE"
   write_status "running" "Fetching $REMOTE/$BRANCH." "$(git rev-parse --short HEAD)"
 
