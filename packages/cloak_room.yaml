@@ -33,12 +33,18 @@ automation:
       - platform: state
         entity_id: binary_sensor.occupancy_sensor_a2f5_occupancy
         to: 'on'
+      - platform: state
+        entity_id: binary_sensor.cloak_room_occupancy
+        to: 'on'
       - platform: homeassistant
         event: start
 
     condition:
       - condition: state
         entity_id: binary_sensor.occupancy_sensor_a2f5_occupancy
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.cloak_room_occupancy
         state: 'on'
       - condition: state
         entity_id: input_boolean.away_mode
@@ -67,6 +73,9 @@ automation:
       - condition: state
         entity_id: binary_sensor.occupancy_sensor_a2f5_occupancy
         state: 'off'
+      - condition: state
+        entity_id: binary_sensor.cloak_room_occupancy
+        state: 'off'
     action:
       - action: homeassistant.turn_off
         entity_id: switch.shellyplus2pm_fcb467a684e8_switch_0
@@ -88,9 +97,8 @@ automation:
             above: 200
         continue_on_timeout: false
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: "Electricity power failure detected. The gas water heater has been reset, check that it's on"
 
 
@@ -176,9 +184,8 @@ automation:
       - delay: '00:00:02'
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Alert: Water heater malfunction"
           message: "Please check the heater display"
           data:
@@ -188,6 +195,6 @@ automation:
                   [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.gas_heater_cam_gas_heater_esp32_cam?token={{ state_attr('camera.gas_heater_cam_gas_heater_esp32_cam', 'access_token') }})
                 parse_mode: markdown
 
-      - action: switch.toggle
-        target:
-          entity_id: switch.gas_water_heater
+      # - action: switch.toggle
+      #   target:
+      #     entity_id: switch.gas_water_heater

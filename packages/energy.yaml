@@ -1,4 +1,16 @@
 ---
+rest_command:
+  solar_panels_cleanliness_init:
+    url: !secret solar_panels_cleanliness_init_url
+    method: GET
+    timeout: 120
+
+  solar_panels_cleanliness_update:
+    url: !secret solar_panels_cleanliness_update_url
+    method: GET
+    timeout: 120
+
+
 template:
   - binary_sensor:
       - name: "Should display energy badge"
@@ -17,6 +29,20 @@ template:
           {% else %}
             off
           {% endif %}
+
+      - name: Solar Panels Need Cleaning
+        unique_id: solar_panels_need_cleaning
+        device_class: problem
+        state: >
+          {% set score = states('sensor.solar_panel_cleanliness') | float(100) %}
+          {% set threshold = states('input_number.solar_panels_cleaning_threshold') | float(65) %}
+          {{ score < threshold }}
+        attributes:
+          cleanliness_score: "{{ states('sensor.solar_panel_cleanliness') }}"
+          threshold: "{{ states('input_number.solar_panels_cleaning_threshold') }}"
+          assessment: "{{ state_attr('sensor.solar_panel_cleanliness', 'assessment') }}"
+          likely_causes: "{{ state_attr('sensor.solar_panel_cleanliness', 'likely_causes') }}"
+
 
   - sensor:
       - name: "Solar Monthly Income"
@@ -222,6 +248,38 @@ input_number:
     step: 0.01
     unit_of_measurement: "ILS/kWh"
 
+  solar_panels_cleaning_threshold:
+    name: Solar panels cleaning threshold
+    min: 0
+    max: 100
+    step: 1
+    initial: 65
+
+
+script:
+  solar_panels_cleanliness_refresh_and_alert:
+    alias: Solar panels cleanliness refresh and alert
+    sequence:
+      - action: rest_command.solar_panels_cleanliness_update
+
+      - delay:
+          seconds: 15
+
+      - if:
+          - condition: state
+            entity_id: binary_sensor.solar_panels_need_cleaning
+            state: "on"
+        then:
+          - action: notify.send_message
+            data:
+              entity_id: notify.telegram_bot_659000495_155103022
+              message: >-
+                An issue has been identified in the Solar panels system.
+                Cleanliness score is {{ states('sensor.solar_panel_cleanliness') }}/100.
+                Threshold is {{ states('input_number.solar_panels_cleaning_threshold') }}.
+                Assessment: {{ state_attr('sensor.solar_panel_cleanliness', 'assessment') or 'n/a' }}.
+
+
 automation:
   - alias: "Alert when solar system is inactive"
     id: energy_alert_when_solar_system_is_inactive
@@ -235,12 +293,11 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: >-
             An issue has been identified in the Solar panels system,
-            current system state is {{  state('sensor.solaredge_site_details') }}
+            current system state is {{  states('sensor.solaredge_site_details') }}
 
 ###############################################################################
 # Automation: at sunset on the last day, send UNDER / WITHIN / ABOVE notification
@@ -275,9 +332,8 @@ automation:
                 value_template: "{{ expected_kwh > 0 and actual_kwh < lower_bound }}"
             sequence:
               - action: notify.send_message
-                target:
-                  entity_id: notify.telegram_bot_659000495_155103022
                 data:
+                  entity_id: notify.telegram_bot_659000495_155103022
                   title: "SolarEdge • {{ nice_month }} UNDER target"
                   message: >
                     Expected: {{ expected_kwh }} kWh | Actual: {{ actual_kwh }} kWh
@@ -290,9 +346,8 @@ automation:
                 value_template: "{{ expected_kwh > 0 and actual_kwh > upper_bound }}"
             sequence:
               - action: notify.send_message
-                target:
-                  entity_id: notify.telegram_bot_659000495_155103022
                 data:
+                  entity_id: notify.telegram_bot_659000495_155103022
                   title: "SolarEdge • {{ nice_month }} ABOVE target 🎉"
                   message: >
                     Expected: {{ expected_kwh }} kWh | Actual: {{ actual_kwh }} kWh
@@ -302,12 +357,36 @@ automation:
         default:
           # --- WITHIN threshold (± threshold) ---
           - action: notify.send_message
-            target:
-              entity_id: notify.telegram_bot_659000495_155103022
             data:
+              entity_id: notify.telegram_bot_659000495_155103022
               title: "SolarEdge • {{ nice_month }} within target"
               message: >
                 Expected: {{ expected_kwh }} kWh | Actual: {{ actual_kwh }} kWh
                 | Difference: {{ (actual_kwh - expected_kwh) | round(2) }} kWh ({{ diff_pct | round(1) }}%)
                 | Threshold: ±{{ threshold_pct }}%
                 → Month closed within tolerance.
+
+
+  - alias: Solar panels cleanliness init on start
+    id: solar_panels_cleanliness_init_on_start
+    triggers:
+      - trigger: homeassistant
+        event: start
+    actions:
+      - action: rest_command.solar_panels_cleanliness_init
+      - delay:
+          seconds: 30
+      - action: script.solar_panels_cleanliness_refresh_and_alert
+
+
+  - alias: Solar panels cleanliness weekly update
+    id: solar_panels_cleanliness_weekly_update
+    triggers:
+      - trigger: time
+        at: "09:00:00"
+    conditions:
+      - condition: time
+        weekday:
+          - sun
+    actions:
+      - action: script.solar_panels_cleanliness_refresh_and_alert

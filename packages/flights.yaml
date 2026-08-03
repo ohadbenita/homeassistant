@@ -1,0 +1,62 @@
+automation:
+  - id: krakow_flight_possible_delay_alert
+    alias: "Flights: Krakow flight possible delay alert"
+    description: "Alert Ohad and Rinat when W6 2098 to Krakow may be delayed."
+    triggers:
+      - trigger: state
+        entity_id: sensor.cloak_room_ben_gurion_airport_krakow_flight
+      - trigger: state
+        entity_id: sensor.cloak_room_ben_gurion_airport_krakow_flight
+        attribute: change_token
+    conditions:
+      - condition: template
+        value_template: >
+          {% set old = trigger.from_state %}
+          {% set new = trigger.to_state %}
+          {% set old_scheduled = as_datetime(old.attributes.scheduled_time) if old else none %}
+          {% set old_updated = as_datetime(old.attributes.updated_time) if old else none %}
+          {% set new_scheduled = as_datetime(new.attributes.scheduled_time) if new else none %}
+          {% set new_updated = as_datetime(new.attributes.updated_time) if new else none %}
+          {% set was_possible_delay =
+            old is not none and (
+              old.attributes.is_delayed == true
+              or old.state == 'DELAYED'
+              or (old_scheduled is not none and old_updated is not none and old_updated > old_scheduled)
+            )
+          %}
+          {% set is_possible_delay =
+            new is not none and (
+              new.attributes.is_delayed == true
+              or new.state == 'DELAYED'
+              or (new_scheduled is not none and new_updated is not none and new_updated > new_scheduled)
+            )
+          %}
+          {{ is_possible_delay and not was_possible_delay }}
+    actions:
+      - variables:
+          flight_entity: sensor.cloak_room_ben_gurion_airport_krakow_flight
+          flight_code: "{{ state_attr(flight_entity, 'flight_code') }}"
+          city: "{{ state_attr(flight_entity, 'city') }}"
+          status: "{{ states(flight_entity) }}"
+          scheduled_time: "{{ as_timestamp(state_attr(flight_entity, 'scheduled_time')) | timestamp_custom('%H:%M', true) }}"
+          updated_time: "{{ as_timestamp(state_attr(flight_entity, 'updated_time')) | timestamp_custom('%H:%M', true) }}"
+          terminal: "{{ state_attr(flight_entity, 'terminal') or 'TBD' }}"
+          gate: "{{ state_attr(flight_entity, 'gate') or 'TBD' }}"
+          message: >
+            Possible delay for {{ flight_code }} to {{ city }}.
+            Status: {{ status }}.
+            Scheduled: {{ scheduled_time }}. Updated: {{ updated_time }}.
+            Terminal: {{ terminal }}. Gate: {{ gate }}.
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Flight delay alert"
+          message: "{{ message }}"
+      - action: notify.mobile_app_rinats_iphone
+        data:
+          title: "Flight delay alert"
+          message: "{{ message }}"
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          message: "{{ message }}"
+    mode: single

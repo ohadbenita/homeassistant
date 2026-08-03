@@ -99,9 +99,8 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Ketem notifications"
           message: >-
             Status: {% if is_state('binary_sensor.ketem', 'off') %}Away{% else %}Home{% endif %}
@@ -150,9 +149,9 @@ automation:
                 volume: 1.0
 
       # Adi (Hebrew)
-      - action: notify.mobile_app_adidibenita
+      - action: notify.mobile_app_adis_iphone
         data:
-          title: "התראות קטם"
+          title: "התראות כתם"
           message: >-
             מצב: {% if is_state('binary_sensor.ketem', 'off') %}מחוץ לבית{% else %}בבית{% endif %},
             ללא שינוי מאז {{ relative_time(states.binary_sensor.ketem.last_changed) }}

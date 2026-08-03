@@ -222,8 +222,8 @@ template:
         }}
 
 automation:
-  - alias: 'Balcony - Handle button actions'
-    id: balcony_pergola_button_actions
+  - alias: 'Balcony - Handle light button actions'
+    id: balcony_pergola_light_button_actions
     initial_state: true
     mode: single
     trigger:
@@ -240,16 +240,7 @@ automation:
           - conditions:
               - condition: state
                 entity_id: sensor.pergola_01_action
-                state: 'button_1_single'
-            sequence:
-              - action: fan.toggle
-                target:
-                  entity_id: fan.balcony
-
-          - conditions:
-              - condition: state
-                entity_id: sensor.pergola_01_action
-                state: 'button_1_double'
+                state: 'button_2_single'
             sequence:
               - action: light.toggle
                 target:
@@ -258,20 +249,37 @@ automation:
           - conditions:
               - condition: state
                 entity_id: sensor.pergola_01_action
-                state: 'button_2_single'
+                state: 'button_1_single'
             sequence:
               - action: light.toggle
                 target:
                   entity_id: light.balcony_fan_light
 
+
+  - alias: 'Balcony - Handle fan button actions'
+    id: balcony_pergola_fan_button_actions
+    initial_state: true
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: sensor.pergola_fan_switch_action
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - choose:
           - conditions:
               - condition: state
-                entity_id: sensor.pergola_01_action
-                state: 'button_2_double'
+                entity_id: sensor.pergola_fan_switch_action
+                state: 'button_1_single'
             sequence:
-              - action: switch.toggle
+              - action: fan.toggle
                 target:
-                  entity_id: switch.shellyswitch25_6869e3_channel_2  # front lawn flood light
+                  entity_id: fan.balcony
 
 
   - alias: "Turn on parking flood lights when motion is detected"
@@ -308,11 +316,16 @@ automation:
       - platform: state
         entity_id: binary_sensor.parking_stairs_01_occupancy
         to: 'off'
+        for:
+          minutes: 5
 
     condition:
-      condition: state
-      entity_id: light.parking_flood_light
-      state: 'on'
+      - condition: state
+        entity_id: light.parking_flood_light
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
 
     action:
       - action: homeassistant.turn_off

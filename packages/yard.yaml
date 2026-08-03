@@ -7,10 +7,9 @@ script:
           entity_id:
             - switch.shellyplus2pm_fcb467a557a0_switch_0
             - switch.shellyplus2pm_d48afc581860_switch_1
-            - switch.shellyswitch25_6869e3_channel_1
-            - switch.shellyswitch25_6869e3_channel_2
+            - switch.roof_lights_output_0
+            - switch.roof_lights_output_1
             - switch.shelly1pmminig3_34b7dac88574_switch_0
-            - switch.clinic_door_flood_light
             - switch.shelly1pmminig3_34b7dac9ea68_switch_0
             - switch.clinic_door_flood_light
 
@@ -22,13 +21,12 @@ template:
           {{
             is_state('switch.shellyplus2pm_fcb467a557a0_switch_0', 'on') and
             is_state('switch.shellyplus2pm_d48afc581860_switch_1', 'on') and
-            is_state('switch.shellyswitch25_6869e3_channel_1', 'on') and
-            is_state('switch.shellyswitch25_6869e3_channel_2', 'on') and
+            is_state('switch.roof_lights_output_0', 'on') and
+            is_state('switch.roof_lights_output_1', 'on') and
             is_state('switch.shelly1pmminig3_34b7dac88574_switch_0', 'on') and
             is_state('switch.clinic_door_flood_light', 'on') and
             is_state('switch.shelly1pmminig3_34b7dac9ea68_switch_0', 'on') and
-            is_state('switch.backyard_flood_light_near_clinic', 'on') and
-            is_state('switch.clinic_door_flood_light', 'on')
+            is_state('switch.backyard_flood_light_near_clinic', 'on')
           }}
         turn_on:
           action: script.turn_on_all_yard_lights
@@ -38,10 +36,9 @@ template:
             entity_id:
               - switch.shellyplus2pm_fcb467a557a0_switch_0
               - switch.shellyplus2pm_d48afc581860_switch_1
-              - switch.shellyswitch25_6869e3_channel_1
-              - switch.shellyswitch25_6869e3_channel_2
+              - switch.roof_lights_output_0
+              - switch.roof_lights_output_1
               - switch.shelly1pmminig3_34b7dac88574_switch_0
-              - switch.clinic_door_flood_light
               - switch.shelly1pmminig3_34b7dac9ea68_switch_0
               - switch.backyard_flood_light_near_clinic
               - switch.clinic_door_flood_light
@@ -125,15 +122,15 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shellyswitch25_6869e3_channel_1  # roof flood light #1
-          - switch.shellyswitch25_6869e3_channel_2  # roof flood light #2
+          - switch.roof_lights_output_1  # roof flood light #1
+          - switch.roof_lights_output_0  # roof flood light #2
 
   - alias: "Yard - Turn off path lights in the night"
     id: yard_turn_off_path_lights_in_the_night
     initial_state: true
     trigger:
       - platform: time
-        at: "22:00:00"
+        at: "01:00:00"
 
     condition:
       - condition: state
@@ -198,7 +195,7 @@ automation:
       - action: homeassistant.turn_on
         entity_id:
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
-          - switch.clinic_door_flood_light
+          # - switch.clinic_door_flood_light
 
   - alias: "Turn off kids bathroom path lights"
     id: yard_turn_off_kids_bathroom_path_light
@@ -238,7 +235,7 @@ automation:
       - action: homeassistant.turn_off
         entity_id:
           - switch.shellyplus2pm_fcb467a557a0_switch_0  # Bathroom door
-          - switch.clinic_door_flood_light  # Clinic door
+          # - switch.clinic_door_flood_light  # Clinic door
 
 
   - alias: "Turn on kitchen door light"
@@ -380,9 +377,8 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Alert: High water consumption forecast"
           message: >-
             The current forecasted monthly water consumption is {{ states('sensor.meter_1018_monthly_forecast') | int }} m³.
@@ -438,6 +434,7 @@ automation:
                     - switch.clinic_door_flood_light
                     - switch.shellyplus2pm_fcb467a557a0_switch_0
 
+
   - alias: "Turn off clinic door flood light when the door is locked"
     id: yard_turn_off_clinic_door_flight_light_when_door_locked
     initial_state: true
@@ -449,15 +446,59 @@ automation:
         for:
           minutes: 5
 
+      - platform: state
+        entity_id: binary_sensor.south_yard_person
+        from: 'on'
+        to: 'off'
+        for:
+          minutes: 5
+
     condition:
       - condition: state
         entity_id: switch.clinic_door_flood_light  # clinic door
-        state: "on"
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.south_yard_person
+        state: 'off'
 
     action:
       - action: homeassistant.turn_off
-        entity_id:
-          - switch.clinic_door_flood_light  # Clinic door
+        entity_id: switch.clinic_door_flood_light  # Clinic door
+
+
+  - alias: "Turn on clinic door flood light when person detected"
+    id: yard_turn_on_clinic_door_flood_light_when_person_detected
+    initial_state: true
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.south_yard_person
+        from: "off"
+        to: "on"
+
+    condition:
+      - condition: state
+        entity_id: switch.clinic_door_flood_light
+        state: "off"
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
+      - condition: not
+        conditions:
+          - condition: sun
+            after: sunrise
+            after_offset: "00:15:00"
+            before: sunset
+            before_offset: "-00:15:00"
+
+    action:
+      - action: homeassistant.turn_on
+        entity_id: switch.clinic_door_flood_light
+
 
   - alias: Turn off clinic floodlight during daylight hours
     id: yard_turn_off_clinic_door_light_during_daylight_hours
@@ -524,7 +565,7 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.shellyswitch25_6869e3_channel_2
+        entity_id: switch.roof_lights_output_1
 
     action:
       - action: switch.toggle
@@ -642,8 +683,7 @@ automation:
       # Reuse the last captured snapshot (don’t take a second one)
       - action: telegram_bot.send_photo
         data:
-          target:
-            - !secret telegram_homeassistant_notifications_chat_id
+          chat_id: !secret telegram_homeassistant_notifications_chat_id
           file: "/config/www/snapshots/lpg_auto_switcher_snapshot.jpg"
           caption: >-
             🚨 **LPG Auto-Switcher Alert**
@@ -686,8 +726,7 @@ automation:
     action:
       - action: telegram_bot.send_message
         data:
-          target:
-            - !secret telegram_homeassistant_notifications_chat_id
+          chat_id: !secret telegram_homeassistant_notifications_chat_id
           message: >-
             🔋 **LPG Camera Battery Low**
 
@@ -710,14 +749,21 @@ automation:
       - condition: template
         value_template: >-
           {% set last = state_attr('automation.lpg_timercamera_wake_flow_snapshot_analyze_hibernate', 'last_triggered') %}
-          {{ last is none or (as_timestamp(now()) - as_timestamp(last)) >= 72*3600 }}
+          {% set updated_at = state_attr('sensor.lpg_auto_switcher', 'updated_at') | int(0) %}
+          {{
+            last is none
+            or (as_timestamp(now()) - as_timestamp(last)) >= 72*3600
+            or updated_at == 0
+          }}
+        # value_template: >-
+        #   {% set last = state_attr('automation.lpg_timercamera_wake_flow_snapshot_analyze_hibernate', 'last_triggered') %}
+        #   {{ last is none or (as_timestamp(now()) - as_timestamp(last)) >= 72*3600 }}
 
     action:
       # Reuse the last captured snapshot (don’t take a second one)
       - action: telegram_bot.send_photo
         data:
-          target:
-            - !secret telegram_homeassistant_notifications_chat_id
+          chat_id: !secret telegram_homeassistant_notifications_chat_id
           file: "/config/www/snapshots/lpg_auto_switcher_snapshot.jpg"
           caption: >-
             🚨 **LPG Watchdog Alert**
@@ -769,9 +815,8 @@ automation:
       - delay: '00:00:02'
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Alert: Laundry is out"
           message: >-
             please consider bringing it into the house
@@ -783,8 +828,8 @@ automation:
                 parse_mode: markdown
 
 
-  - alias: "Turn backyard light on when a person is detected"
-    id: yard_turn_on_backyard_light_person_detected
+  - alias: "Turn clinic door flood light on when south yard person is detected"
+    id: yard_turn_on_clinic_door_flood_light_south_yard_person_detected
     initial_state: true
     mode: single
     trigger:
@@ -805,21 +850,49 @@ automation:
             - condition: sun
               after: sunset
               after_offset: "-00:15:00"
+        - condition: state
+          entity_id: binary_sensor.south_yard_person
+          state: "on"
+
+    action:
+      - action: homeassistant.turn_on
+        entity_id:
+          - switch.clinic_door_flood_light
+
+
+  - alias: "Turn backyard flood light near clinic on when backyard pano person is detected"
+    id: yard_turn_on_backyard_flood_light_near_clinic_backyard_pano_person_detected
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.backyard_pano_person
+        to: "on"
+      - platform: homeassistant
+        event: start
+
+    condition:
+      condition: and
+      conditions:
         - condition: or
           conditions:
-            - condition: state
-              entity_id: binary_sensor.south_yard_person
-              state: "on"
+            - condition: sun
+              before: sunrise
+              before_offset: "00:15:00"
+            - condition: sun
+              after: sunset
+              after_offset: "-00:15:00"
+        - condition: state
+          entity_id: binary_sensor.backyard_pano_person
+          state: "on"
 
     action:
       - action: homeassistant.turn_on
         entity_id:
           - switch.backyard_flood_light_near_clinic
-          - switch.clinic_door_flood_light
 
-
-  - alias: "Turn backyard light when no one is detected"
-    id: yard_turn_off_backyard_light_no_person_detected
+  - alias: "Turn clinic door flood light off when no one is detected in south yard"
+    id: yard_turn_off_clinic_door_flood_light_no_south_yard_person_detected
     initial_state: true
     mode: single
     trigger:
@@ -836,12 +909,42 @@ automation:
       - condition: state
         entity_id: binary_sensor.south_yard_person
         state: "off"
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
+
+    action:
+      - action: homeassistant.turn_off
+        entity_id:
+          - switch.clinic_door_flood_light
+
+
+  - alias: "Turn backyard flood light near clinic off when no one is detected by backyard pano"
+    id: yard_turn_off_backyard_flood_light_near_clinic_no_backyard_pano_person_detected
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.backyard_pano_person
+        to: "off"
+        for:
+          minutes: 5
+
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.backyard_pano_person
+        state: "off"
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
 
     action:
       - action: homeassistant.turn_off
         entity_id:
           - switch.backyard_flood_light_near_clinic
-          - switch.clinic_door_flood_light
 
 
   - alias: Yard - Turn off roof light 1 when no person is detected
@@ -855,7 +958,7 @@ automation:
 
     condition:
       - condition: state
-        entity_id: switch.shellyswitch25_6869e3_channel_1
+        entity_id: switch.roof_lights_output_0
         state: 'on'
       - condition: state
         entity_id: input_boolean.yard_light_automations_bypass
@@ -864,4 +967,64 @@ automation:
     action:
       - action: switch.turn_off
         target:
-          entity_id: switch.shellyswitch25_6869e3_channel_1
+          entity_id: switch.roof_lights_output_0
+
+
+  - alias: "Turn south yard tree floodlight on when backyard pano person is detected"
+    id: yard_turn_on_south_yard_tree_floodlight_backyard_pano_person_detected
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.backyard_pano_person
+        to: "on"
+      - platform: homeassistant
+        event: start
+
+    condition:
+      condition: and
+      conditions:
+        - condition: or
+          conditions:
+            - condition: sun
+              before: sunrise
+              before_offset: "00:15:00"
+            - condition: sun
+              after: sunset
+              after_offset: "-00:15:00"
+        - condition: state
+          entity_id: binary_sensor.backyard_pano_person
+          state: "on"
+
+    action:
+      - action: light.turn_on
+        entity_id:
+          - light.south_yard_tree_floodlight
+
+
+  - alias: "Turn south yard tree floodlight off when no one is detected in backyard pano"
+    id: yard_turn_off_south_yard_tree_floodlight_no_backyard_pano_person_detected
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.backyard_pano_person
+        to: "off"
+        for:
+          minutes: 5
+
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: state
+        entity_id: binary_sensor.backyard_pano_person
+        state: "off"
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
+
+    action:
+      - action: light.turn_off
+        entity_id:
+          - light.south_yard_tree_floodlight

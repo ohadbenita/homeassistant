@@ -189,7 +189,7 @@ automation:
           - conditions:
               - condition: numeric_state
                 entity_id: input_number.daily_expected_max_temperature
-                above: 28
+                above: 23
             sequence:
               - action: climate.set_hvac_mode
                 target:
@@ -342,52 +342,70 @@ automation:
           entity_id: climate.living_room_ac_smartair
 
 
-  - alias: "Turn off living room Shelly switches at 1AM if no presence"
-    id: "turn_off_living_room_shelly_1am_no_presence"
+  - alias: "Turn off lights at 1AM if no presence"
+    id: "turn_off_lights_1am_no_presence"
     mode: single
 
     trigger:
       - platform: time
         at: "01:00:00"
 
-    condition:
-      - condition: template
-        value_template: >
-          {{
-            states('switch.shelly1pmminig3_34b7da92245c_switch_0') == 'on'
-            or states('switch.living_room_couch_light') == 'on'
-           }}
-
-      - condition: template
-        value_template: >
-          {{ states('binary_sensor.living_room_presence') == 'off' }}
-
-    action:
-      - action: switch.turn_off
-        target:
-          entity_id:
-            - switch.shelly1pmminig3_34b7da92245c_switch_0
-            - switch.living_room_couch_light
-
-
-  - alias: "Turn off kids bathroom lights at 1AM if no occupancy"
-    id: "turn_off_kids_bathroom_lights_1am_no_occupancy"
-    mode: single
-
-    trigger:
       - platform: time
-        at: "01:00:00"
-
-    condition:
-      - condition: state
-        entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
-        state: "on"
-
-      - condition: state
-        entity_id: binary_sensor.kids_bathroom_occupancy
-        state: "off"
+        at: "02:00:00"
 
     action:
       - action: switch.turn_off
-        target:
-          entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
+        entity_id:
+          - switch.shelly1pmminig3_34b7da8a0338_switch_0  # Shelter main
+          - switch.shelly1pmminig3_34b7da8b78c4_switch_0  # Shelter entrance
+
+      - if:
+          - condition: template
+            value_template: >
+              {{
+                states('switch.shelly1pmminig3_34b7da92245c_switch_0') == 'on'
+                or states('switch.living_room_couch_light') == 'on'
+                or states('switch.shelly1pmminig3_34b7da9342c4_switch_0') == 'on'
+              }}
+          - condition: state
+            entity_id: binary_sensor.living_room_presence
+            state: "off"
+        then:
+          - action: switch.turn_off
+            target:
+              entity_id:
+                - switch.shelly1pmminig3_34b7da92245c_switch_0
+                - switch.living_room_couch_light
+                - switch.shelly1pmminig3_34b7da9342c4_switch_0
+
+      - if:
+          - condition: state
+            entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
+            state: "on"
+          - condition: state
+            entity_id: binary_sensor.kids_bathroom_occupancy
+            state: "off"
+        then:
+          - action: switch.turn_off
+            target:
+              entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
+
+      - if:
+          - condition: template
+            value_template: >
+              {{
+                states('switch.shellyplus2pm_fcb4670e68e8_switch_0') == 'on'
+                or states('switch.shellyplus2pm_fcb4670e68e8_switch_1') == 'on'
+              }}
+          - condition: state
+            entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
+            state: "off"
+          - condition: state
+            entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_11
+            state: "off"
+        then:
+          - action: switch.turn_off
+            target:
+              entity_id:
+                - switch.shellyplus2pm_fcb4670e68e8_switch_0
+                - switch.shellyplus2pm_fcb4670e68e8_switch_1

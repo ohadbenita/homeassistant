@@ -24,8 +24,8 @@ all_lights:
     - switch.shellyplus2pm_fcb467a580a8_switch_0
     - switch.shellyplus2pm_fcb467a580a8_switch_1
     - switch.shellyplus2pm_fcb467a684e8_switch_0
-    - switch.shellyswitch25_6869e3_channel_1
-    - switch.shellyswitch25_6869e3_channel_2
+    - switch.roof_lights_output_0
+    - switch.roof_lights_output_1
     - light.kitchen_path_floodlight
     - switch.master_bedroom_spots
     - switch.shelly2pmg3_8cbfea94c76c_switch_0
@@ -40,10 +40,10 @@ all_lights:
 all_ac:
   entities:
     - climate.living_room_ac_smartair
-    - climate.ella_ac
+    - climate.master_bedroom_ac_smartair
+    - climate.ella_room_ac_smartair
     - climate.roi_room_ac
     - climate.adi_room_ac
-    - climate.master_bedroom_ac
     - climate.study_room_ac
 public_space_small_shutters:
   entities:

@@ -32,7 +32,7 @@ automation:
                   message: "Ketem's GPS tracker is charged, please re-attach it"
                   title: Device notification
         default:
-          - action: notify.mobile_app_adidibenita
+          - action: notify.mobile_app_adis_iphone
             data:
               message: 'הג׳יפיאס של כתם סיים להיטען, אנא חברי לה אותו בחזרה'
               title: Device notification
@@ -61,7 +61,7 @@ automation:
                   message: "Ketem's GPS tracker needs to be charged"
                   title: Device notification
         default:
-          - action: notify.mobile_app_adidibenita
+          - action: notify.mobile_app_adis_iphone
             data:
               message: 'הסוללה בג׳יפיאס של כתם חלשה, אנא הטעיני אותו בהקדם'
               title: Device notification
@@ -93,7 +93,7 @@ automation:
                     🐾 Ketem Fountain: Filter nearly due.
                     Remaining filter days: {{ filter_days }}
         default:
-          - action: notify.mobile_app_adidibenita
+          - action: notify.mobile_app_adis_iphone
             data:
               title: Device notification
               message: |
@@ -127,7 +127,7 @@ automation:
                     🐾 Ketem Fountain: Low water alert.
                     Remaining water: {{ remaining_water }}%
         default:
-          - action: notify.mobile_app_adidibenita
+          - action: notify.mobile_app_adis_iphone
             data:
               title: Device notification
               message: |
@@ -163,23 +163,21 @@ automation:
                     🐾 Ketem feeder is running low.
                     Remaining food: {{ feeder_weight }} g
               - action: notify.send_message
-                target:
-                  entity_id: notify.telegram_bot_659000495_155103022
                 data:
+                  entity_id: notify.telegram_bot_659000495_155103022
                   message: |
                     🐾 Ketem feeder is running low.
                     Remaining food: {{ feeder_weight }} g
         default:
-          - action: notify.mobile_app_adidibenita
+          - action: notify.mobile_app_adis_iphone
             data:
               title: Device notification
               message: |
                 🐾 האוכל של כתם כמעט נגמר.
                 נותרו {{ feeder_weight }} גרם במתקן.
           - action: notify.send_message
-            target:
-              entity_id: notify.telegram_bot_659000495_155103022
             data:
+              entity_id: notify.telegram_bot_659000495_155103022
               message: |
                 🐾 Ketem feeder is running low.
                 Remaining food: {{ feeder_weight }} g
@@ -203,3 +201,39 @@ automation:
 
       - action: lock.unlock
         entity_id: lock.entrance_door_locked_in
+
+  - id: ketem_turn_on_ac_when_entering_while_away
+    alias: Ketem - turn on AC when entering while away
+    initial_state: true
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.ketem
+        to: 'on'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'on'
+      - condition: sun
+        after: sunrise
+        before: sunset
+      - condition: state
+        entity_id: climate.living_room_ac_smartair
+        state: 'off'
+      - condition: template
+        value_template: >
+          {{ this.attributes.last_triggered is none or
+             as_timestamp(now()) - as_timestamp(this.attributes.last_triggered, 0) > 3600 }}
+
+    action:
+      - action: climate.turn_on
+        target:
+          entity_id: climate.living_room_ac_smartair
+
+      - delay: '00:15:00'
+
+      - action: climate.turn_off
+        target:
+          entity_id: climate.living_room_ac_smartair

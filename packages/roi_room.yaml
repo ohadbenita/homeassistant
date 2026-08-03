@@ -14,6 +14,23 @@ template:
         device_class: temperature
         icon: mdi:thermometer
 
+      - name: "Roi room temperature rounded"
+        unit_of_measurement: "°C"
+        state: "{{ states('sensor.roi_room_temperature') | float(0) | round(0) }}"
+        availability: >
+          {{ states('sensor.roi_room_temperature') not in ['unknown', 'unavailable'] }}
+        device_class: temperature
+        icon: mdi:thermometer
+
+      - name: "Roi room humidity rounded"
+        unit_of_measurement: "%"
+        state: "{{ states('sensor.roi_room_humidity') | float(0) | round(0) }}"
+        availability: >
+          {{ states('sensor.roi_room_humidity') not in ['unknown', 'unavailable'] }}
+        device_class: humidity
+        icon: mdi:water-percent
+
+
   - binary_sensor:
       - name: "Roi Room Occupancy"
         unique_id: roi_room_occupancy
@@ -22,6 +39,7 @@ template:
           {{
             is_state('binary_sensor.roi_computer_area_presence_sensor_occupancy', 'on')
             or is_state('binary_sensor.occupancy_sensor_71bf_occupancy', 'on')
+            or is_state('binary_sensor.occupancy_sensor_77b5_occupancy', 'on')
           }}
 
 
@@ -116,7 +134,7 @@ automation:
 
   - alias: "Turn off Roi room appliances when no motion is detected"
     id: roi_room_turn_appliances_off_no_motion_detected
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.roi_room_occupancy
@@ -217,7 +235,7 @@ automation:
                       - choose:
                           - conditions:
                               - condition: numeric_state
-                                entity_id: sensor.openweathermap_feels_like_temperature
+                                entity_id: input_number.daily_expected_max_temperature
                                 above: 23
                             sequence:
                               - service: climate.set_hvac_mode
@@ -281,3 +299,25 @@ automation:
     action:
       - action: climate.turn_off
         entity_id: climate.roi_room_ac
+
+
+  - alias: "Clean Roi's room when NFC tag is scanned"
+    mode: single
+
+    trigger:
+      - platform: tag
+        tag_id: bc623766-3edc-4aae-a6ad-136aa4081285
+
+    action:
+      - action: script.alexa_notification
+        data:
+          alexa_device: media_player.roy_s_echo
+          volume: 0.4
+          message: Starting to clean Roy's room
+
+      - action: vacuum.send_command
+        data:
+          entity_id: vacuum.yulanda
+          command: app_segment_clean
+          params:
+            - 16

@@ -96,6 +96,7 @@ template:
         {{
           is_state('lock.entrance_door', 'locked') and
           is_state('lock.kids_bathroom_door', 'locked') and
+          is_state('lock.clinic_door', 'locked') and
           is_state('lock.kitchen_door', 'locked')
         }}
       lock:
@@ -105,6 +106,7 @@ template:
             - lock.entrance_door
             - lock.kids_bathroom_door
             - lock.kitchen_door
+            - lock.clinic_door
       unlock:
         action: lock.unlock
         target:
@@ -112,6 +114,7 @@ template:
             - lock.entrance_door
             - lock.kids_bathroom_door
             - lock.kitchen_door
+            - lock.clinic_door
 
 
 automation:
@@ -143,9 +146,8 @@ automation:
       - delay:
           seconds: 1
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Security - human presence detected"
           message: >-
             Presence detected @ {{ trigger.entity_id.split('.')[1].replace('_person', '').replace('_', ' ') | title }}
@@ -212,9 +214,8 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Security - entrance door is open"
           message: >-
             The entrance door has been open for the past 10 minutes, please close it as soon as possible.
@@ -246,13 +247,12 @@ automation:
         entity_id: input_boolean.turn_everything_off_failed
         to: 'on'
         for:
-          minutes: 5
+          minutes: 7
 
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: 'Turn everything off automation failed to execute.'
 
 
@@ -299,18 +299,16 @@ automation:
                 data:
                   entity_id: lock.home_only_doors
               - action: notify.send_message
-                target:
-                  entity_id: notify.telegram_bot_659000495_155103022
                 data:
+                  entity_id: notify.telegram_bot_659000495_155103022
                   title: "Security - home locked"
                   message: >-
                     The house has been locked as no one has been detected in the house and at least one door has been left unlocked
 
         default:
           - action: notify.send_message
-            target:
-              entity_id: notify.telegram_bot_659000495_155103022
             data:
+              entity_id: notify.telegram_bot_659000495_155103022
               title: "Security - house locking skipped"
               message: >-
                 The house has **NOT** been locked as no one has been detected in the house
@@ -329,9 +327,8 @@ automation:
         for: '00:30:00'
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Security - door left open"
           message: >-
             {{ trigger.to_state.name }} has been open for 30 minutes.
@@ -354,9 +351,8 @@ automation:
           entity_id: button.study_usw_flex_port_4_power_cycle
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Security - clinic door lock unavailable"
           parse_mode: markdown
           message: >-
@@ -381,9 +377,8 @@ automation:
           payload: "1"
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Security - entrance door lock unavailable"
           message: >-
             {{ trigger.to_state.name }} has been *unavailable* for over 2 minutes.
@@ -413,9 +408,8 @@ automation:
           payload: "1"
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Security - kitchen door lock unavailable"
           parse_mode: markdown
           message: >-
@@ -440,9 +434,8 @@ automation:
           payload: "1"
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Security - kids bathroom door lock unavailable"
           parse_mode: markdown
           message: >-

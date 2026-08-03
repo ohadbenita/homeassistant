@@ -5,6 +5,7 @@
 import base64
 import json
 import logging
+import math
 import os
 import time
 from typing import Dict, Any, Tuple
@@ -40,7 +41,22 @@ ENTRANCE_DOORBELL_CAMERA_TARGET_ENTITY_ID = os.environ.get("ENTRANCE_DOORBELL_CA
 LPG_AUTO_SWITCHER_CAMERA_ENTITY_ID = os.environ.get("LPG_AUTO_SWITCHER_CAMERA_ENTITY_ID")
 LPG_AUTO_SWITCHER_TARGET_ENTITY_ID = os.environ.get("LPG_AUTO_SWITCHER_TARGET_ENTITY_ID")
 
-AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
+WATERING_LEAKAGE_CAMERA_ENTITY_ID = os.environ.get(
+    "WATERING_LEAKAGE_CAMERA_ENTITY_ID",
+    "camera.backyard_pano_snapshots_clear",
+)
+WATERING_LEAKAGE_TARGET_ENTITY_ID = os.environ.get("WATERING_LEAKAGE_TARGET_ENTITY_ID")
+
+SOLAR_PANELS_CAMERA_ENTITY_ID = os.environ.get(
+    "SOLAR_PANELS_CAMERA_ENTITY_ID",
+    "camera.northern_roof_clear",
+)
+SOLAR_PANELS_TARGET_ENTITY_ID = os.environ.get(
+    "SOLAR_PANELS_TARGET_ENTITY_ID",
+    "sensor.solar_panel_cleanliness",
+)
+
+AWS_REGION = (os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-east-1").lower()
 BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "us.amazon.nova-lite-v1:0")
 
 # Optional default overrides via env (so you can tweak boot defaults without code changes)
@@ -61,6 +77,20 @@ DEFAULTS_DOORBELL_CONFIDENCE = float(os.environ.get("DEFAULTS_DOORBELL_CONFIDENC
 # NEW: LPG defaults
 DEFAULTS_LPG_AUTO_SWITCHER_STATE = os.environ.get("DEFAULTS_LPG_AUTO_SWITCHER_STATE", "off")  # 'on' when red
 DEFAULTS_LPG_AUTO_SWITCHER_CONFIDENCE = float(os.environ.get("DEFAULTS_LPG_AUTO_SWITCHER_CONFIDENCE", "0.0"))
+
+# NEW: watering leakage defaults
+DEFAULTS_WATERING_LEAKAGE_STATE = os.environ.get("DEFAULTS_WATERING_LEAKAGE_STATE", "off")  # 'on' when leaking
+DEFAULTS_WATERING_LEAKAGE_CONFIDENCE = float(os.environ.get("DEFAULTS_WATERING_LEAKAGE_CONFIDENCE", "0.0"))
+
+# NEW: solar panels cleanliness defaults
+DEFAULTS_SOLAR_PANELS_CLEANLINESS = float(
+    os.environ.get(
+        "DEFAULTS_SOLAR_PANELS_CLEANLINESS",
+        os.environ.get("DEFAULTS_SOLAR_PANELS_CLEANLINESS_SCORE", "100"),
+    )
+)
+DEFAULTS_SOLAR_PANELS_VISIBLE = os.environ.get("DEFAULTS_SOLAR_PANELS_VISIBLE", "on")
+DEFAULTS_SOLAR_PANELS_CONFIDENCE = float(os.environ.get("DEFAULTS_SOLAR_PANELS_CONFIDENCE", "0.0"))
 
 # Basic validation (keep existing behavior)
 required_vars = [
@@ -92,6 +122,32 @@ def _is_truthy(val: str | None) -> bool:
     if val is None:
         return False
     return str(val).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _coerce_json_bool(value: Any, key_name: str) -> bool:
+    """Return a bool from JSON booleans or common string booleans."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
+            return False
+    raise ValueError(f"Expected '{key_name}' to be a boolean, got {value!r}.")
+
+
+def _clamp_json_number(value: Any, key_name: str, minimum: float, maximum: float) -> float:
+    """Return a finite JSON number constrained to the requested range."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as ex:
+        raise ValueError(f"Expected '{key_name}' to be a number, got {value!r}.") from ex
+
+    if not math.isfinite(number):
+        raise ValueError(f"Expected '{key_name}' to be finite, got {value!r}.")
+
+    return max(minimum, min(maximum, number))
 
 
 def _make_fake_bedrock_result(text_obj: Dict[str, Any]) -> Dict[str, Any]:
@@ -418,6 +474,124 @@ def update_lpg_auto_switcher_ha_entity(result: Dict[str, Any]) -> Tuple[bool, fl
     return is_red, confidence
 
 
+def update_watering_leakage_ha_entity(result: Dict[str, Any]) -> Tuple[bool, float]:
+    """
+    Update HA entity reflecting whether watering/irrigation leakage is visible.
+
+    HA state:
+      - "on"  => visible watering leakage is suspected
+      - "off" => no visible watering leakage is suspected
+    """
+    if not (HA_BASE_URL and HA_TOKEN and WATERING_LEAKAGE_TARGET_ENTITY_ID):
+        logger.warning("Cannot update entity. Missing HA config or target entity.")
+        raise ValueError("Cannot update entity. Missing HA config or target entity.")
+
+    detection_result = _parse_bedrock_content_json(result)
+    leak_detected = _coerce_json_bool(detection_result["leak_detected"], "leak_detected")
+    confidence = float(detection_result["confidence"])
+
+    state_value = "on" if leak_detected else "off"
+    attributes = {
+        "device_class": "problem",
+        "leak_detected": leak_detected,
+        "confidence": round(confidence, 3),
+        "updated_at": int(time.time()),
+        "input_tokens": result.get("usage", {}).get("inputTokens", 0),
+        "output_tokens": result.get("usage", {}).get("outputTokens", 0),
+        "stop_reason": result.get("stopReason", ""),
+    }
+
+    url = f"{HA_BASE_URL}/api/states/{WATERING_LEAKAGE_TARGET_ENTITY_ID}"
+    headers = {"Authorization": f"Bearer {HA_TOKEN}", "Content-Type": "application/json"}
+    data = {"state": state_value, "attributes": attributes}
+
+    resp = requests.post(url, headers=headers, json=data, timeout=5)
+    if resp.status_code in (200, 201):
+        logger.info(
+            f"Successfully updated '{WATERING_LEAKAGE_TARGET_ENTITY_ID}' with "
+            f"leak_detected={leak_detected}, confidence={confidence:.3f}."
+        )
+    else:
+        logger.error(
+            f"Failed to update entity '{WATERING_LEAKAGE_TARGET_ENTITY_ID}'. "
+            f"Status: {resp.status_code}, Error: {resp.text}"
+        )
+
+    return leak_detected, confidence
+
+
+def update_solar_panels_ha_entity(result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Update the HA sensor with the visible solar panel cleanliness score.
+
+    Sensor state:
+      - 100 => cleanest
+      - 0   => dirtiest
+    """
+    if not (HA_BASE_URL and HA_TOKEN and SOLAR_PANELS_TARGET_ENTITY_ID):
+        logger.warning("Cannot update solar panel entity. Missing HA config or target entity.")
+        raise ValueError("Cannot update solar panel entity. Missing HA config or target entity.")
+
+    detection_result = _parse_bedrock_content_json(result)
+    cleanliness = round(_clamp_json_number(detection_result["cleanliness"], "cleanliness", 0.0, 100.0), 1)
+    confidence = _clamp_json_number(detection_result["confidence"], "confidence", 0.0, 1.0)
+    visible_panels = _coerce_json_bool(detection_result.get("visible_panels", True), "visible_panels")
+
+    raw_causes = detection_result.get("likely_causes", [])
+    if isinstance(raw_causes, list):
+        likely_causes = [str(item).strip() for item in raw_causes if str(item).strip()][:5]
+    elif raw_causes:
+        likely_causes = [str(raw_causes).strip()]
+    else:
+        likely_causes = []
+
+    shared_attributes = {
+        "cleanliness": cleanliness,
+        "dirtiness": round(100.0 - cleanliness, 1),
+        "visible_panels": visible_panels,
+        "confidence": round(confidence, 3),
+        "assessment": str(detection_result.get("assessment", "")).strip()[:240],
+        "likely_causes": likely_causes,
+        "camera_entity_id": SOLAR_PANELS_CAMERA_ENTITY_ID,
+        "updated_at": int(time.time()),
+        "input_tokens": result.get("usage", {}).get("inputTokens", 0),
+        "output_tokens": result.get("usage", {}).get("outputTokens", 0),
+        "stop_reason": result.get("stopReason", ""),
+    }
+
+    headers = {"Authorization": f"Bearer {HA_TOKEN}", "Content-Type": "application/json"}
+
+    sensor_url = f"{HA_BASE_URL}/api/states/{SOLAR_PANELS_TARGET_ENTITY_ID}"
+    sensor_data = {
+        "state": cleanliness,
+        "attributes": {
+            **shared_attributes,
+            "unit_of_measurement": "%",
+            "state_class": "measurement",
+            "icon": "mdi:solar-panel-large",
+        },
+    }
+    sensor_resp = requests.post(sensor_url, headers=headers, json=sensor_data, timeout=5)
+    if sensor_resp.status_code in (200, 201):
+        logger.info(
+            f"Successfully updated '{SOLAR_PANELS_TARGET_ENTITY_ID}' with "
+            f"cleanliness={cleanliness:.1f}, confidence={confidence:.3f}."
+        )
+    else:
+        logger.error(
+            f"Failed to update entity '{SOLAR_PANELS_TARGET_ENTITY_ID}'. "
+            f"Status: {sensor_resp.status_code}, Error: {sensor_resp.text}"
+        )
+
+    return {
+        "cleanliness": cleanliness,
+        "dirtiness": round(100.0 - cleanliness, 1),
+        "visible_panels": visible_panels,
+        "confidence": confidence,
+        "sensor_entity_id": SOLAR_PANELS_TARGET_ENTITY_ID,
+    }
+
+
 # ---------------------------------------------------------
 # Routes
 # ---------------------------------------------------------
@@ -624,13 +798,144 @@ def analyze_lpg_auto_switcher():
         return jsonify({"error": str(ex)}), 500
 
 
+@app.route("/analyze/watering-leakage", methods=["GET"])
+def analyze_watering_leakage():
+    """
+    Capture, analyze, and update watering/irrigation leakage status in Home Assistant.
+    Detect visible leakage such as unexpected pooling, broken-line spray, dripping, or runoff.
+
+    Supports `?init=1` to upsert defaults without camera/Bedrock.
+    """
+    try:
+        if _is_truthy(request.args.get("init")):
+            fake = _make_fake_bedrock_result(
+                {
+                    "leak_detected": (DEFAULTS_WATERING_LEAKAGE_STATE.lower() == "on"),
+                    "confidence": float(DEFAULTS_WATERING_LEAKAGE_CONFIDENCE),
+                }
+            )
+            leak_detected, confidence = update_watering_leakage_ha_entity(fake)
+            return jsonify({"leak_detected": leak_detected, "confidence": confidence, "mode": "init"}), 200
+
+        if not WATERING_LEAKAGE_CAMERA_ENTITY_ID:
+            raise ValueError("WATERING_LEAKAGE_CAMERA_ENTITY_ID is not set.")
+        if not WATERING_LEAKAGE_TARGET_ENTITY_ID:
+            raise ValueError("WATERING_LEAKAGE_TARGET_ENTITY_ID is not set.")
+
+        image_bytes = capture_image_from_ha(WATERING_LEAKAGE_CAMERA_ENTITY_ID)
+
+        detection_result = analyze_image_with_bedrock(
+            image_bytes=image_bytes,
+            system_prompt=(
+                "You are a vision classification system. "
+                "You must return STRICT JSON ONLY. "
+                "Do NOT use markdown. Do NOT use triple backticks. Do NOT add explanations. "
+                "Do NOT add text before or after the JSON. "
+                "The response must start with '{' and end with '}'. "
+                "Return exactly one JSON object with keys: "
+                "'leak_detected' (boolean) and 'confidence' (number between 0 and 1). "
+                "Any response that is not valid JSON is a failure."
+            ),
+            user_prompt=(
+                "Analyze this backyard watering or irrigation camera image. "
+                "Decide whether there is visible watering leakage: water spraying from a broken hose, pipe, "
+                "irrigation tube, connector, or sprinkler head; continuous dripping; unexpected pooling; "
+                "flooding; runoff; or water flowing where it should not be. "
+                "Do not mark normal sprinkler spray, normal wet soil or plants, expected irrigation coverage, "
+                "shadows, glare, or reflections as leakage. "
+                "Return ONLY this JSON shape:\n"
+                "{\"leak_detected\": <true_or_false>, \"confidence\": <0_to_1>}\n"
+                "No markdown. No triple backticks. No extra text."
+            ),
+        )
+
+        leak_detected, confidence = update_watering_leakage_ha_entity(detection_result)
+        return jsonify({"leak_detected": leak_detected, "confidence": confidence}), 200
+
+    except Exception as ex:
+        logger.exception(f"Analysis workflow failed: {ex}")
+        return jsonify({"error": str(ex)}), 500
+
+
+@app.route("/analyze/solar-panels", methods=["GET"])
+def analyze_solar_panels_cleanliness():
+    """
+    Capture, analyze, and update visible solar panel cleanliness in Home Assistant.
+    Scores cleanliness from 100 (cleanest) to 0 (dirtiest).
+
+    Supports `?init=1` to upsert defaults without camera/Bedrock.
+    """
+    try:
+        if _is_truthy(request.args.get("init")):
+            fake = _make_fake_bedrock_result(
+                {
+                    "cleanliness": float(DEFAULTS_SOLAR_PANELS_CLEANLINESS),
+                    "visible_panels": DEFAULTS_SOLAR_PANELS_VISIBLE.lower() == "on",
+                    "confidence": float(DEFAULTS_SOLAR_PANELS_CONFIDENCE),
+                    "assessment": "init default",
+                    "likely_causes": [],
+                }
+            )
+            data_sent = update_solar_panels_ha_entity(fake)
+            return jsonify({**data_sent, "mode": "init"}), 200
+
+        if not SOLAR_PANELS_CAMERA_ENTITY_ID:
+            raise ValueError("SOLAR_PANELS_CAMERA_ENTITY_ID is not set.")
+        if not SOLAR_PANELS_TARGET_ENTITY_ID:
+            raise ValueError("SOLAR_PANELS_TARGET_ENTITY_ID is not set.")
+
+        image_bytes = capture_image_from_ha(SOLAR_PANELS_CAMERA_ENTITY_ID)
+
+        detection_result = analyze_image_with_bedrock(
+            image_bytes=image_bytes,
+            system_prompt=(
+                "You are a vision scoring system for residential solar panel cleanliness. "
+                "You must return STRICT JSON ONLY. "
+                "Do NOT use markdown. Do NOT use triple backticks. Do NOT add explanations. "
+                "Do NOT add text before or after the JSON. "
+                "The response must start with '{' and end with '}'. "
+                "Return exactly one JSON object with keys: "
+                "'cleanliness' (number 0 to 100 where 100 is cleanest and 0 is dirtiest), "
+                "'visible_panels' (boolean), "
+                "'confidence' (number between 0 and 1), "
+                "'assessment' (short string), "
+                "and 'likely_causes' (array of short strings). "
+                "Any response that is not valid JSON is a failure."
+            ),
+            user_prompt=(
+                "Analyze the visible solar panels in this roof camera image. "
+                "Score how clean the panel surfaces appear on a 0 to 100 scale: "
+                "100 means clean or nearly spotless; 75 means light dust, haze, or isolated spots; "
+                "50 means moderate dust, streaking, bird droppings, leaves, or debris; "
+                "25 means heavy soiling or debris covering meaningful panel area; "
+                "0 means the panels are almost completely obscured by dirt or debris. "
+                "Judge physical soiling on the panel surfaces. Do not reduce the score for normal shadows, "
+                "cloud reflections, viewing angle, glare, wetness from rain, or temporary lighting differences. "
+                "If solar panels are not clearly visible, return visible_panels=false, cleanliness=100, "
+                "confidence=0.0, assessment='panels not clearly visible', and likely_causes=[]. "
+                "Return ONLY this JSON shape:\n"
+                "{\"cleanliness\": <0_to_100>, \"visible_panels\": <true_or_false>, "
+                "\"confidence\": <0_to_1>, \"assessment\": \"<short_text>\", "
+                "\"likely_causes\": [\"<short_text>\"]}\n"
+                "No markdown. No triple backticks. No extra text."
+            ),
+        )
+
+        data_sent = update_solar_panels_ha_entity(detection_result)
+        return jsonify(data_sent), 200
+
+    except Exception as ex:
+        logger.exception(f"Analysis workflow failed: {ex}")
+        return jsonify({"error": str(ex)}), 500
+
+
 # ---------------------------------------------------------
 # Entrypoint
 # ---------------------------------------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-    # (Note: code after app.run won't execute; kept for parity with original)
     for rule in app.url_map.iter_rules():
         methods = ",".join(sorted(rule.methods - {"HEAD", "OPTIONS"}))
-        logger.info(f"{rule.endpoint:20s} {methods:10s} {rule}")
+        logger.info(f"{rule.endpoint:35s} {methods:10s} {rule}")
+
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

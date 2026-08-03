@@ -150,6 +150,7 @@ automation:
           - service: homeassistant.turn_off
             entity_id: switch.shelly1pmminig3_34b7da8b78c4_switch_0
 
+
   - alias: 'Shelter - Handle Bedside button actions'
     id: shelter_bedside_button_actions
     initial_state: true
@@ -168,3 +169,30 @@ automation:
               - action: switch.toggle
                 target:
                   entity_id: switch.shelly1pmminig3_34b7da8a0338_switch_0
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.shelter_bed_action
+                state: 'double'
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: >
+                          {{
+                            is_state('switch.shellyplus2pm_a0a3b3682b10_switch_0', 'on')
+                            or
+                            is_state('switch.shellyplus2pm_a0a3b3682b10_switch_1', 'on')
+                          }}
+                    sequence:
+                      - action: switch.turn_on
+                        target:
+                          entity_id:
+                            - switch.shellyplus2pm_a0a3b3682b10_switch_0
+                            - switch.shellyplus2pm_a0a3b3682b10_switch_1
+                default:
+                  - action: switch.toggle
+                    target:
+                      entity_id:
+                        - switch.shellyplus2pm_a0a3b3682b10_switch_0
+                        - switch.shellyplus2pm_a0a3b3682b10_switch_1

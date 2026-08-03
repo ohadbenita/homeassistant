@@ -49,9 +49,8 @@ automation:
         to: 'on'
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: "Water leak has been detected @ {{ trigger.from_state.attributes.friendly_name }} !!!"
 
 
@@ -76,3 +75,48 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id: switch.shellyplus2pm_fcb467a557a0_switch_1
+
+
+  - alias: 'Kids bathroom i4 switches - Toggle clinic door lock'
+    id: kids_bathroom_switch_button_actions
+    initial_state: true
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.kids_bathroom_entrance_i4_switches_input_0
+        from:
+          - 'on'
+          - 'off'
+        to:
+          - 'on'
+          - 'off'
+
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
+
+    action:
+      - variables:
+          was_locked: "{{ is_state('lock.clinic_door', 'locked') }}"
+
+      - action: script.alexa_notification
+        data:
+          alexa_device: media_player.kids_bathroom_echo
+          volume: 0.4
+          message: >
+            Clinic door is now {{ 'unlocked' if was_locked else 'locked' }}
+
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ was_locked }}"
+            sequence:
+              - action: lock.unlock
+                target:
+                  entity_id: lock.clinic_door
+        default:
+          - action: lock.lock
+            target:
+              entity_id: lock.clinic_door

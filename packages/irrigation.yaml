@@ -56,9 +56,90 @@ sensor:
     start: "{{ now().replace(day=1, hour=0, minute=0, second=0) - timedelta(days=30) }}"
     end: "{{ now() }}"
 
+template:
+  - binary_sensor:
+      - name: Irrigation schedule enabled
+        state: >-
+          {% set s = states('input_datetime.irrigation_disabled_until') %}
+          {% if s in ['unknown','unavailable',''] %}
+            true
+          {% else %}
+            {{ (as_timestamp(now()) | float(0)) >= (as_timestamp(s) | float(0)) }}
+          {% endif %}
+
 input_datetime:
   irrigation_disabled_until:
     name: Irrigation disabled until
+    has_date: true
+    has_time: true
+
+  pickle_plant_last_watered:
+    name: Pickle plant last watered
+    has_date: true
+    has_time: true
+
+  variegated_baby_rubber_plant_last_watered:
+    name: Variegated baby rubber plant last watered
+    has_date: true
+    has_time: true
+
+  umbrella_plant_last_watered:
+    name: Umbrella plant last watered
+    has_date: true
+    has_time: true
+
+  monstera_last_watered:
+    name: Monstera last watered
+    has_date: true
+    has_time: true
+
+  fiddle_leaf_fig_last_watered:
+    name: Fiddle-leaf fig last watered
+    has_date: true
+    has_time: true
+
+  lemon_lime_last_watered:
+    name: Lemon lime last watered
+    has_date: true
+    has_time: true
+
+  areca_palm_last_watered:
+    name: Areca palm last watered
+    has_date: true
+    has_time: true
+
+  mount_everest_succulent_last_watered:
+    name: Mount Everest succulent last watered
+    has_date: true
+    has_time: true
+
+  silver_torch_cactus_last_watered:
+    name: Silver torch cactus last watered
+    has_date: true
+    has_time: true
+
+  rainbow_jade_last_watered:
+    name: Rainbow jade last watered
+    has_date: true
+    has_time: true
+
+  zz_plant_snake_plant_last_watered:
+    name: ZZ plant & snake plant last watered
+    has_date: true
+    has_time: true
+
+  zebra_haworthia_last_watered:
+    name: Zebra haworthia last watered
+    has_date: true
+    has_time: true
+
+  bunny_ear_cactus_last_watered:
+    name: Bunny ear cactus last watered
+    has_date: true
+    has_time: true
+
+  phothos_last_watered:
+    name: Living room table Phothos last watered
     has_date: true
     has_time: true
 
@@ -66,7 +147,8 @@ input_datetime:
 script:
   irrigation_cycle:
     alias: "Irrigation cycle"
-    mode: parallel
+    mode: queued
+    max: 2
     fields:
       additional_switches:
         description: "List of additional switches to control (YAML list format)"
@@ -168,6 +250,18 @@ script:
             {{ (as_timestamp(now()) | float(0)) | int | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
 
 
+rest_command:
+  watering_leakage_init:
+    url: !secret backyard_water_leakage_init_url
+    method: GET
+    timeout: 30
+
+  watering_leakage_analyze:
+    url: !secret backyard_water_leakage_url
+    method: GET
+    timeout: 90
+
+
 automation:
   - alias: Weekly Irrigation Cycle - trees and bushes
     id: irrigation_simple_weekly_schedule_trees_bushes
@@ -183,14 +277,9 @@ automation:
           - mon
           - wed
           - fri
-      - condition: template
-        value_template: >-
-          {% set s = states('input_datetime.irrigation_disabled_until') %}
-          {% if s in ['unknown','unavailable',''] %}
-            true
-          {% else %}
-            {{ (as_timestamp(now()) | float(0)) >= (as_timestamp(s) | float(0)) }}
-          {% endif %}
+      - condition: state
+        entity_id: binary_sensor.irrigation_schedule_enabled
+        state: 'on'
 
     action:
       - if:
@@ -205,10 +294,12 @@ automation:
                 - switch.irrigation_l5
               irrigation_duration_minutes: 45
         else:
+          - condition: state
+            entity_id: input_boolean.away_mode
+            state: 'off'
           - action: notify.send_message
-            target:
-              entity_id: notify.telegram_bot_659000495_155103022
             data:
+              entity_id: notify.telegram_bot_659000495_155103022
               title: "Irrigation"
               message: "[Trees] Irrigation cycle skipped as it's probably going to rain soon"
 
@@ -222,14 +313,9 @@ automation:
         offset: "00:00:00"
 
     condition:
-      - condition: template
-        value_template: >-
-          {% set s = states('input_datetime.irrigation_disabled_until') %}
-          {% if s in ['unknown','unavailable',''] %}
-            true
-          {% else %}
-            {{ (as_timestamp(now()) | float(0)) >= (as_timestamp(s) | float(0)) }}
-          {% endif %}
+      - condition: state
+        entity_id: binary_sensor.irrigation_schedule_enabled
+        state: 'on'
 
     action:
       - if:
@@ -243,10 +329,12 @@ automation:
                 - switch.irrigation_l3
               irrigation_duration_minutes: 7
         else:
+          - condition: state
+            entity_id: input_boolean.away_mode
+            state: 'off'
           - action: notify.send_message
-            target:
-              entity_id: notify.telegram_bot_659000495_155103022
             data:
+              entity_id: notify.telegram_bot_659000495_155103022
               title: "Irrigation"
               message: "[Flowers & herbs] Irrigation cycle skipped as it's probably going to rain soon"
 
@@ -257,7 +345,7 @@ automation:
     trigger:
       - platform: time_pattern
         minutes: "/30"
-        seconds: "*"
+        seconds: 0
 
     condition:
       condition: and
@@ -282,13 +370,18 @@ automation:
             to: 'off'
         timeout:
           minutes: 2
-        continue_on_timeout: false
+        continue_on_timeout: true
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
-          message: 'Irrigation Watchdog had to stop the irrigation, please check the issue with the automations'
+          entity_id: notify.telegram_bot_659000495_155103022
+          title: "Irrigation Watchdog"
+          message: >-
+            {% if wait.completed %}
+              Irrigation Watchdog stopped irrigation after it was left on for over 70 minutes.
+            {% else %}
+              Irrigation Watchdog tried to stop irrigation after it was left on for over 70 minutes, but switch.irrigation_l6 did not confirm off within 2 minutes. Please check the irrigation switches.
+            {% endif %}
 
 
   - alias: "Update Daily Max Temperature"
@@ -325,3 +418,295 @@ automation:
         data:
           title: "Fertilizer Refill Needed"
           message: "The garden fertilizer tank is empty and needs refilling."
+
+
+  - alias: Plants - NFC watering tracker
+    mode: single
+
+    triggers:
+      - trigger: event
+        event_type: tag_scanned
+        id: plant_scanned
+
+      - trigger: time
+        at: "09:00:00"
+        id: daily_reminder
+
+    variables:
+      season: "{{ 'summer' if now().month in [4, 5, 6, 7, 8, 9, 10] else 'winter' }}"
+
+      plants:
+        "e8fe36f2-18eb-4308-a00b-2d5acbc37c4d":
+          name: "Monstera"
+          area: "Dining room"
+          location: "Right side window"
+          last_watered_entity: input_datetime.monstera_last_watered
+          summer: 6
+          winter: 14
+
+        "35d77666-ccd9-4dca-b277-b6ced519f8d2":
+          name: "Fiddle-leaf fig"
+          area: "Dining room"
+          location: "Left side window"
+          last_watered_entity: input_datetime.fiddle_leaf_fig_last_watered
+          summer: 6
+          winter: 14
+
+        "e0172352-52c4-40e2-a078-5596d6563db8":
+          name: "Zebra haworthia"
+          area: "Ella's room"
+          location: "On the windowsill"
+          last_watered_entity: input_datetime.zebra_haworthia_last_watered
+          summer: 14
+          winter: 35
+
+        "6e1a9629-2a20-44b7-bf6f-9d3db2a5ce51":
+          name: "Lemon lime"
+          area: "Kitchen"
+          location: "Near the kitchen island"
+          last_watered_entity: input_datetime.lemon_lime_last_watered
+          summer: 10
+          winter: 21
+
+        "d20c14f6-701f-48b9-a396-89981a6783ce":
+          name: "Umbrella plant"
+          area: "Living room"
+          location: "Between the sofa and bench"
+          last_watered_entity: input_datetime.umbrella_plant_last_watered
+          summer: 9
+          winter: 12
+
+        "3c69297d-5867-4577-a92d-79bc33af657c":
+          name: "Variegated baby rubber plant"
+          area: "Master bathroom"
+          location: "In front of the window"
+          last_watered_entity: input_datetime.variegated_baby_rubber_plant_last_watered
+          summer: 7
+          winter: 16
+
+        "a94ea357-baae-41eb-aa16-f3e290059d7e":
+          name: "Bunny ear cactus"
+          area: "Master bedroom"
+          location: "Ohad's side windowsill"
+          last_watered_entity: input_datetime.bunny_ear_cactus_last_watered
+          summer: 21
+          winter: 50
+
+        "dd5027ba-79e4-4bd1-8a54-721926e9a658":
+          name: "Pickle plant"
+          area: "Master bedroom"
+          location: "Rinat's side window"
+          last_watered_entity: input_datetime.pickle_plant_last_watered
+          summer: 14
+          winter: 30
+
+        "1a43bf7a-2257-4b1a-80ef-c3df8fc976ea":
+          name: "ZZ plant & snake plant"
+          area: "Master bedroom"
+          location: "Near the robot vacuum station"
+          last_watered_entity: input_datetime.zz_plant_snake_plant_last_watered
+          summer: 21
+          winter: 40
+
+        "2c912420-46f7-43ce-a89c-7a74e04a892e":
+          name: "Areca palm"
+          area: "Study"
+          location: "Near the SKADIS boards"
+          last_watered_entity: input_datetime.areca_palm_last_watered
+          summer: 7
+          winter: 9
+
+        "f961c817-e892-4db0-96d4-4a894bf238b1":
+          name: "Mount Everest succulent"
+          area: "Upper stairwell"
+          location: "On the windowsill"
+          last_watered_entity: input_datetime.mount_everest_succulent_last_watered
+          summer: 14
+          winter: 35
+
+        "cf348f0d-65bc-41aa-99b1-020d2d75a3f7":
+          name: "Silver torch cactus"
+          area: "Upper stairwell"
+          location: "On the windowsill"
+          last_watered_entity: input_datetime.silver_torch_cactus_last_watered
+          summer: 21
+          winter: 50
+
+        "bd0ab34d-e630-4173-a825-9eb932508e26":
+          name: "Rainbow jade"
+          area: "Upper stairwell"
+          location: "On the windowsill"
+          last_watered_entity: input_datetime.rainbow_jade_last_watered
+          summer: 14
+          winter: 35
+
+        "38335ba4-3e06-4c4e-97d3-d40bbdc13981":
+          name: "Pothos"
+          area: "Living room"
+          location: "On the table"
+          last_watered_entity: input_datetime.phothos_last_watered
+          summer: 7
+          winter: 16
+
+    actions:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: plant_scanned
+              - condition: template
+                value_template: "{{ trigger.event.data.tag_id in plants }}"
+            sequence:
+              - variables:
+                  tag_id: "{{ trigger.event.data.tag_id }}"
+                  plant: "{{ plants[tag_id] }}"
+
+              - action: input_datetime.set_datetime
+                target:
+                  entity_id: "{{ plant.last_watered_entity }}"
+                data:
+                  timestamp: "{{ now().timestamp() }}"
+
+              - action: notify.mobile_app_ohadbenita
+                data:
+                  title: "Plant watered"
+                  message: >
+                    {{ plant.name }} marked as watered.
+                    Area: {{ plant.area }}.
+                    Location: {{ plant.location }}.
+                    Next check in {{ plant[season] }} days.
+
+          - conditions:
+              - condition: trigger
+                id: daily_reminder
+            sequence:
+              - repeat:
+                  for_each: "{{ plants.values() | list }}"
+                  sequence:
+                    - variables:
+                        plant: "{{ repeat.item }}"
+                        last_ts: "{{ state_attr(plant.last_watered_entity, 'timestamp') | float(0) }}"
+                        interval_days: "{{ plant[season] | int }}"
+                        days_since: "{{ ((now().timestamp() - last_ts) / 86400) | int }}"
+
+                    - if:
+                        - condition: template
+                          value_template: "{{ last_ts > 0 and days_since >= interval_days }}"
+                      then:
+                        - action: notify.mobile_app_ohadbenita
+                          data:
+                            title: "Check plant"
+                            message: >
+                              {{ plant.name }} may need water.
+                              Area: {{ plant.area }}.
+                              Location: {{ plant.location }}.
+                              Last watered {{ days_since }} days ago.
+                              {{ season | title }} interval is {{ interval_days }} days.
+
+
+  - alias: Terrarium LED - 8 hour daylight cycle
+    description: Keeps the terrarium LED on from 09:00 to 17:00 daily.
+    mode: single
+
+    triggers:
+      - trigger: time
+        at: "09:00:00"
+      - trigger: time
+        at: "19:00:00"
+
+    actions:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >
+                  {{ today_at('09:00:00') <= now() < today_at('19:00:00') }}
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.sonoff_s20_05
+        default:
+          - action: switch.turn_off
+            target:
+              entity_id: switch.sonoff_s20_05
+
+
+  - alias: Toggle Terrarium LED from NFC tag
+    id: toggle_terrarium_led_from_nfc_tag
+    description: Toggle the Terrarium LED when the configured NFC tag is scanned.
+    mode: single
+    trigger:
+      - platform: tag
+        tag_id: 0cdc0e4f-dbc4-4561-8aef-ee9f12fe9936
+
+    action:
+      - action: switch.toggle
+        entity_id: switch.sonoff_s20_05
+
+
+  - alias: Init watering leakage analyzer entity
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - action: rest_command.watering_leakage_init
+
+
+  - alias: "Analyze watering leakage when trees and bushes irrigation starts"
+    id: watering_leakage_detection_trees_bushes
+    initial_state: true
+    mode: single
+
+    trigger:
+      platform: state
+      entity_id:
+        - switch.irrigation_l4
+        - switch.irrigation_l5
+      to: 'on'
+
+    action:
+      - delay: '00:02:00'
+
+      - condition: template
+        value_template: >-
+          {{
+            is_state('switch.irrigation_l4', 'on') or
+            is_state('switch.irrigation_l5', 'on')
+          }}
+
+      - action: rest_command.watering_leakage_analyze
+
+
+  - alias: "Alert if watering leakage is detected"
+    id: watering_leakage_detected_alert
+    initial_state: true
+
+    trigger:
+      platform: state
+      entity_id: binary_sensor.watering_leakage_detected
+      to: 'on'
+
+    condition:
+      - condition: template
+        value_template: >-
+          {{
+            state_attr('binary_sensor.watering_leakage_detected', 'confidence') | float(0) >= 0.8
+          }}
+
+    action:
+      - action: camera.snapshot
+        data:
+          entity_id: camera.backyard_pano_snapshots_clear
+          filename: "/config/www/snapshots/backyard_watering_leakage_snapshot.jpg"
+
+      - delay: '00:00:02'
+
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          title: "Alert: Watering leakage detected"
+          message: "Possible irrigation leakage detected in the backyard"
+          data:
+            photo:
+              - file: "/config/www/snapshots/backyard_watering_leakage_snapshot.jpg"
+                caption: >-
+                  [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.backyard_pano_snapshots_clear?token={{ state_attr('camera.backyard_pano_snapshots_clear', 'access_token') }})
+                parse_mode: markdown

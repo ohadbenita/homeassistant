@@ -1,24 +1,37 @@
 ---
+climate:
+  - platform: smartir
+    name: Ella room AC Smartair
+    unique_id: ella_room_ac_smartair
+    device_code: 1343
+    controller_data: remote.ella_room_broadlink_mini
+    temperature_sensor: sensor.ella_room_temperature_temperature
+    humidity_sensor: sensor.ella_room_temperature_humidity
+    # power_sensor: binary_sensor.living_room_ac_active
+
+
 template:
   - sensor:
-      - name: "Ella Room AC Temperature"
+      - name: "Ella room temperature rounded"
         unit_of_measurement: "°C"
-        state: "{{ state_attr('climate.ella_ac', 'current_temperature') }}"
-        availability: "{{ state_attr('climate.ella_ac', 'current_temperature') is not none }}"
+        state: "{{ states('sensor.ella_room_temperature_temperature') | float(0) | round(0) }}"
+        availability: >
+          {{ states('sensor.ella_room_temperature_temperature') not in ['unknown', 'unavailable'] }}
         device_class: temperature
         icon: mdi:thermometer
 
-      - name: "Ella Room AC humidity"
+      - name: "Ella room humidity rounded"
         unit_of_measurement: "%"
-        state: "{{ state_attr('climate.ella_ac', 'current_humidity') }}"
-        availability: "{{ state_attr('climate.ella_ac', 'current_humidity') is not none }}"
+        state: "{{ states('sensor.ella_room_temperature_humidity') | float(0) | round(0) }}"
+        availability: >
+          {{ states('sensor.ella_room_temperature_humidity') not in ['unknown', 'unavailable'] }}
         device_class: humidity
         icon: mdi:water-percent
 
       - name: "Ella room AC temperature difference"
         unit_of_measurement: "°C"
-        state: "{{ (state_attr('climate.ella_ac', 'current_temperature') - state_attr('climate.ella_ac', 'temperature')) | abs }}"
-        availability: "{{ state_attr('climate.ella_ac', 'current_temperature') is not none }}"
+        state: "{{ (states('sensor.ella_room_temperature_temperature') - state_attr('climate.ella_room_ac_smartair', 'temperature')) | abs }}"
+        availability: "{{ state_attr('climate.ella_room_ac_smartair', 'temperature') is not none }}"
         device_class: temperature
         icon: mdi:thermometer
 
@@ -61,16 +74,16 @@ automation:
       - platform: template
         value_template: >-
           {{
-            states('climate.ella_ac') != 'off' and
-            (now() - states.climate.ella_ac.last_changed).total_seconds() > 3600
+            states('climate.ella_room_ac_smartair') != 'off' and
+            (now() - states.climate.ella_room_ac_smartair.last_changed).total_seconds() > 3600
           }}
 
     condition:
       - condition: template
         value_template: >
           {{
-            states('climate.ella_ac') != 'off' and
-            (now() - states.climate.ella_ac.last_changed).total_seconds() > 3600
+            states('climate.ella_room_ac_smartair') != 'off' and
+            (now() - states.climate.ella_room_ac_smartair.last_changed).total_seconds() > 3600
           }}
       - condition: numeric_state
         entity_id: sensor.ella_room_temp_difference_change_per_10_minutes
@@ -79,7 +92,7 @@ automation:
 
     action:
       - action: climate.turn_off
-        entity_id: climate.ella_ac
+        entity_id: climate.ella_room_ac_smartair
 
 
   - alias: "Ella Room - Set AC to night mode (summer)"
@@ -97,28 +110,28 @@ automation:
         - condition: template
           value_template: >-
             {{ not (
-                is_state_attr('climate.ella_ac', 'temperature', 24) and
-                is_state_attr('climate.ella_ac', 'fan_mode', 'low') and
-                is_state_attr('climate.ella_ac', 'swing_mode', 'rangefull')
+                is_state_attr('climate.ella_room_ac_smartair', 'temperature', 24) and
+                is_state_attr('climate.ella_room_ac_smartair', 'fan_mode', 'low') and
+                is_state_attr('climate.ella_room_ac_smartair', 'swing_mode', 'rangefull')
               )
             }}
         - condition: state
-          entity_id: climate.ella_ac
+          entity_id: climate.ella_room_ac_smartair
           state: 'cool'
 
     action:
       - action: climate.set_temperature
         data:
           temperature: 24
-          entity_id: climate.ella_ac
+          entity_id: climate.ella_room_ac_smartair
       - action: climate.set_fan_mode
         data:
           fan_mode: low
-          entity_id: climate.ella_ac
+          entity_id: climate.ella_room_ac_smartair
       - action: climate.set_swing_mode
         data:
           swing_mode: rangefull
-          entity_id: climate.ella_ac
+          entity_id: climate.ella_room_ac_smartair
 
 
   - alias: "Ella Room - Turn AC off when no one is in the room"
@@ -134,12 +147,12 @@ automation:
     condition:
       condition: template
       value_template: >-
-        {{ not is_state('climate.ella_ac', 'off') }}
+        {{ not is_state('climate.ella_room_ac_smartair', 'off') }}
 
     action:
       - action: climate.turn_off
         data_template:
-          entity_id: climate.ella_ac
+          entity_id: climate.ella_room_ac_smartair
 
 
   - alias: "Ella Room - Turn lights off when no one is in the room"
@@ -158,98 +171,6 @@ automation:
           entity_id:
             - switch.shelly2pmg3_8cbfea9f54b0_switch_0
             - switch.shelly2pmg3_8cbfea9f54b0_switch_1
-
-
-  - alias: 'Ella room - Handle Bedside button actions'
-    id: ella_room_bedside_button_actions
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.ella_bedside_action
-
-    action:
-      - choose:
-        - conditions:  # yamllint disable-line rule:indentation
-          - condition: state  # yamllint disable-line rule:indentation
-            entity_id: sensor.ella_bedside_action
-            state: 'single'
-          sequence:
-            - choose:
-                - conditions:
-                    - condition: or
-                      conditions:
-                        - condition: state
-                          entity_id: switch.shelly2pmg3_8cbfea9f54b0_switch_0
-                          state: "on"
-                        - condition: state
-                          entity_id: switch.shelly2pmg3_8cbfea9f54b0_switch_1
-                          state: "on"
-                  sequence:
-                    - action: switch.turn_off
-                      target:
-                        entity_id:
-                          - switch.shelly2pmg3_8cbfea9f54b0_switch_0
-                          - switch.shelly2pmg3_8cbfea9f54b0_switch_1
-              default:
-                - action: switch.turn_on
-                  target:
-                    entity_id:
-                      - switch.shelly2pmg3_8cbfea9f54b0_switch_0
-                      - switch.shelly2pmg3_8cbfea9f54b0_switch_1
-      - choose:
-        - conditions:  # yamllint disable-line rule:indentation
-          - condition: state  # yamllint disable-line rule:indentation
-            entity_id: sensor.ella_bedside_action
-            state: 'double'
-          sequence:
-            - choose:
-                - conditions:
-                    - condition: state
-                      entity_id: climate.ella_ac
-                      state: 'off'
-                  sequence:
-                    - choose:
-                        - conditions:
-                            - condition: numeric_state
-                              entity_id: sensor.openweathermap_feels_like_temperature
-                              above: 23
-                          sequence:
-                            - service: climate.set_hvac_mode
-                              target:
-                                entity_id: climate.ella_ac
-                              data:
-                                hvac_mode: 'cool'
-                      default:
-                        - service: climate.set_hvac_mode
-                          target:
-                            entity_id: climate.ella_ac
-                          data:
-                            hvac_mode: 'heat'
-              default:
-                - service: climate.turn_off
-                  target:
-                    entity_id: climate.ella_ac
-
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: sensor.ella_bedside_action
-                state: 'hold'
-            sequence:
-              - variables:
-                  covers:
-                    - cover.ella_room_small_shutter
-                    - cover.ella_big_shutter
-
-              - action: cover.set_cover_position
-                target:
-                  entity_id: "{{ covers }}"
-                data:
-                  position: >
-                    {% set positions = covers | map('state_attr','current_position') | list %}
-                    {% set any_above_20 = positions | select('number') | select('gt', 20) | list | count > 0 %}
-                    {{ 20 if any_above_20 else 100 }}
 
 
   - alias: Ella smoke detection on
@@ -286,13 +207,12 @@ automation:
 
 
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: "Smoke has been detected in Ella's room"
 
       - action: notify.mobile_app_ohadbenita
-        data_template:
+        data:
           title: "Hazards"
           message: "Smoke has been detected in the Ella's room, density is {{states('sensor.ella_smoke_density')}}%"
 
@@ -307,12 +227,12 @@ automation:
         to: 'off'
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: "Smoke in Ella's room is not detected anymore"
+
       - action: notify.mobile_app_ohadbenita
-        data_template:
+        data:
           title: "Hazards"
           message: "Smoke is not detected in Ella's room, density is {{states('sensor.ella_smoke_density')}}%"
 
@@ -348,3 +268,160 @@ automation:
                 data:
                   entity_id: cover.ella_room_small_shutter
                   position: 45
+
+
+  - alias: 'Ella room - Handle IR actions button actions'
+    id: ella_room_ir_actions_button_actions
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.ella_ir_buttons_action
+
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_2_hold'
+            sequence:
+              - action: remote.send_command
+                target:
+                  entity_id: remote.ella_room_broadlink_mini
+                data:
+                  device: ella_tv
+                  command:
+                    - power
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_2_single'
+            sequence:
+              - action: remote.send_command
+                target:
+                  entity_id: remote.ella_room_broadlink_mini
+                data:
+                  device: ella_tv
+                  command:
+                    - volume_up
+                    - volume_up
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_1_single'
+            sequence:
+              - action: remote.send_command
+                target:
+                  entity_id: remote.ella_room_broadlink_mini
+                data:
+                  device: ella_tv
+                  command:
+                    - volume_down
+                    - volume_down
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_4_double'
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: numeric_state
+                        entity_id: input_number.daily_expected_max_temperature
+                        above: 23
+                    sequence:
+                      - action: climate.set_hvac_mode
+                        target:
+                          entity_id: climate.ella_room_ac_smartair
+                        data:
+                          hvac_mode: 'cool'
+                      - action: climate.set_temperature
+                        data:
+                          entity_id: climate.ella_room_ac_smartair
+                          temperature: 18
+                default:
+                  - action: climate.set_hvac_mode
+                    target:
+                      entity_id: climate.ella_room_ac_smartair
+                    data:
+                      hvac_mode: 'heat'
+                  - action: climate.set_temperature
+                    data:
+                      entity_id: climate.ella_room_ac_smartair
+                      temperature: 23
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_3_double'
+            sequence:
+              - action: climate.turn_off
+                entity_id: climate.ella_room_ac_smartair
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_3_hold'
+            sequence:
+              - action: cover.close_cover
+                target:
+                  entity_id:
+                    - cover.ella_room_small_shutter
+                    - cover.ella_big_shutter
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_3_release'
+            sequence:
+              - action: cover.stop_cover
+                target:
+                  entity_id:
+                    - cover.ella_room_small_shutter
+                    - cover.ella_big_shutter
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_4_hold'
+            sequence:
+              - action: cover.open_cover
+                target:
+                  entity_id:
+                    - cover.ella_room_small_shutter
+                    - cover.ella_big_shutter
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_4_release'
+            sequence:
+              - action: cover.stop_cover
+                target:
+                  entity_id:
+                    - cover.ella_room_small_shutter
+                    - cover.ella_big_shutter
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_3_single'
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id:
+                    - switch.shelly2pmg3_8cbfea9f54b0_switch_0
+                    - switch.shelly2pmg3_8cbfea9f54b0_switch_1
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.ella_ir_buttons_action
+                state: 'button_4_single'
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id:
+                    - switch.shelly2pmg3_8cbfea9f54b0_switch_0
+                    - switch.shelly2pmg3_8cbfea9f54b0_switch_1

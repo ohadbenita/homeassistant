@@ -179,9 +179,8 @@ automation:
 
 
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: "Smoke has been detected in the hallway"
 
       - action: notify.mobile_app_ohadbenita
@@ -200,10 +199,10 @@ automation:
         to: 'off'
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: "Smoke in the hallway is not detected anymore"
+
       - action: notify.mobile_app_ohadbenita
         data_template:
           title: "Hazards"

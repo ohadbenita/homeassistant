@@ -8,6 +8,22 @@ template:
         device_class: temperature
         icon: mdi:thermometer
 
+      - name: "Adi room temperature rounded"
+        unit_of_measurement: "°C"
+        state: "{{ states('sensor.adi_room_temperature') | float(0) | round(0) }}"
+        availability: >
+          {{ states('sensor.adi_room_temperature') not in ['unknown', 'unavailable'] }}
+        device_class: temperature
+        icon: mdi:thermometer
+
+      - name: "Adi room humidity rounded"
+        unit_of_measurement: "%"
+        state: "{{ states('sensor.adi_room_humidity') | float(0) | round(0) }}"
+        availability: >
+          {{ states('sensor.adi_room_humidity') not in ['unknown', 'unavailable'] }}
+        device_class: humidity
+        icon: mdi:water-percent
+
   - binary_sensor:
       - name: "Adi Room Occupancy"
         unique_id: adi_room_occupancy
@@ -193,7 +209,7 @@ automation:
                       - choose:
                           - conditions:
                               - condition: numeric_state
-                                entity_id: sensor.openweathermap_feels_like_temperature
+                                entity_id: input_number.daily_expected_max_temperature
                                 above: 23
                             sequence:
                               - service: climate.set_hvac_mode
@@ -271,3 +287,25 @@ automation:
     action:
       - action: climate.turn_off
         entity_id: climate.adi_room_ac
+
+
+  - alias: "Clean Adi's room when NFC tag is scanned"
+    mode: single
+
+    trigger:
+      - platform: tag
+        tag_id: 660ff178-5a29-4728-83b4-b91128df7540
+
+    action:
+      - action: script.alexa_notification
+        data:
+          alexa_device: media_player.adi_s_echo
+          volume: 0.4
+          message: Starting Adi's room cleaning
+
+      - action: vacuum.send_command
+        data:
+          entity_id: vacuum.yulanda
+          command: app_segment_clean
+          params:
+            - 17

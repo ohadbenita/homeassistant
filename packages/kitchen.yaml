@@ -42,9 +42,8 @@ automation:
         to: 'on'
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: "Water leak has been detected @ {{ trigger.from_state.attributes.friendly_name }} !!!"
 
   - alias: Kitchen smoke detection on
@@ -80,13 +79,12 @@ automation:
 
 
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: "Smoke has been detected in the kitchen"
 
       - action: notify.mobile_app_ohadbenita
-        data_template:
+        data:
           title: "Hazards"
           message: "Smoke has been detected in the kitchen, density is {{states('sensor.kitchen_ceiling_smoke_density')}}%"
 
@@ -100,10 +98,10 @@ automation:
         to: 'off'
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: "Smoke in the kitchen is not detected anymore"
+
       - action: notify.mobile_app_ohadbenita
         data_template:
           title: "Hazards"
@@ -115,7 +113,6 @@ automation:
     initial_state: true
     trigger:
       - entity_id:
-          # - binary_sensor.occupancy_sensor_77b5_occupancy
           - binary_sensor.kitchen_door_contact
           - binary_sensor.pantry_to_kitchen_door_contact
         platform: state
@@ -139,12 +136,6 @@ automation:
     id: kitchen_pantry_lights_off_no_motion
     initial_state: true
     trigger:
-      # - platform: state
-      #   entity_id: binary_sensor.occupancy_sensor_77b5_occupancy
-      #   to: 'off'
-      #   for:
-      #     minutes: 5
-
       - platform: state
         entity_id:
           - binary_sensor.pantry_to_kitchen_door_contact
@@ -367,7 +358,7 @@ automation:
         data:
           alexa_device: media_player.kitchen_echo
           volume: 0.4
-          message: I just sent Yulanda to clean the living room, dining room, kitchen & hallway
+          message: I just sent Yulanda to clean the living room, dining room, kitchen and hallway
 
 
   - alias: Tami4 button - Toggle vacuum intensity
@@ -437,9 +428,8 @@ automation:
           minutes: 5
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: "The pantry freezer door is open, close it as soon as possible"
 
       - action: notify.mobile_app_rinats_iphone
@@ -468,18 +458,16 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: >-
             The pantry freezer door has been closed after being open for {{
             ((as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60)
             | int }} minutes
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: >
             The pantry freezer door has been closed after being open for {{
             ((as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60)
@@ -742,112 +730,87 @@ automation:
                   message: "Roi didn't clear the dishwasher after one hour"
 
 
-  - alias: "Kitchen - Turn off kitchen lights at 1AM if no presence"
-    id: "kitchen_turn_off_kitchen_lights_1am_no_presence"
-    mode: single
-
-    trigger:
-      - platform: time
-        at: "01:00:00"
-
-    condition:
-      - condition: template
-        value_template: >
-          {{ states('switch.shellyplus2pm_fcb4670e68e8_switch_0') == 'on'
-            or states('switch.shellyplus2pm_fcb4670e68e8_switch_1') == 'on' }}
-
-      - condition: template
-        value_template: >
-          {% set sensors = [
-            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1',
-            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_2',
-            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_3',
-            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_4',
-            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_5',
-            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_6',
-            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_7',
-            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_8',
-            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_9',
-            'binary_sensor.presence_sensor_fp2_69e2_presence_sensor_10'
-          ] %}
-          {{ sensors
-            | map('states')
-            | select('eq', 'on')
-            | list
-            | length == 0 }}
-
-    action:
-      - action: switch.turn_off
-        target:
-          entity_id:
-            - switch.shellyplus2pm_fcb4670e68e8_switch_0
-            - switch.shellyplus2pm_fcb4670e68e8_switch_1
-
-
   - alias: "Kitchen - Shutter button actions"
     id: kitchen_shutter_button_actions
     initial_state: true
     mode: queued
     max: 3
+
     trigger:
       - platform: state
         entity_id: sensor.kitchen_shutter_action
 
+    variables:
+      button_action: "{{ trigger.to_state.state if trigger.to_state is not none else '' }}"
+      cover_entity: cover.kitchen_window
+      cover_state: "{{ states(cover_entity) }}"
+      current_position: "{{ state_attr(cover_entity, 'current_position') | int(0) }}"
+
     action:
       - choose:
+          # Any button 1/2 press while the shutter is moving -> stop
+          - conditions:
+              - condition: template
+                value_template: >
+                  {{ button_action in [
+                    'button_1_single',
+                    'button_2_single',
+                    'button_1_double',
+                    'button_2_double'
+                  ] and cover_state in ['opening', 'closing'] }}
+            sequence:
+              - action: cover.stop_cover
+                target:
+                  entity_id: "{{ cover_entity }}"
+
           # Button 1 single: open fully
           - conditions:
-              - condition: state
-                entity_id: sensor.kitchen_shutter_action
-                state: "button_1_single"
+              - condition: template
+                value_template: "{{ button_action == 'button_1_single' }}"
             sequence:
               - action: cover.set_cover_position
                 target:
-                  entity_id: cover.kitchen_window
+                  entity_id: "{{ cover_entity }}"
                 data:
                   position: 100
 
           # Button 2 single: close fully
           - conditions:
-              - condition: state
-                entity_id: sensor.kitchen_shutter_action
-                state: "button_2_single"
+              - condition: template
+                value_template: "{{ button_action == 'button_2_single' }}"
             sequence:
               - action: cover.set_cover_position
                 target:
-                  entity_id: cover.kitchen_window
+                  entity_id: "{{ cover_entity }}"
                 data:
                   position: 0
 
           # Button 1 double: +20% (cap at 100)
           - conditions:
-              - condition: state
-                entity_id: sensor.kitchen_shutter_action
-                state: "button_1_double"
+              - condition: template
+                value_template: "{{ button_action == 'button_1_double' }}"
             sequence:
               - action: cover.set_cover_position
                 target:
-                  entity_id: cover.kitchen_window
+                  entity_id: "{{ cover_entity }}"
                 data:
                   position: >
-                    {% set cur = state_attr('cover.kitchen_window', 'current_position') | int(0) %}
-                    {% set nxt = cur + 20 %}
+                    {% set nxt = current_position + 20 %}
                     {{ [nxt, 100] | min }}
 
           # Button 2 double: -20% (floor at 0)
           - conditions:
-              - condition: state
-                entity_id: sensor.kitchen_shutter_action
-                state: "button_2_double"
+              - condition: template
+                value_template: "{{ button_action == 'button_2_double' }}"
             sequence:
               - action: cover.set_cover_position
                 target:
-                  entity_id: cover.kitchen_window
+                  entity_id: "{{ cover_entity }}"
                 data:
                   position: >
-                    {% set cur = state_attr('cover.kitchen_window', 'current_position') | int(0) %}
-                    {% set nxt = cur - 20 %}
+                    {% set nxt = current_position - 20 %}
                     {{ [nxt, 0] | max }}
+
 
   - alias: Kitchen night light
     id: kitchen_night_light_fp2_main_off
@@ -909,231 +872,3 @@ automation:
       - action: media_player.media_stop
         target:
           entity_id: media_player.kitchen_echo
-
-
-  # - alias: Set Dishwasher Announcement Time
-  #   id: kitchen_set_dishwasher_announcement_time
-  #   initial_state: true
-  #   trigger:
-  #     - platform: state
-  #       entity_id: binary_sensor.dishwasher_active
-  #       from: 'on'
-  #       to: 'off'
-  #       for:
-  #         minutes: 33
-  #   condition:
-  #     - condition: template  # Ensure 2 hours since last triggered
-  #       value_template: >-
-  #         {{ as_timestamp(now()) - as_timestamp(state_attr('automation.set_dishwasher_announcement_time', 'last_triggered')) | int > 7200 }}
-  #     - condition: template
-  #       value_template: >-
-  #         {{
-  #           distance(
-  #             state_attr('zone.home', 'latitude'),
-  #             state_attr('zone.home', 'longitude'),
-  #             state_attr('person.roi_benita', 'latitude'),
-  #             state_attr('person.roi_benita', 'longitude')
-  #           ) | int < 120
-  #         }}
-  #   action:
-  #     - action: input_boolean.turn_on
-  #       target:
-  #         entity_id: input_boolean.dishwasher_message_scheduled
-
-  #     - choose:
-  #         - conditions:
-  #             - condition: time  # Check if cycle completed after midnight
-  #               after: '00:00:00'
-  #               before: '06:00:00'
-  #           sequence:
-  #             - choose:
-  #                 - conditions:
-  #                     - condition: state
-  #                       entity_id: sensor.school_is_high_vacation
-  #                       state: 'True'
-  #                   sequence:
-  #                     - action: input_datetime.set_datetime
-  #                       target:
-  #                         entity_id: input_datetime.dishwasher_announcement_time
-  #                       data:
-  #                         datetime: "{{ now().replace(hour=8, minute=0, second=0) }}"  # Morning time if vacation
-  #         - conditions:
-  #             - condition: state
-  #               entity_id: person.roi_benita
-  #               state: 'home'
-  #           sequence:
-  #             - action: notify.ohad_whatsapp_api
-  #               data:
-  #                 message: Dishwasher cycle complete, please unload the dishes
-  #                 title: Chore notification
-  #                 target: !secret roi_benita_whatsapp_user_id
-  #                 data:
-  #                   media_url: {}
-  #         - conditions:
-  #             - condition: template
-  #               value_template: >-
-  #                 {{ not is_state('person.roi_benita', 'home') }}
-  #           sequence:
-  #             - action: input_boolean.turn_on
-  #               target:
-  #                 entity_id: input_boolean.dishwasher_message_scheduled
-
-
-  # - alias: Announce Dishwasher Cycle Completion
-  #   id: announce_dishwasher_cycle_completion
-  #   initial_state: true
-  #   trigger:
-  #     - platform: time
-  #       at: input_datetime.dishwasher_announcement_time
-  #       id: input_datetime
-  #     - platform: state
-  #       entity_id: person.roi_benita
-  #       to: 'home'
-  #       id: person_arrival
-
-  #   condition:
-  #     - condition: state
-  #       entity_id: binary_sensor.dishwasher_active
-  #       state: 'off'
-  #     - condition: template  # Ensure 2 hours since last triggered
-  #       value_template: >-
-  #         {{ as_timestamp(now()) - as_timestamp(state_attr('automation.announce_dishwasher_cycle_completion', 'last_triggered')) | int > 7200 }}
-  #     - condition: state
-  #       entity_id: input_boolean.dishwasher_message_scheduled
-  #       state: 'on'
-
-  #   action:
-  #     - action: notify.mobile_app_rois_iphone
-  #       data:
-  #         title: Chore notification
-  #         message: Dishwasher cycle completed, please unload the dishes
-
-  #     - action: input_boolean.turn_off
-  #       target:
-  #         entity_id: input_boolean.dishwasher_message_scheduled
-
-  # - alias: Set Dishwasher Announcement Time
-  #   id: kitchen_set_dishwasher_announcement_time
-  #   initial_state: true
-  #   trigger:
-  #     - platform: state
-  #       entity_id: binary_sensor.dishwasher_active
-  #       from: 'on'
-  #       to: 'off'
-  #       for:
-  #         minutes: 33
-  #   condition:
-  #     - condition: template  # Ensure 2 hours since last triggered
-  #       value_template: >-
-  #         {{ as_timestamp(now())
-  #           - as_timestamp(state_attr('automation.kitchen_set_dishwasher_announcement_time', 'last_triggered'))
-  #           | int > 7200 }}
-  #     - condition: template  # ROI within 120 meters of home
-  #       value_template: >-
-  #         {{ distance(
-  #             state_attr('zone.home', 'latitude'),
-  #             state_attr('zone.home', 'longitude'),
-  #             state_attr('person.roi_benita', 'latitude'),
-  #             state_attr('person.roi_benita', 'longitude')
-  #           ) < 120 }}
-  #   action:
-  #     - action: input_datetime.set_datetime
-  #       target:
-  #         entity_id: input_datetime.dishwasher_announcement_time
-  #       data:
-  #         datetime: "{{ (now() + timedelta(minutes=1)).strftime('%Y-%m-%d %H:%M:%S') }}"
-  #     - action: input_boolean.turn_on
-  #       target:
-  #         entity_id: input_boolean.dishwasher_message_scheduled
-
-  # - alias: Announce Dishwasher Cycle Completion
-  #   id: announce_dishwasher_cycle_completion
-  #   initial_state: true
-  #   trigger:
-  #     - platform: time
-  #       at: input_datetime.dishwasher_announcement_time
-  #     - platform: state
-  #       entity_id: person.roi_benita
-  #       to: 'home'
-  #   condition:
-  #     - condition: state
-  #       entity_id: binary_sensor.dishwasher_active
-  #       state: 'off'
-  #     - condition: template
-  #       value_template: >-
-  #         {{ as_timestamp(now())
-  #           - as_timestamp(state_attr('automation.announce_dishwasher_cycle_completion','last_triggered'))
-  #           | int > 7200 }}
-  #     - condition: state
-  #       entity_id: input_boolean.dishwasher_message_scheduled
-  #       state: 'on'
-  #   action:
-  #     - action: notify.mobile_app_ohadbenita
-  #       data:
-  #         title: "Chore notification"
-  #         message: "הפעלת המדיח הסתיימה"
-  #         data:
-  #           actions:
-  #             - action: START_TIMER
-  #               title: "הזכר לי בעוד שעה"
-  #             - action: MARK_VACANT
-  #               title: "סיימתי לפנות"
-
-  #     - action: timer.start
-  #       target:
-  #         entity_id: timer.dishwasher_timer
-
-  #     - action: input_datetime.set_datetime
-  #       target:
-  #         entity_id: input_datetime.dishwasher_timer_started
-
-  #     - action: input_boolean.turn_off
-  #       target:
-  #         entity_id: input_boolean.dishwasher_message_scheduled
-
-
-  # - alias: Handle Dishwasher Notification – Mark Vacant
-  #   id: dishwasher_notification_mark_vacant
-  #   initial_state: true
-  #   trigger:
-  #     platform: event
-  #     event_type: mobile_app_notification_action
-  #     event_data:
-  #       action: MARK_VACANT
-  #   action:
-  #     - action: timer.cancel
-  #       target:
-  #         entity_id: timer.dishwasher_timer
-
-  #     - action: input_boolean.turn_on
-  #       target:
-  #         entity_id: input_boolean.dishwasher_vacant
-
-  #     - action: notify.mobile_app_ohadbenita
-  #       data:
-  #         title: "Dishwasher Unloaded"
-  #         message: >-
-  #           Roi unloaded the dishwasher after
-  #           {{ ((as_timestamp(now())
-  #               - as_timestamp(states.input_datetime.dishwasher_timer_started.state))
-  #               / 60) | int }}
-  #           minutes.
-
-
-  # - alias: Announce Dishwasher Timer Ended
-  #   id: announce_dishwasher_timer_ended
-  #   initial_state: true
-  #   trigger:
-  #     platform: event
-  #     event_type: timer.finished
-  #     event_data:
-  #       entity_id: timer.dishwasher_timer
-  #   action:
-  #     - action: notify.mobile_app_rois_iphone
-  #       data:
-  #         title: "Dishwasher Reminder"
-  #         message: "You didn't clear the dishwasher. Please unload it now"
-  #     - action: notify.mobile_app_ohadbenita
-  #       data:
-  #         title: "Dishwasher Reminder dismissed"
-  #         message: "Roi didn't clear the dishwasher"

@@ -83,6 +83,23 @@ input_button:
   start_cleaning_upper_s8:
     name: Start Cleaning (Upper floor / S8)
 
+input_number:
+  clean_passes:
+    name: Cleaning passes
+    min: 1
+    max: 2
+    step: 1
+    mode: box
+    initial: 1
+
+  clean_upper_passes_s8:
+    name: Cleaning passes (Upper floor / S8)
+    min: 1
+    max: 2
+    step: 1
+    mode: box
+    initial: 1
+
 
 timer:
   # Downstairs
@@ -276,7 +293,7 @@ automation:
                 {% if is_state('input_boolean.clean_living_room','on') %}{% set s = s + [27] %}{% endif %}
                 {% if is_state('input_boolean.clean_entrance','on') %}{% set s = s + [28] %}{% endif %}
                 {% if is_state('input_boolean.clean_hall','on') %}{% set s = s + [29] %}{% endif %}
-                {{ s }}
+                {{ [{'segments': s, 'repeat': states('input_number.clean_passes') | int(1)}] }}
 
           # Turn off every helper that was on
           - action: input_boolean.turn_off
@@ -357,7 +374,7 @@ automation:
                 {% if is_state('input_boolean.clean_upper_hallway','on') %}{% set s = s + [19] %}{% endif %}
                 {% if is_state('input_boolean.clean_upper_ella_room','on') %}{% set s = s + [20] %}{% endif %}
                 {% if is_state('input_boolean.clean_upper_stairs','on') %}{% set s = s + [22] %}{% endif %}
-                {{ s }}
+                {{ [{'segments': s, 'repeat': states('input_number.clean_upper_passes_s8') | int(1)}] }}
 
           # Turn off every helper that was on
           - action: input_boolean.turn_off

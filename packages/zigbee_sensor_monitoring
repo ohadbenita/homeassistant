@@ -207,9 +207,8 @@ automation:
 
             # Notify + latch ON
             - action: notify.send_message
-              target:
-                entity_id: notify.telegram_bot_659000495_155103022
               data:
+                entity_id: notify.telegram_bot_659000495_155103022
                 message: >-
                   ⚠️ *Zigbee watchdog*: `{{ sensor }}` has been *UNAVAILABLE*
                   since {{ since }}.
@@ -303,9 +302,8 @@ automation:
                 entity_id: "{{ latch }}"
 
             - action: notify.send_message
-              target:
-                entity_id: notify.telegram_bot_659000495_155103022
               data:
+                entity_id: notify.telegram_bot_659000495_155103022
                 message: >-
                   ✅ *Zigbee watchdog*: `{{ sensor }}` is back online and stable.
                 parse_mode: markdown

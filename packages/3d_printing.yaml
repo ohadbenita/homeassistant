@@ -5,6 +5,7 @@ input_datetime:
     has_date: true
     has_time: true
 
+
 sensor:
   - platform: history_stats
     name: "3D Print Active Time"
@@ -14,17 +15,29 @@ sensor:
     start: "{{ states('input_datetime.print_active_start_time') }}"
     end: "{{ now() }}"
 
-  - platform: command_line
-    name: 3D print latest timelapse filename
-    command: >
-      find /config/www -type f -name '*.mp4' -printf '%T@ %f\n' |
-      sort -n |
-      tail -1 |
-      awk '{print $2}'
-    scan_interval: 300
+
+command_line:
+  - sensor:
+      name: 3D print latest timelapse filename
+      command: >
+        find /config/www -type f -name '*.mp4' -printf '%T@ %f\n' |
+        sort -n |
+        tail -1 |
+        awk '{print $2}'
+      scan_interval: 300
+
 
 shell_command:
   download_latest_mp4_timelapse: '/config/scripts/download_latest_timelapse.sh'
+
+
+script:
+  reload_moonraker:
+    alias: Reload Moonraker
+    sequence:
+      - action: homeassistant.reload_config_entry
+        data:
+          entry_id: 01KAGP6872VWEN5BW0ZS6BZAHE
 
 
 template:
@@ -88,9 +101,8 @@ automation:
       - delay: '00:00:02'
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: "The 3D print has completed"
           data:
             photo:
@@ -103,19 +115,20 @@ automation:
     trigger:
       - platform: state
         entity_id: sensor.creality_ender_v3_ke_current_print_state
-        to: error
+        to:
+          - error
+          - paused
 
     action:
       - action: camera.snapshot
         data:
-          entity_id: camera.study_rpi3b_creality_nebula
+          entity_id: camera.creality_ender_v3_ke
           filename: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
       - delay: '00:00:02'
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: "The 3D print has come to an error. Here's a snapshot"
           data:
             photo:
@@ -218,9 +231,8 @@ automation:
       - delay: '00:00:02'
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: "A possible issue has been detected in the current 3D print"
           data:
             photo:
@@ -275,34 +287,3 @@ automation:
               - action: switch.turn_off
                 target:
                   entity_id: switch.shellyplus1pm_e465b8f12024_switch_0
-
-
-  # - alias: "3D Print Complete – Send Timelapse and Turn Off Fan"
-  #   id: 3d_print_complete
-  #   description: "Downloads the latest .mp4 timelapse, sends a Telegram link when a print completes, and turns off the exhaust fan if it's on."
-  #   trigger:
-  #     - platform: state
-  #       entity_id: sensor.creality_ender_v3_ke_current_print_state
-  #       from: printing
-  #       to: complete
-  #       for:
-  #         minutes: 1
-
-  #   action:
-  #     - action: switch.turn_off
-  #       target:
-  #         entity_id: switch.weto_03
-
-  #     - delay: "00:10:00"
-
-  #     - action: shell_command.download_latest_mp4_timelapse
-
-  #     - action: notify.send_message
-  #       target:
-  #         entity_id: notify.telegram_bot_659000495_155103022
-  #       data:
-  #         message: "Your latest 3D print timelapse is ready!"
-  #         data:
-  #           video:
-  #             - file: "/config/www/3d_print_latest_timelapse.mp4"
-  #               caption: "Latest Timelapse"

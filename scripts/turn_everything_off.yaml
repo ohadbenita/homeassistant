@@ -1,7 +1,206 @@
 ---
+turn_everything_off_live_activity:
+  alias: 'Turn Everything Off Live Activity Update'
+  mode: parallel
+  fields:
+    message:
+      description: 'Live Activity status text'
+    progress:
+      description: 'Progress percentage from 0 to 100'
+    color:
+      description: 'Progress color'
+    icon:
+      description: 'Live Activity icon'
+    tag:
+      description: 'Live Activity tag'
+    notify_rinat:
+      description: 'Whether to notify Rinat when she is home'
+  sequence:
+    - action: notify.mobile_app_ohadbenita
+      data:
+        title: 'Turning everything off'
+        message: '{{ message }}'
+        data:
+          tag: "{{ tag | default('turn_everything_off') }}"
+          live_update: true
+          progress: '{{ progress | int }}'
+          progress_max: 100
+          critical_text: '{{ progress | int }}%'
+          notification_icon: "{{ icon | default('mdi:power') }}"
+          notification_icon_color: "{{ color | default('#2196F3') }}"
+          color: "{{ color | default('#2196F3') }}"
+          progress_bar_color: "{{ color | default('#2196F3') }}"
+          url: /lovelace/sections
+
+    - condition: template
+      value_template: "{{ notify_rinat | default(true) | bool and is_state('person.rinat', 'home') }}"
+
+    - action: notify.mobile_app_rinats_iphone
+      data:
+        title: 'Turning everything off'
+        message: '{{ message }}'
+        data:
+          tag: "{{ tag | default('turn_everything_off') }}"
+          live_update: true
+          progress: '{{ progress | int }}'
+          progress_max: 100
+          critical_text: '{{ progress | int }}%'
+          notification_icon: "{{ icon | default('mdi:power') }}"
+          notification_icon_color: "{{ color | default('#2196F3') }}"
+          color: "{{ color | default('#2196F3') }}"
+          progress_bar_color: "{{ color | default('#2196F3') }}"
+          url: /lovelace/sections
+
+turn_everything_off_live_activity_clear:
+  alias: 'Turn Everything Off Live Activity Clear'
+  mode: parallel
+  fields:
+    tag:
+      description: 'Live Activity tag'
+  sequence:
+    - action: notify.mobile_app_ohadbenita
+      data:
+        message: 'clear_notification'
+        data:
+          tag: "{{ tag | default('turn_everything_off') }}"
+
+    - condition: template
+      value_template: "{{ notify_rinat | default(true) | bool and is_state('person.rinat', 'home') }}"
+
+    - action: notify.mobile_app_rinats_iphone
+      data:
+        message: 'clear_notification'
+        data:
+          tag: "{{ tag | default('turn_everything_off') }}"
+
+turn_everything_off_live_activity_demo:
+  alias: 'Turn Everything Off Live Activity Demo'
+  mode: single
+  sequence:
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        notify_rinat: false
+        message: 'Starting shutdown'
+        progress: 5
+        color: '#2196F3'
+        icon: mdi:home-export-outline
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        notify_rinat: false
+        message: 'Goodbye announced'
+        progress: 15
+        color: '#2196F3'
+        icon: mdi:speaker-message
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        notify_rinat: false
+        message: 'Closing small shutters'
+        progress: 30
+        color: '#2196F3'
+        icon: mdi:blinds
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        notify_rinat: false
+        message: 'Waiting for exit'
+        progress: 40
+        color: '#FFC107'
+        icon: mdi:timer-sand
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        notify_rinat: false
+        message: 'Locking doors'
+        progress: 55
+        color: '#FFC107'
+        icon: mdi:door-closed-lock
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        notify_rinat: false
+        message: 'Doors locked'
+        progress: 65
+        color: '#2196F3'
+        icon: mdi:lock-check
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        notify_rinat: false
+        message: 'Closing main shutters'
+        progress: 75
+        color: '#2196F3'
+        icon: mdi:blinds
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        notify_rinat: false
+        message: 'Closing upstairs shutters'
+        progress: 85
+        color: '#2196F3'
+        icon: mdi:blinds-horizontal-closed
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        notify_rinat: false
+        message: 'Turning off AC and lights'
+        progress: 95
+        color: '#2196F3'
+        icon: mdi:lightbulb-off
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        notify_rinat: false
+        message: 'Shutdown complete'
+        progress: 100
+        color: '#4CAF50'
+        icon: mdi:check-circle
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity_clear
+      data:
+        tag: turn_everything_off_demo
+
 turn_everything_off:
   alias: 'Turn Everything Off Script'
   sequence:
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Starting shutdown'
+        progress: 5
+        color: '#2196F3'
+        icon: mdi:home-export-outline
+
     - action: input_boolean.turn_on
       entity_id:
         - input_boolean.turn_everything_off_started
@@ -25,8 +224,15 @@ turn_everything_off:
     - action: script.alexa_notification
       data:
         alexa_device: media_player.kitchen_echo
-        volume: 0.45
+        volume: 0.3
         message: "Goodbye, {{ funny_suffix }}"
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Goodbye announced'
+        progress: 15
+        color: '#2196F3'
+        icon: mdi:speaker-message
 
     # Compute the shutter target position once using the existing rules:
     # - If sun is above horizon AND next sunset is >= 3h away -> position 15
@@ -50,9 +256,23 @@ turn_everything_off:
       data:
         position: "{{ target_pos | int }}"
 
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Closing small shutters'
+        progress: 30
+        color: '#2196F3'
+        icon: mdi:blinds
+
     # 2) Wait for either:
     #    - The entrance door is closed for 60s
     #    - OR no one is home for 10s
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Waiting for exit'
+        progress: 40
+        color: '#FFC107'
+        icon: mdi:timer-sand
+
     - wait_for_trigger:
         - platform: state
           entity_id: binary_sensor.entrance_door_contact
@@ -67,6 +287,13 @@ turn_everything_off:
       timeout: "00:05:00"
       continue_on_timeout: true
 
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Locking doors'
+        progress: 55
+        color: '#FFC107'
+        icon: mdi:door-closed-lock
+
     # Lock doors
     - action: lock.lock
       target:
@@ -75,6 +302,13 @@ turn_everything_off:
           - lock.kitchen_door
           - lock.kids_bathroom_door
 
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Doors locked'
+        progress: 65
+        color: '#2196F3'
+        icon: mdi:lock-check
+
     # 3) Now set ALL public-space shutters using the same computed target
     - action: cover.set_cover_position
       target:
@@ -82,12 +316,26 @@ turn_everything_off:
       data:
         position: "{{ target_pos | int }}"
 
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Closing main shutters'
+        progress: 75
+        color: '#2196F3'
+        icon: mdi:blinds
+
     # 3) Now set ALL second-floor shutters using the same computed target
     - action: cover.set_cover_position
       target:
         entity_id: group.second_floor_shutters
       data:
         position: "{{ target_pos | int }}"
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Closing upstairs shutters'
+        progress: 85
+        color: '#2196F3'
+        icon: mdi:blinds-horizontal-closed
 
     # Turn off AC and lights
     - action: homeassistant.turn_off
@@ -97,8 +345,134 @@ turn_everything_off:
           - group.all_ac
           - group.all_lights
 
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Turning off AC and lights'
+        progress: 95
+        color: '#2196F3'
+        icon: mdi:lightbulb-off
+
     - action: input_boolean.turn_off
       entity_id: input_boolean.turn_everything_off_failed
 
     - action: input_boolean.turn_off
       entity_id: input_boolean.turn_everything_off_started
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Shutdown complete'
+        progress: 100
+        color: '#4CAF50'
+        icon: mdi:check-circle
+
+    - delay: '00:10:00'
+
+    - action: script.turn_everything_off_live_activity_clear
+
+
+# Previous version before Live Activity changes - 2026-07-24
+# ---
+# turn_everything_off:
+#   alias: 'Turn Everything Off Script'
+#   sequence:
+#     - action: input_boolean.turn_on
+#       entity_id:
+#         - input_boolean.turn_everything_off_started
+#         - input_boolean.turn_everything_off_failed
+#
+#     - variables:
+#         funny_suffix: >-
+#           {{ [
+#             "see you soon.",
+#             "stay safe.",
+#             "don't break anything.",
+#             "behave yourselves.",
+#             "no parties.",
+#             "keep it quiet.",
+#             "no drama.",
+#             "stay cozy.",
+#             "lights out.",
+#             "house asleep."
+#           ] | random }}
+#
+#     - action: script.alexa_notification
+#       data:
+#         alexa_device: media_player.kitchen_echo
+#         volume: 0.3
+#         message: "Goodbye, {{ funny_suffix }}"
+#
+#     # Compute the shutter target position once using the existing rules:
+#     # - If sun is above horizon AND next sunset is >= 3h away -> position 15
+#     # - Otherwise -> position 0
+#     - variables:
+#         target_pos: >-
+#           {% set sun_state = states('sun.sun') %}
+#           {% set next_setting = state_attr('sun.sun','next_setting') %}
+#           {% if sun_state == 'above_horizon'
+#                 and next_setting is not none
+#                 and (as_timestamp(next_setting) - as_timestamp(now())) >= 3 * 3600 %}
+#             45
+#           {% else %}
+#             45
+#           {% endif %}
+#
+#     # 1) First set ONLY the small shutters
+#     - action: cover.set_cover_position
+#       target:
+#         entity_id: group.public_space_small_shutters
+#       data:
+#         position: "{{ target_pos | int }}"
+#
+#     # 2) Wait for either:
+#     #    - The entrance door is closed for 60s
+#     #    - OR no one is home for 10s
+#     - wait_for_trigger:
+#         - platform: state
+#           entity_id: binary_sensor.entrance_door_contact
+#           to: 'off'
+#           for:
+#             seconds: 60
+#         - platform: numeric_state
+#           entity_id: sensor.people_at_home
+#           below: 1
+#           for:
+#             seconds: 10
+#       timeout: "00:05:00"
+#       continue_on_timeout: true
+#
+#     # Lock doors
+#     - action: lock.lock
+#       target:
+#         entity_id:
+#           - lock.entrance_door
+#           - lock.kitchen_door
+#           - lock.kids_bathroom_door
+#
+#     # 3) Now set ALL public-space shutters using the same computed target
+#     - action: cover.set_cover_position
+#       target:
+#         entity_id: group.public_space_shutters
+#       data:
+#         position: "{{ target_pos | int }}"
+#
+#     # 3) Now set ALL second-floor shutters using the same computed target
+#     - action: cover.set_cover_position
+#       target:
+#         entity_id: group.second_floor_shutters
+#       data:
+#         position: "{{ target_pos | int }}"
+#
+#     # Turn off AC and lights
+#     - action: homeassistant.turn_off
+#       continue_on_error: true
+#       target:
+#         entity_id:
+#           - group.all_ac
+#           - group.all_lights
+#
+#     - action: input_boolean.turn_off
+#       entity_id: input_boolean.turn_everything_off_failed
+#
+#     - action: input_boolean.turn_off
+#       entity_id: input_boolean.turn_everything_off_started
+#

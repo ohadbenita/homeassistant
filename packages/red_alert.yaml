@@ -13,6 +13,7 @@ automation:
 
       - platform: state
         entity_id: sensor.oref_alert_lehavim
+        from: "alert"
         to: "ok"
         id: ok
 
@@ -92,9 +93,8 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: >-
             Red alert in Lehavim, you got 45 seconds to get to a shelter
 
@@ -143,8 +143,7 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: >-
             Red alert in Jerusalem, check on Ella

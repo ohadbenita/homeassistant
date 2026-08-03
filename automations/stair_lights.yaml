@@ -106,6 +106,14 @@
         - condition: numeric_state
           entity_id: sensor.people_at_home
           above: 0
+    - condition: or
+      conditions:
+        - condition: sun
+          before: sunrise
+          before_offset: "02:00:00"
+        - condition: sun
+          after: sunset
+          after_offset: "-01:00:00"
 
   action:
     - action: homeassistant.turn_on

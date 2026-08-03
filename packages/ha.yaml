@@ -63,7 +63,7 @@ template:
 
       - name: "Adi iPhone Location Permission"
         state: >
-          {{ states('sensor.iphone_location_permission') != 'Authorized Always' }}
+          {{ states('sensor.adis_iphone_location_permission') != 'Authorized Always' }}
         device_class: problem
 
   - binary_sensor:
@@ -98,7 +98,7 @@ template:
       - name: "Adi iPhone Charging"
         unique_id: adi_iphone_charging
         state: >
-          {% set s = states('sensor.iphone_battery_state') | lower %}
+          {% set s = states('sensor.adis_iphone_battery_state') | lower %}
           {{ s in ['charging', 'full', 'wireless charging'] }}
         device_class: battery_charging
 
@@ -182,16 +182,15 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: >-
             A new version of Home Assistant is available, {{ states('sensor.hass_docker_version') }}, while existing local version is {{states('sensor.current_local_version') }}
 
             Link: {{ state_attr('sensor.home_assistant_released_version', 'html_url') }}
 
       - action: input_text.set_value
-        data_template:
+        data:
           entity_id: input_text.hass_last_notified_available_version
           value: "{{ states('sensor.hass_docker_version') }}"
 
@@ -216,9 +215,8 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: >-
             HASS has been upgraded from {{states('input_text.hass_last_notified_upgraded_version')}} to {{states('sensor.current_local_version')}}, you can find the release notes @ https://github.com/home-assistant/home-assistant/releases/{{states('sensor.current_local_version')}}
 
@@ -240,9 +238,8 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: |
             {{ trigger.topic.split('/')[1] }} is {{ trigger.payload }}
 
@@ -260,8 +257,8 @@ automation:
             'lock.kids_bathroom_door',
             'switch.irrigation_l1',
             'climate.living_room_ac_smartair',
-            'climate.master_bedroom_ac',
-            'climate.ella_ac',
+            'climate.master_bedroom_ac_smartair',
+            'climate.ella_room_ac_smartair',
             'cover.living_room_middle_window',
             'cover.living_room_right_window',
             'cover.shelly2pmg3_34cdb0776380_cover_0',
@@ -276,9 +273,8 @@ automation:
           {{- not (avail(core_devices) | bool) -}}
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: >
             The following devices are offline:
             {%- for entity_id in [
@@ -287,8 +283,8 @@ automation:
               'lock.kids_bathroom_door',
               'switch.irrigation_l1',
               'climate.living_room_ac_smartair',
-              'climate.master_bedroom_ac',
-              'climate.ella_ac',
+              'climate.master_bedroom_ac_smartair',
+              'climate.ella_room_ac_smartair',
               'cover.living_room_middle_window',
               'cover.living_room_right_window',
               'cover.shelly2pmg3_34cdb0776380_cover_0',
@@ -323,12 +319,13 @@ automation:
               - sensor.ohadbenita_battery_level
               - sensor.rinats_iphone_battery_level
               - sensor.rois_iphone_battery_level
-              - sensor.iphone_battery_level
+              - sensor.adis_iphone_battery_level
               - sensor.ohadbenita_watch_battery
               - sensor.clinic_door_entrance_battery
               - sensor.living_room_01_battery
               - sensor.ketem_tracker_battery
               - binary_sensor.entrance_door_battery_charging
+              - sensor.kitchen_shutter_battery
           low_battery_devices: >
             {% set threshold = states('input_number.battery_low_level_threshold') | int %}
             {% set exclude = exclude %}
@@ -350,18 +347,16 @@ automation:
               value_template: "{{ low_battery_devices | length > 0 }}"
           sequence:
             - action: notify.send_message
-              target:
-                entity_id: notify.telegram_bot_659000495_155103022
               data:
+                entity_id: notify.telegram_bot_659000495_155103022
                 title: "Low Battery Alert"
                 message: >
                   The following devices have low battery levels (below {{ threshold }}%):
                   {{ low_battery_devices }}
         default:
           - action: notify.send_message
-            target:
-              entity_id: notify.telegram_bot_659000495_155103022
             data:
+              entity_id: notify.telegram_bot_659000495_155103022
               title: "Battery Check"
               message: "All devices have sufficient battery levels."
 
@@ -412,9 +407,8 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: >
             {% set updates = states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | list %}
             {% if updates | count > 0 %}
@@ -450,9 +444,8 @@ automation:
             {{ states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: "Triggered installation of pending firmware updates"
 
 
@@ -471,9 +464,8 @@ automation:
         entity_id: input_boolean.skip_firmware_updates
 
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: "Update check will be snoozed by end of week"
 
 
@@ -508,9 +500,8 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
+        data:
           entity_id: notify.telegram_bot_659000495_155103022
-        data_template:
           message: One of the Synology disks is malfunctioning, please check it as soon as possible.
 
 
@@ -524,27 +515,10 @@ automation:
 
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Synology security status - unsafe"
           message: "Synology's security status changed to unsafe, please check security advisor for recent findings and recommendations"
-
-
-  - alias: "Alert on Grisha's bin being full"
-    id: ha_alert_grisha_bin_full
-    initial_state: true
-    trigger:
-      platform: state
-      entity_id: binary_sensor.grisha_bin_full
-      to: 'on'
-
-    action:
-      - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
-        data:
-          message: "[Device maintenance] Grisha's bin is full."
 
 
   - alias: DST Warning
@@ -560,9 +534,8 @@ automation:
           {{ state_attr('binary_sensor.dst', 'next').days_to_event in [7,1] }}
     action:
       - action: notify.send_message
-        target:
-          entity_id: notify.telegram_bot_659000495_155103022
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           message: >
             {%- set next = state_attr('binary_sensor.dst', 'next') %}
             {%- set plural = 's' if next.days_to_event > 1 else '' %}
@@ -620,14 +593,14 @@ automation:
           - sensor.rois_iphone_storage
           - sensor.rinats_iphone_storage
           - sensor.ellas_iphone_storage
-          - sensor.iphone_storage
+          - sensor.adis_iphone_storage
           - sensor.ohadbenita_storage
         below: 2
 
     action:
       - action: >
           notify.mobile_app_{{
-            trigger.entity_id.split('.')[1].replace('_storage','') if trigger.entity_id != 'sensor.iphone_storage' else 'adidibenita'
+            trigger.entity_id.split('.')[1].replace('_storage','')
           }}
         data:
           message: >
@@ -665,9 +638,71 @@ automation:
           entity_id:
         actions:
           - action: notify.send_message
-            target:
+            data:
               entity_id: notify.telegram_bot_659000495_155103022
-            data_template:
               message: >-
                 Some Zigbee devices are offline:
                 {{ sensors }}
+
+
+  - alias: Xiaomi BLE sensors zero luminance alert
+    id: xiaomi_ble_sensors_zero_value_alert
+    mode: queued
+    max: 10
+
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.occupancy_sensor_a2f5_illuminance
+          - sensor.occupancy_sensor_fe31_illuminance
+          - sensor.occupancy_sensor_6cc0_illuminance
+          - sensor.occupancy_sensor_34f8_illuminance
+          - sensor.occupancy_sensor_71bf_illuminance
+          - sensor.occupancy_sensor_77b5_illuminance
+          - sensor.occupancy_sensor_808b_illuminance
+          - sensor.occupancy_sensor_1104_illuminance
+          - sensor.occupancy_sensor_3012_illuminance
+          - sensor.occupancy_sensor_5775_illuminance
+          - sensor.occupancy_sensor_7480_illuminance
+          - sensor.occupancy_sensor_a2f5_illuminance
+          - sensor.occupancy_sensor_a5d0_illuminance
+          - sensor.occupancy_sensor_a206_illuminance
+          - sensor.occupancy_sensor_b978_illuminance
+          - sensor.occupancy_sensor_e2bc_illuminance
+          - sensor.roi_computer_area_presence_sensor_illuminance
+        to: "0"
+        for:
+          hours: 6
+
+    variables:
+      telegram_target: notify.telegram_bot_659000495_155103022
+      sensor_entity: "{{ trigger.entity_id }}"
+      sensor_name: "{{ state_attr(trigger.entity_id, 'friendly_name') or trigger.entity_id }}"
+      sensor_value: "{{ states(trigger.entity_id) }}"
+
+    action:
+      - action: notify.send_message
+        data:
+          entity_id: "{{ telegram_target }}"
+          message: >-
+            Sensor {{ sensor_name }} has been at 0 for more than 6 hours.
+
+            Entity: {{ sensor_entity }}
+            Current value: {{ sensor_value }}
+
+
+  - id: power_cycle_parking_pergola_motion_unavailable
+    alias: Power cycle parking pergola when motion sensor unavailable
+    description: Power cycles Northern Roof USW Flex port 2 when the parking pergola motion sensor is unavailable.
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.parking_pergola_motion
+        to: "unavailable"
+        for:
+          minutes: 2
+    conditions: []
+    actions:
+      - action: button.press
+        target:
+          entity_id: button.northern_roof_usw_flex_port_2_power_cycle
+    mode: single
