@@ -120,15 +120,6 @@ main() {
   ensure_git_repo
   write_status "running" "Fetching $REMOTE/$BRANCH." "$(current_commit)"
 
-  if ! git diff --quiet || ! git diff --cached --quiet; then
-    log "Working tree has local changes. Refusing to sync."
-    git status --short
-    write_status "skipped_dirty_tree" \
-      "Working tree has local changes. Refusing to sync." \
-      "$(current_commit)"
-    exit 1
-  fi
-
   log "Fetching $REMOTE/$BRANCH"
   git fetch "$REMOTE" "$BRANCH"
 
@@ -137,6 +128,15 @@ main() {
   local upstream
   current="$(git rev-parse HEAD 2>/dev/null || true)"
   upstream="$(git rev-parse "$target")"
+
+  if [[ -n "$current" ]] && (! git diff --quiet || ! git diff --cached --quiet); then
+    log "Working tree has local changes. Refusing to sync."
+    git status --short
+    write_status "skipped_dirty_tree" \
+      "Working tree has local changes. Refusing to sync." \
+      "$(current_commit)"
+    exit 1
+  fi
 
   if [[ "$current" == "$upstream" ]]; then
     log "Already up to date at $current"
