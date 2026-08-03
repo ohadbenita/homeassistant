@@ -276,13 +276,25 @@ automation:
         data:
           title: Critical issues detected
           severity: Critical
-          message: >-
-            {{ state_attr('sensor.home_health_critical_issues', 'summary') }}
+          message: |
+            {% set critical_batteries = state_attr(
+              'sensor.home_health_low_batteries', 'critical_entities')
+              | default([], true) %}
+            {% set stale = state_attr(
+              'sensor.home_health_stale_last_seen', 'critical_entities')
+              | default([], true) %}
+            {% set unavailable = state_attr(
+              'sensor.home_health_watched_unavailable', 'entities')
+              | default([], true) %}
 
-            Check these sensor attributes for details:
-            sensor.home_health_low_batteries critical_entities,
-            sensor.home_health_stale_last_seen critical_entities,
-            sensor.home_health_watched_unavailable entities.
+            Critical batteries ({{ critical_batteries | count }}):
+            {{ critical_batteries | join('\n') if critical_batteries else 'None' }}
+
+            Stale last-seen over 24h ({{ stale | count }}):
+            {{ stale | join('\n') if stale else 'None' }}
+
+            Watched unavailable ({{ unavailable | count }}):
+            {{ unavailable | join('\n') if unavailable else 'None' }}
 
   - alias: Home Health critical recovery
     id: home_health_critical_recovery
