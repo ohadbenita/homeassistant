@@ -16,8 +16,9 @@ automation:
       - condition: template
         value_template: "{{ now().month in [6, 7, 8, 9] }}"
     action:
-      - action: notify.telegram_bot_659000495_155103022
+      - action: notify.send_message
         data:
+          entity_id: notify.telegram_bot_659000495_155103022
           title: "Boiler possible leak"
           message: >-
             Boiler temperature dropped below 50°C while away during summer.
