@@ -7,6 +7,7 @@ BRANCH="${BRANCH:-master}"
 RELOAD_AFTER_SYNC="${RELOAD_AFTER_SYNC:-0}"
 LOCK_FILE="${LOCK_FILE:-.ha_git_sync.lock}"
 STATUS_FILE="${STATUS_FILE:-www/github_sync_status.json}"
+export GIT_CONFIG_GLOBAL="${GIT_CONFIG_GLOBAL:-$PWD/.gitconfig}"
 
 log() {
   printf '[%s] %s\n' "$(date -Iseconds)" "$*"
@@ -49,6 +50,8 @@ current_commit() {
 }
 
 ensure_git_repo() {
+  git config --global --add safe.directory "$(pwd)"
+
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     log "Initializing git repository in $(pwd)"
     git init
