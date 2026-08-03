@@ -9,6 +9,10 @@ LOCK_FILE="${LOCK_FILE:-.ha_git_sync.lock}"
 STATUS_FILE="${STATUS_FILE:-www/github_sync_status.json}"
 export GIT_CONFIG_GLOBAL="${GIT_CONFIG_GLOBAL:-$PWD/.gitconfig}"
 
+git() {
+  command git -c safe.directory="$(pwd)" "$@"
+}
+
 log() {
   printf '[%s] %s\n' "$(date -Iseconds)" "$*"
 }
