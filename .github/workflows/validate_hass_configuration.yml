@@ -61,3 +61,61 @@ jobs:
           docker run --rm -v $PWD:/config \
             ghcr.io/home-assistant/home-assistant:stable \
             python /usr/src/homeassistant/homeassistant/scripts/check_config.py -c /config
+
+  sync:
+    name: Sync live Home Assistant host
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    env:
+      HA_SYNC_HOST: ${{ secrets.HA_SYNC_HOST }}
+      HA_SYNC_USER: ${{ secrets.HA_SYNC_USER }}
+      HA_SYNC_SSH_KEY: ${{ secrets.HA_SYNC_SSH_KEY }}
+      HA_SYNC_PORT: ${{ secrets.HA_SYNC_PORT }}
+      HA_SYNC_PATH: ${{ vars.HA_SYNC_PATH }}
+      HA_SYNC_CHECK_CMD: ${{ vars.HA_SYNC_CHECK_CMD }}
+      HA_SYNC_RELOAD_CMD: ${{ vars.HA_SYNC_RELOAD_CMD }}
+
+    steps:
+      - name: Check SSH configuration
+        id: ssh_config
+        run: |
+          if [ -z "$HA_SYNC_HOST" ] || \
+             [ -z "$HA_SYNC_USER" ] || \
+             [ -z "$HA_SYNC_SSH_KEY" ]; then
+            echo "::notice::HA sync SSH secrets are not configured; skipping."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
+      - name: Configure SSH key
+        if: steps.ssh_config.outputs.configured == 'true'
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$HA_SYNC_SSH_KEY" > ~/.ssh/ha_sync_key
+          chmod 600 ~/.ssh/ha_sync_key
+
+      - name: Run safe sync on HA host
+        if: steps.ssh_config.outputs.configured == 'true'
+        run: |
+          port="${HA_SYNC_PORT:-22}"
+          path="${HA_SYNC_PATH:-/config/workspace/hass-config}"
+          check_cmd="${HA_SYNC_CHECK_CMD:-hass --script check_config -c \"\$PWD\"}"
+          reload_cmd="${HA_SYNC_RELOAD_CMD:-ha core reload || ha core restart}"
+          remote_script="/tmp/ha-sync-from-git.sh"
+
+          ssh -i ~/.ssh/ha_sync_key \
+            -p "$port" \
+            -o StrictHostKeyChecking=accept-new \
+            "$HA_SYNC_USER@$HA_SYNC_HOST" \
+            "cd '$path' && \
+             git fetch origin master && \
+             git show origin/master:scripts/sync_from_git.sh > '$remote_script' && \
+             chmod +x '$remote_script' && \
+             HA_CHECK_CMD='$check_cmd' \
+             RELOAD_AFTER_SYNC=1 \
+             HA_RELOAD_CMD='$reload_cmd' \
+             '$remote_script'"
