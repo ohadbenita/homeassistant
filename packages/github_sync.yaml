@@ -54,7 +54,7 @@ automation:
     mode: single
     trigger:
       - platform: webhook
-        webhook_id: !secret github_sync_webhook_id
+        webhook_id: 34ae915f3e055485d19b3ee581a4fa311396abed19dd52eec826fb8674275125
         allowed_methods:
           - POST
         local_only: false
