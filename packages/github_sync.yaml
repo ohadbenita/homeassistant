@@ -54,7 +54,7 @@ automation:
     mode: single
     trigger:
       - platform: webhook
-        webhook_id: 34ae915f3e055485d19b3ee581a4fa311396abed19dd52eec826fb8674275125
+        webhook_id: 19c15aacd0623b999e5191ddaa8aaf93845c814d
         allowed_methods:
           - POST
         local_only: false
