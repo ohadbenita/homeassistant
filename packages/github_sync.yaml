@@ -42,6 +42,8 @@ template:
 shell_command:
   sync_home_assistant_from_git: >-
     bash -lc 'cd /config/workspace/hass-config &&
+    STATUS_FILE=www/github_sync_status.json
+    HA_CHECK_CMD=true
     RELOAD_AFTER_SYNC=1
     HA_RELOAD_CMD="ha core restart"
     ./scripts/sync_from_git.sh'
