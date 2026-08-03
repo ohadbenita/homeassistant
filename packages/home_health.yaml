@@ -71,6 +71,20 @@ template:
               {% endif %}
             {% endfor %}
             {{ ns.items | sort }}
+          entities_text: >-
+            {% set ignored = label_entities('home_health_ignore')
+               + label_entities('home_health_ignore_battery') %}
+            {% set ns = namespace(items=[]) %}
+            {% for e in states.sensor
+               | selectattr('attributes.device_class', 'eq', 'battery') %}
+              {% if e.entity_id not in ignored
+                 and not e.entity_id.startswith('sensor.home_health_')
+                 and is_number(e.state)
+                 and e.state | float <= 20 %}
+                {% set ns.items = ns.items + [e.name ~ ': ' ~ e.state ~ '%'] %}
+              {% endif %}
+            {% endfor %}
+            {{ (ns.items | sort) | join('\n') }}
           critical_entities: >-
             {% set ignored = label_entities('home_health_ignore')
                + label_entities('home_health_ignore_battery') %}
@@ -99,6 +113,7 @@ template:
             {% set seen = as_datetime(e.state, none) %}
             {% if candidate
                and e.entity_id not in ignored
+               and not e.entity_id.startswith('sensor.home_health_')
                and seen is not none
                and now() - seen > timedelta(hours=6) %}
               {% set ns.count = ns.count + 1 %}
@@ -116,6 +131,7 @@ template:
               {% set seen = as_datetime(e.state, none) %}
               {% if candidate
                  and e.entity_id not in ignored
+                 and not e.entity_id.startswith('sensor.home_health_')
                  and seen is not none
                  and now() - seen > timedelta(hours=6) %}
                 {% set age = ((as_timestamp(now()) - as_timestamp(seen)) / 3600)
@@ -124,6 +140,25 @@ template:
               {% endif %}
             {% endfor %}
             {{ ns.items | sort }}
+          entities_text: >-
+            {% set ignored = label_entities('home_health_ignore')
+               + label_entities('home_health_ignore_stale') %}
+            {% set ns = namespace(items=[]) %}
+            {% for e in states.sensor %}
+              {% set candidate = e.entity_id.endswith('_last_seen')
+                 or 'last seen' in e.name | lower %}
+              {% set seen = as_datetime(e.state, none) %}
+              {% if candidate
+                 and e.entity_id not in ignored
+                 and not e.entity_id.startswith('sensor.home_health_')
+                 and seen is not none
+                 and now() - seen > timedelta(hours=6) %}
+                {% set age = ((as_timestamp(now()) - as_timestamp(seen)) / 3600)
+                   | round(1) %}
+                {% set ns.items = ns.items + [e.name ~ ': ' ~ age ~ 'h'] %}
+              {% endif %}
+            {% endfor %}
+            {{ (ns.items | sort) | join('\n') }}
           critical_entities: >-
             {% set ignored = label_entities('home_health_ignore')
                + label_entities('home_health_ignore_stale') %}
@@ -134,6 +169,7 @@ template:
               {% set seen = as_datetime(e.state, none) %}
               {% if candidate
                  and e.entity_id not in ignored
+                 and not e.entity_id.startswith('sensor.home_health_')
                  and seen is not none
                  and now() - seen > timedelta(hours=24) %}
                 {% set age = ((as_timestamp(now()) - as_timestamp(seen)) / 3600)
@@ -142,7 +178,6 @@ template:
               {% endif %}
             {% endfor %}
             {{ ns.items | sort }}
-
       - name: Home Health Watched Unavailable
         unique_id: home_health_watched_unavailable
         icon: mdi:alert-circle-outline
@@ -177,6 +212,22 @@ template:
               {% endif %}
             {% endfor %}
             {{ ns.items | sort }}
+          entities_text: >-
+            {% set ignored = label_entities('home_health_ignore')
+               + label_entities('home_health_ignore_unavailable') %}
+            {% set watched = label_entities('home_health_watch')
+               + label_entities('home_health_critical') %}
+            {% set ns = namespace(items=[]) %}
+            {% for entity_id in watched | unique | list %}
+              {% if entity_id not in ignored
+                 and not entity_id.startswith('sensor.home_health_')
+                 and states(entity_id) in ['unavailable', 'unknown'] %}
+                {% set ns.items = ns.items
+                   + [state_attr(entity_id, 'friendly_name')
+                   ~ ': ' ~ states(entity_id)] %}
+              {% endif %}
+            {% endfor %}
+            {{ (ns.items | sort) | join('\n') }}
 
       - name: Home Health Critical Issues
         unique_id: home_health_critical_issues
