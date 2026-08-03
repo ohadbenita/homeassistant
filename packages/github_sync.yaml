@@ -6,7 +6,7 @@ command_line:
       name: GitHub Sync Status
       unique_id: github_sync_status
       command: >-
-        cat /config/workspace/hass-config/www/github_sync_status.json 2>/dev/null
+        cat /config/www/github_sync_status.json 2>/dev/null
         || echo '{"status":"never_run","message":"Sync has not run yet.",
         "commit":"","updated_at":""}'
       value_template: "{{ value_json.status }}"
@@ -41,7 +41,7 @@ template:
 
 shell_command:
   sync_home_assistant_from_git: >-
-    bash -lc 'cd /config/workspace/hass-config &&
+    bash -lc 'cd /config &&
     STATUS_FILE=www/github_sync_status.json
     HA_CHECK_CMD=true
     RELOAD_AFTER_SYNC=1
