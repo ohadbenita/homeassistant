@@ -798,9 +798,9 @@ automation:
       offset: "01:00:00"
 
     condition:
-      - condition: state
-        entity_id: binary_sensor.is_laundry_hanging
-        state: 'on'
+      - alias: "Alert only when the external laundry detector says laundry is hanging"
+        condition: template
+        value_template: "{{ states('binary_sensor.is_laundry_hanging') == 'on' }}"
       - alias: "Alert only if humidity is high"
         condition: numeric_state
         entity_id: sensor.openweathermap_humidity

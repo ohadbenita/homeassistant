@@ -16,7 +16,7 @@ automation:
       - condition: template
         value_template: "{{ now().month in [6, 7, 8, 9] }}"
     action:
-      - service: notify.telegram_bot_659000495_155103022
+      - action: notify.telegram_bot_659000495_155103022
         data:
           title: "Boiler possible leak"
           message: >-
