@@ -144,12 +144,10 @@ main() {
   fi
 
   if [[ -n "$current" ]] && (! git diff --quiet || ! git diff --cached --quiet); then
-    log "Working tree has local changes. Refusing to sync."
+    log "Working tree has local changes. Saving patch before sync."
     git status --short
-    write_status "skipped_dirty_tree" \
-      "Working tree has local changes. Refusing to sync." \
-      "$(current_commit)"
-    exit 1
+    mkdir -p backups
+    git diff > "backups/git-sync-$(date +%Y%m%d-%H%M%S).patch"
   fi
 
   if [[ -n "$current" ]] && ! git merge-base --is-ancestor HEAD "$target"; then
@@ -165,12 +163,8 @@ main() {
   git --work-tree="$WORKTREE_DIR" checkout -f "$target" -- .
   run_ha_config_check "$WORKTREE_DIR"
 
-  log "Validation passed. Fast-forwarding to $upstream"
-  if [[ -n "$current" ]]; then
-    git merge --ff-only "$target"
-  else
-    git reset --hard "$target"
-  fi
+  log "Validation passed. Resetting to $upstream"
+  git reset --hard "$target"
 
   reload_home_assistant
   write_status "success" "Synced successfully." "$(current_commit)"
