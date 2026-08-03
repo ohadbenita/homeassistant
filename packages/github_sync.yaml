@@ -1,6 +1,44 @@
 ---
 # Sync the live Home Assistant configuration from GitHub after CI passes.
 
+command_line:
+  - sensor:
+      name: GitHub Sync Status
+      unique_id: github_sync_status
+      command: >-
+        cat /config/workspace/hass-config/www/github_sync_status.json 2>/dev/null
+        || echo '{"status":"never_run","message":"Sync has not run yet.",
+        "commit":"","updated_at":""}'
+      value_template: "{{ value_json.status }}"
+      json_attributes:
+        - message
+        - commit
+        - updated_at
+
+template:
+  - sensor:
+      - name: GitHub Sync Message
+        unique_id: github_sync_message
+        icon: mdi:message-text-outline
+        state: >-
+          {{ state_attr('sensor.github_sync_status', 'message')
+             | default('Unknown', true) }}
+
+      - name: GitHub Sync Commit
+        unique_id: github_sync_commit
+        icon: mdi:source-commit
+        state: >-
+          {{ state_attr('sensor.github_sync_status', 'commit')
+             | default('Unknown', true) }}
+
+      - name: GitHub Sync Last Updated
+        unique_id: github_sync_last_updated
+        icon: mdi:clock-check-outline
+        device_class: timestamp
+        state: >-
+          {% set updated_at = state_attr('sensor.github_sync_status', 'updated_at') %}
+          {{ updated_at if updated_at else none }}
+
 shell_command:
   sync_home_assistant_from_git: >-
     bash -lc 'cd /config/workspace/hass-config &&
