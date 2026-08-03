@@ -190,7 +190,7 @@ ffplay -rtsp_transport tcp rtsp://127.0.0.1:8554/crealityNebula
 
 From another machine:
 
-```
+```text
 rtsp://<PI_IP>:8554/crealityNebula
 ```
 
@@ -204,7 +204,7 @@ rtsp://<PI_IP>:8554/crealityNebula
 ls -l /dev/video*
 ```
 
-2. Add a path:
+1. Add a path:
 
 ```yaml
 paths:
@@ -218,7 +218,7 @@ Restart MediaMTX:
 sudo systemctl restart mediamtx
 ```
 
-3. Create a second FFmpeg service:
+1. Create a second FFmpeg service:
 
 ```bash
 sudo nano /etc/systemd/system/ffmpeg-usb-rtsp-camera2.service
@@ -267,7 +267,7 @@ sudo systemctl enable --now ffmpeg-usb-rtsp-camera2
 ## 10. Troubleshooting
 
 | Symptom | Cause |
-|------|------|
+| ------- | ----- |
 | 400 Bad Request | RTSP path not defined |
 | Green blocks | CPU overloaded |
 | Restart loop | Camera not ready / permissions |
