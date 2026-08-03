@@ -2,6 +2,7 @@
 set -euo pipefail
 
 REMOTE="${REMOTE:-origin}"
+REMOTE_URL="${REMOTE_URL:-https://github.com/ohadbenita/homeassistant.git}"
 BRANCH="${BRANCH:-master}"
 RELOAD_AFTER_SYNC="${RELOAD_AFTER_SYNC:-0}"
 LOCK_FILE="${LOCK_FILE:-.ha_git_sync.lock}"
@@ -41,6 +42,31 @@ PY
 
   printf '{"status":"%s","message":"%s","commit":"%s","updated_at":"%s"}\n' \
     "$status" "$message" "$commit" "$now" > "$STATUS_FILE"
+}
+
+current_commit() {
+  git rev-parse --short HEAD 2>/dev/null || true
+}
+
+ensure_git_repo() {
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    log "Initializing git repository in $(pwd)"
+    git init
+  fi
+
+  if ! git remote get-url "$REMOTE" >/dev/null 2>&1; then
+    log "Adding git remote $REMOTE"
+    git remote add "$REMOTE" "$REMOTE_URL"
+  fi
+}
+
+handle_error() {
+  local failed_command="$1"
+
+  write_status \
+    "failed" \
+    "Sync failed while running: $failed_command" \
+    "$(current_commit)"
 }
 
 run_ha_config_check() {
@@ -84,21 +110,22 @@ main() {
 
   if [[ -e "$LOCK_FILE" ]]; then
     log "Sync already running or stale lock exists: $LOCK_FILE"
-    write_status "failed" "Sync already running or stale lock exists." "$(git rev-parse --short HEAD)"
+    write_status "failed" "Sync already running or stale lock exists." "$(current_commit)"
     exit 1
   fi
 
   trap 'rm -f "$LOCK_FILE"; [[ -n "${WORKTREE_DIR:-}" ]] && rm -rf "$WORKTREE_DIR"' EXIT
-  trap 'last_command=$BASH_COMMAND; write_status "failed" "Sync failed while running: $last_command" "$(git rev-parse --short HEAD 2>/dev/null || true)"' ERR
+  trap 'last_command=$BASH_COMMAND; handle_error "$last_command"' ERR
   printf '%s\n' "$$" > "$LOCK_FILE"
-  write_status "running" "Fetching $REMOTE/$BRANCH." "$(git rev-parse --short HEAD)"
+  ensure_git_repo
+  write_status "running" "Fetching $REMOTE/$BRANCH." "$(current_commit)"
 
   if ! git diff --quiet || ! git diff --cached --quiet; then
     log "Working tree has local changes. Refusing to sync."
     git status --short
     write_status "skipped_dirty_tree" \
       "Working tree has local changes. Refusing to sync." \
-      "$(git rev-parse --short HEAD)"
+      "$(current_commit)"
     exit 1
   fi
 
@@ -108,20 +135,20 @@ main() {
   local target="$REMOTE/$BRANCH"
   local current
   local upstream
-  current="$(git rev-parse HEAD)"
+  current="$(git rev-parse HEAD 2>/dev/null || true)"
   upstream="$(git rev-parse "$target")"
 
   if [[ "$current" == "$upstream" ]]; then
     log "Already up to date at $current"
-    write_status "success" "Already up to date." "$(git rev-parse --short HEAD)"
+    write_status "success" "Already up to date." "$(current_commit)"
     exit 0
   fi
 
-  if ! git merge-base --is-ancestor HEAD "$target"; then
+  if [[ -n "$current" ]] && ! git merge-base --is-ancestor HEAD "$target"; then
     log "Remote is not a fast-forward from local HEAD. Refusing to sync."
     write_status "failed" \
       "Remote is not a fast-forward from local HEAD. Refusing to sync." \
-      "$(git rev-parse --short HEAD)"
+      "$(current_commit)"
     exit 1
   fi
 
@@ -131,10 +158,15 @@ main() {
   run_ha_config_check "$WORKTREE_DIR"
 
   log "Validation passed. Fast-forwarding to $upstream"
-  git merge --ff-only "$target"
+  if [[ -n "$current" ]]; then
+    git merge --ff-only "$target"
+  else
+    git reset --hard "$target"
+  fi
+
   reload_home_assistant
-  write_status "success" "Synced successfully." "$(git rev-parse --short HEAD)"
-  log "Sync complete at $(git rev-parse --short HEAD)"
+  write_status "success" "Synced successfully." "$(current_commit)"
+  log "Sync complete at $(current_commit)"
 }
 
 main "$@"
