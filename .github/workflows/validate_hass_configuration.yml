@@ -69,24 +69,50 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
 
     env:
-      HA_SYNC_WEBHOOK_URL: ${{ secrets.HA_SYNC_WEBHOOK_URL }}
+      HA_URL: ${{ secrets.HA_URL }}
+      HA_TOKEN: ${{ secrets.HA_TOKEN }}
 
     steps:
-      - name: Check webhook configuration
-        id: webhook_config
+      - name: Check Home Assistant sync configuration
+        id: sync_config
         run: |
-          if [ -z "$HA_SYNC_WEBHOOK_URL" ]; then
-            echo "::notice::HA sync webhook secret is not configured; skipping."
+          if [ -z "$HA_URL" ] || [ -z "$HA_TOKEN" ]; then
+            echo "::notice::HA sync secrets are not configured; skipping."
             echo "configured=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           echo "configured=true" >> "$GITHUB_OUTPUT"
 
-      - name: Call Home Assistant sync webhook
-        if: steps.webhook_config.outputs.configured == 'true'
+      - name: Request and verify live Home Assistant sync
+        if: steps.sync_config.outputs.configured == 'true'
         run: |
+          set -euo pipefail
+
+          short_sha="${GITHUB_SHA::7}"
+
           curl --fail --show-error --silent \
             --request POST \
-            --max-time 10 \
-            "$HA_SYNC_WEBHOOK_URL"
+            --header "Authorization: Bearer $HA_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            --max-time 30 \
+            "$HA_URL/api/services/shell_command/sync_home_assistant_from_git"
+
+          for _ in $(seq 1 60); do
+            status_json="$(curl --fail --show-error --silent \
+              "$HA_URL/local/github_sync_status.json?commit=$short_sha")"
+            status="$(printf '%s' "$status_json" | jq -r '.status // ""')"
+            commit="$(printf '%s' "$status_json" | jq -r '.commit // ""')"
+
+            if [ "$status" = "success" ] && [ "$commit" = "$short_sha" ]; then
+              echo "Home Assistant synced $short_sha."
+              exit 0
+            fi
+
+            echo "Waiting for Home Assistant sync: status=$status commit=$commit"
+            sleep 5
+          done
+
+          echo "Home Assistant did not report a successful sync to $short_sha."
+          exit 1
