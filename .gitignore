@@ -5,6 +5,7 @@ secrets.yaml
 __pycache__/
 .vscode/
 .cloud/
+.storage
 .storage/
 custom_components/
 backups/
