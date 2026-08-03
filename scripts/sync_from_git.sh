@@ -136,6 +136,13 @@ main() {
   current="$(git rev-parse HEAD 2>/dev/null || true)"
   upstream="$(git rev-parse "$target")"
 
+  if [[ "$current" == "$upstream" ]]; then
+    log "Already up to date at $current"
+    git reset --hard "$target"
+    write_status "success" "Already up to date." "$(current_commit)"
+    exit 0
+  fi
+
   if [[ -n "$current" ]] && (! git diff --quiet || ! git diff --cached --quiet); then
     log "Working tree has local changes. Refusing to sync."
     git status --short
@@ -143,12 +150,6 @@ main() {
       "Working tree has local changes. Refusing to sync." \
       "$(current_commit)"
     exit 1
-  fi
-
-  if [[ "$current" == "$upstream" ]]; then
-    log "Already up to date at $current"
-    write_status "success" "Already up to date." "$(current_commit)"
-    exit 0
   fi
 
   if [[ -n "$current" ]] && ! git merge-base --is-ancestor HEAD "$target"; then
