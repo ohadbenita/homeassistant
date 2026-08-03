@@ -1,0 +1,307 @@
+# Home Health package.
+# Labels used by this package:
+# home_health_ignore, home_health_ignore_battery, home_health_ignore_stale,
+# home_health_ignore_unavailable, home_health_critical, home_health_watch.
+
+input_boolean:
+  home_health_alerts_enabled:
+    name: Home Health alerts enabled
+    icon: mdi:heart-pulse
+    initial: true
+
+script:
+  notify_home_health:
+    alias: Notify Home Health
+    mode: queued
+    fields:
+      title:
+        required: true
+        selector:
+          text:
+      severity:
+        default: Warning
+        selector:
+          text:
+      message:
+        required: true
+        selector:
+          text:
+            multiline: true
+    sequence:
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          message: >-
+            [HA] {{ severity | default('Warning') }}: {{ title }}
+
+            {{ message }}
+
+template:
+  - sensor:
+      - name: Home Health Low Batteries
+        unique_id: home_health_low_batteries
+        icon: mdi:battery-alert
+        state: >-
+          {% set ignored = label_entities('home_health_ignore')
+             + label_entities('home_health_ignore_battery') %}
+          {% set ns = namespace(count=0) %}
+          {% for e in states.sensor
+             | selectattr('attributes.device_class', 'eq', 'battery') %}
+            {% if e.entity_id not in ignored
+                 and not e.entity_id.startswith('sensor.home_health_')
+               and is_number(e.state)
+               and e.state | float <= 20 %}
+              {% set ns.count = ns.count + 1 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.count }}
+        attributes:
+          entities: >-
+            {% set ignored = label_entities('home_health_ignore')
+               + label_entities('home_health_ignore_battery') %}
+            {% set ns = namespace(items=[]) %}
+            {% for e in states.sensor
+               | selectattr('attributes.device_class', 'eq', 'battery') %}
+              {% if e.entity_id not in ignored
+                 and not e.entity_id.startswith('sensor.home_health_')
+                 and is_number(e.state)
+                 and e.state | float <= 20 %}
+                {% set ns.items = ns.items + [e.name ~ ': ' ~ e.state ~ '%'] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.items | sort }}
+          critical_entities: >-
+            {% set ignored = label_entities('home_health_ignore')
+               + label_entities('home_health_ignore_battery') %}
+            {% set ns = namespace(items=[]) %}
+            {% for e in states.sensor
+               | selectattr('attributes.device_class', 'eq', 'battery') %}
+              {% if e.entity_id not in ignored
+                 and not e.entity_id.startswith('sensor.home_health_')
+                 and is_number(e.state)
+                 and e.state | float <= 10 %}
+                {% set ns.items = ns.items + [e.name ~ ': ' ~ e.state ~ '%'] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.items | sort }}
+
+      - name: Home Health Stale Last Seen
+        unique_id: home_health_stale_last_seen
+        icon: mdi:clock-alert-outline
+        state: >-
+          {% set ignored = label_entities('home_health_ignore')
+             + label_entities('home_health_ignore_stale') %}
+          {% set ns = namespace(count=0) %}
+          {% for e in states.sensor %}
+            {% set candidate = e.entity_id.endswith('_last_seen')
+               or 'last seen' in e.name | lower %}
+            {% set seen = as_datetime(e.state, none) %}
+            {% if candidate
+               and e.entity_id not in ignored
+               and seen is not none
+               and now() - seen > timedelta(hours=6) %}
+              {% set ns.count = ns.count + 1 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.count }}
+        attributes:
+          entities: >-
+            {% set ignored = label_entities('home_health_ignore')
+               + label_entities('home_health_ignore_stale') %}
+            {% set ns = namespace(items=[]) %}
+            {% for e in states.sensor %}
+              {% set candidate = e.entity_id.endswith('_last_seen')
+                 or 'last seen' in e.name | lower %}
+              {% set seen = as_datetime(e.state, none) %}
+              {% if candidate
+                 and e.entity_id not in ignored
+                 and seen is not none
+                 and now() - seen > timedelta(hours=6) %}
+                {% set age = ((as_timestamp(now()) - as_timestamp(seen)) / 3600)
+                   | round(1) %}
+                {% set ns.items = ns.items + [e.name ~ ': ' ~ age ~ 'h'] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.items | sort }}
+          critical_entities: >-
+            {% set ignored = label_entities('home_health_ignore')
+               + label_entities('home_health_ignore_stale') %}
+            {% set ns = namespace(items=[]) %}
+            {% for e in states.sensor %}
+              {% set candidate = e.entity_id.endswith('_last_seen')
+                 or 'last seen' in e.name | lower %}
+              {% set seen = as_datetime(e.state, none) %}
+              {% if candidate
+                 and e.entity_id not in ignored
+                 and seen is not none
+                 and now() - seen > timedelta(hours=24) %}
+                {% set age = ((as_timestamp(now()) - as_timestamp(seen)) / 3600)
+                   | round(1) %}
+                {% set ns.items = ns.items + [e.name ~ ': ' ~ age ~ 'h'] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.items | sort }}
+
+      - name: Home Health Watched Unavailable
+        unique_id: home_health_watched_unavailable
+        icon: mdi:alert-circle-outline
+        state: >-
+          {% set ignored = label_entities('home_health_ignore')
+             + label_entities('home_health_ignore_unavailable') %}
+          {% set watched = label_entities('home_health_watch')
+             + label_entities('home_health_critical') %}
+          {% set ns = namespace(count=0) %}
+          {% for entity_id in watched | unique | list %}
+            {% if entity_id not in ignored
+                 and not entity_id.startswith('sensor.home_health_')
+               and states(entity_id) in ['unavailable', 'unknown'] %}
+              {% set ns.count = ns.count + 1 %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.count }}
+        attributes:
+          entities: >-
+            {% set ignored = label_entities('home_health_ignore')
+               + label_entities('home_health_ignore_unavailable') %}
+            {% set watched = label_entities('home_health_watch')
+               + label_entities('home_health_critical') %}
+            {% set ns = namespace(items=[]) %}
+            {% for entity_id in watched | unique | list %}
+              {% if entity_id not in ignored
+                 and not entity_id.startswith('sensor.home_health_')
+                 and states(entity_id) in ['unavailable', 'unknown'] %}
+                {% set ns.items = ns.items
+                   + [state_attr(entity_id, 'friendly_name')
+                   ~ ': ' ~ states(entity_id)] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.items | sort }}
+
+      - name: Home Health Critical Issues
+        unique_id: home_health_critical_issues
+        icon: mdi:alert-decagram
+        state: >-
+          {% set batteries = state_attr(
+             'sensor.home_health_low_batteries', 'critical_entities')
+             | default([], true) | count %}
+          {% set stale = state_attr(
+             'sensor.home_health_stale_last_seen', 'critical_entities')
+             | default([], true) | count %}
+          {% set unavailable = states('sensor.home_health_watched_unavailable')
+             | int(0) %}
+          {{ batteries + stale + unavailable }}
+        attributes:
+          summary: >-
+            Critical batteries: {{ state_attr(
+              'sensor.home_health_low_batteries', 'critical_entities')
+              | default([], true) | count }};
+            stale over 24h: {{ state_attr(
+              'sensor.home_health_stale_last_seen', 'critical_entities')
+              | default([], true) | count }};
+            watched unavailable: {{ states(
+              'sensor.home_health_watched_unavailable') | int(0) }}
+
+      - name: Home Health Summary
+        unique_id: home_health_summary
+        icon: mdi:home-heart
+        state: >-
+          {% set critical = states('sensor.home_health_critical_issues') | int(0) %}
+          {% set warnings = states('sensor.home_health_low_batteries') | int(0)
+             + states('sensor.home_health_stale_last_seen') | int(0)
+             + states('sensor.home_health_watched_unavailable') | int(0) %}
+          {% if critical > 0 %}
+            Critical
+          {% elif warnings > 0 %}
+            Warning
+          {% else %}
+            OK
+          {% endif %}
+        attributes:
+          low_batteries: "{{ states('sensor.home_health_low_batteries') | int(0) }}"
+          stale_last_seen: "{{ states('sensor.home_health_stale_last_seen') | int(0) }}"
+          watched_unavailable: "{{ states('sensor.home_health_watched_unavailable') | int(0) }}"
+          critical_issues: "{{ states('sensor.home_health_critical_issues') | int(0) }}"
+
+automation:
+  - alias: Home Health startup suppression
+    id: home_health_startup_suppression
+    mode: restart
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.home_health_alerts_enabled
+      - delay: "00:10:00"
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.home_health_alerts_enabled
+
+  - alias: Home Health daily digest
+    id: home_health_daily_digest
+    mode: single
+    trigger:
+      - platform: time
+        at: "08:30:00"
+    action:
+      - action: script.notify_home_health
+        data:
+          title: Daily digest
+          severity: "{{ states('sensor.home_health_summary') }}"
+          message: >-
+            Summary: {{ states('sensor.home_health_summary') }}
+
+            Low batteries: {{ states('sensor.home_health_low_batteries') }}
+            Stale last-seen: {{ states('sensor.home_health_stale_last_seen') }}
+            Watched unavailable: {{ states('sensor.home_health_watched_unavailable') }}
+
+            Details are available on the Home Health sensors.
+
+  - alias: Home Health critical alert
+    id: home_health_critical_alert
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.home_health_critical_issues
+        above: 0
+        for: "00:15:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.home_health_alerts_enabled
+        state: "on"
+    action:
+      - action: script.notify_home_health
+        data:
+          title: Critical issues detected
+          severity: Critical
+          message: >-
+            {{ state_attr('sensor.home_health_critical_issues', 'summary') }}
+
+            Check these sensor attributes for details:
+            sensor.home_health_low_batteries critical_entities,
+            sensor.home_health_stale_last_seen critical_entities,
+            sensor.home_health_watched_unavailable entities.
+
+  - alias: Home Health critical recovery
+    id: home_health_critical_recovery
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.home_health_critical_issues
+        to: "0"
+        for: "00:10:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.home_health_alerts_enabled
+        state: "on"
+      - condition: template
+        value_template: >-
+          {{ trigger.from_state is not none
+             and trigger.from_state.state | int(0) > 0 }}
+    action:
+      - action: script.notify_home_health
+        data:
+          title: Critical issues recovered
+          severity: Info
+          message: No critical Home Health issues remain.
