@@ -1,3 +1,4 @@
+---
 automation:
   - id: krakow_flight_possible_delay_alert
     alias: "Flights: Krakow flight possible delay alert"
