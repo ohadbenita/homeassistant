@@ -1,0 +1,25 @@
+---
+automation:
+  - alias: "Boiler possible leak alert while away in summer"
+    id: boiler_possible_leak_alert_while_away_in_summer
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.temperature_sensor_temperature
+        below: 50
+        for:
+          minutes: 10
+    condition:
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: "on"
+      - condition: template
+        value_template: "{{ now().month in [6, 7, 8, 9] }}"
+    action:
+      - service: notify.telegram_bot_659000495_155103022
+        data:
+          title: "Boiler possible leak"
+          message: >-
+            Boiler temperature dropped below 50°C while away during summer.
+            Current temperature is {{ states('sensor.temperature_sensor_temperature') }}°C.
+            This may indicate hot water is continuously leaving the boiler, possibly from a leak.
