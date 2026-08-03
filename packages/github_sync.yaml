@@ -1,0 +1,22 @@
+---
+# Sync the live Home Assistant configuration from GitHub after CI passes.
+
+shell_command:
+  sync_home_assistant_from_git: >-
+    bash -lc 'cd /config/workspace/hass-config &&
+    RELOAD_AFTER_SYNC=1
+    HA_RELOAD_CMD="ha core restart"
+    ./scripts/sync_from_git.sh'
+
+automation:
+  - alias: GitHub sync Home Assistant configuration
+    id: github_sync_home_assistant_configuration
+    mode: single
+    trigger:
+      - platform: webhook
+        webhook_id: !secret github_sync_webhook_id
+        allowed_methods:
+          - POST
+        local_only: false
+    action:
+      - action: shell_command.sync_home_assistant_from_git
