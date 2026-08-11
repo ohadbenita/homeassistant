@@ -500,14 +500,24 @@ automation:
         entity_id: switch.clinic_door_flood_light
 
 
-  - alias: Turn off clinic floodlight during daylight hours
-    id: yard_turn_off_clinic_door_light_during_daylight_hours
+  - alias: "Yard - Turn off lights during daylight hours"
+    id: yard_turn_off_lights_during_daylight_hours
+    mode: parallel
     trigger:
       - platform: state
-        entity_id: switch.clinic_door_flood_light
+        entity_id:
+          - switch.shellyplus2pm_fcb467a557a0_switch_0
+          - switch.shellyplus2pm_d48afc581860_switch_1
+          - switch.roof_lights_output_0
+          - switch.roof_lights_output_1
+          - switch.shelly1pmminig3_34b7dac88574_switch_0
+          - switch.shelly1pmminig3_34b7dac9ea68_switch_0
+          - switch.backyard_flood_light_near_clinic
+          - switch.clinic_door_flood_light
+          - light.south_yard_tree_floodlight
         to: "on"
         for:
-          minutes: 2
+          minutes: 5
 
     condition:
       - condition: sun
@@ -515,10 +525,14 @@ automation:
         after_offset: "00:15:00"
         before: sunset
         before_offset: "-00:15:00"
+      - condition: state
+        entity_id: input_boolean.yard_light_automations_bypass
+        state: "off"
 
     action:
       - action: homeassistant.turn_off
-        entity_id: switch.clinic_door_flood_light
+        target:
+          entity_id: "{{ trigger.entity_id }}"
 
   - alias: Sunset and Sunrise house sign control
     id: yard_house_sign_control
