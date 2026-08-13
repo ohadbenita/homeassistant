@@ -143,6 +143,11 @@ input_datetime:
     has_date: true
     has_time: true
 
+  indoor_plants_watering_snoozed_until:
+    name: Indoor plants watering snoozed until
+    has_date: true
+    has_time: true
+
 
 script:
   irrigation_cycle:
@@ -587,10 +592,16 @@ automation:
                         last_ts: "{{ state_attr(plant.last_watered_entity, 'timestamp') | float(0) }}"
                         interval_days: "{{ plant[season] | int }}"
                         days_since: "{{ ((now().timestamp() - last_ts) / 86400) | int }}"
+                        snoozed_until_ts: "{{ state_attr('input_datetime.indoor_plants_watering_snoozed_until', 'timestamp') | float(0) }}"
 
                     - if:
                         - condition: template
-                          value_template: "{{ last_ts > 0 and days_since >= interval_days }}"
+                          value_template: >-
+                            {{
+                              last_ts > 0 and
+                              days_since >= interval_days and
+                              snoozed_until_ts <= now().timestamp()
+                            }}
                       then:
                         - action: notify.mobile_app_ohadbenita
                           data:
@@ -601,6 +612,54 @@ automation:
                               Location: {{ plant.location }}.
                               Last watered {{ days_since }} days ago.
                               {{ season | title }} interval is {{ interval_days }} days.
+                            data:
+                              actions:
+                                - action: "SNOOZE_INDOOR_PLANT_1D"
+                                  title: "Snooze 1 day"
+                                  icon: "mdi:timer-outline"
+                                - action: "SNOOZE_INDOOR_PLANT_3D"
+                                  title: "Snooze 3 days"
+                                  icon: "mdi:timer-outline"
+                                - action: "SNOOZE_INDOOR_PLANT_7D"
+                                  title: "Snooze 1 week"
+                                  icon: "mdi:calendar-week"
+
+
+  - alias: Plants - snooze watering reminder
+    mode: queued
+    max: 5
+
+    trigger:
+      - platform: event
+        event_type: mobile_app_notification_action
+
+    condition:
+      - condition: template
+        value_template: >-
+          {{
+            trigger.event.data.action in [
+              'SNOOZE_INDOOR_PLANT_1D',
+              'SNOOZE_INDOOR_PLANT_3D',
+              'SNOOZE_INDOOR_PLANT_7D',
+            ]
+          }}
+
+    variables:
+      snooze_days: >-
+        {{
+          {
+            'SNOOZE_INDOOR_PLANT_1D': 1,
+            'SNOOZE_INDOOR_PLANT_3D': 3,
+            'SNOOZE_INDOOR_PLANT_7D': 7,
+          }[trigger.event.data.action]
+        }}
+
+    action:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.indoor_plants_watering_snoozed_until
+        data:
+          timestamp: "{{ (now().timestamp() + (snooze_days | int * 86400)) | int }}"
 
 
   - alias: Terrarium LED - 8 hour daylight cycle
