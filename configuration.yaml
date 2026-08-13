@@ -8,11 +8,6 @@ frontend:
   extra_module_url:
     - /local/card-mod.js
 
-lovelace:
-  resources:
-    - url: /local/mushroom.js
-      type: module
-
 homeassistant:
   packages: !include_dir_named packages/
   auth_mfa_modules:

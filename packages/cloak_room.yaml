@@ -21,9 +21,11 @@ rest_command:
   analyze_gas_water_heater_display:
     url: !secret analyze_gas_water_heater_display_url
     method: GET
+    timeout: 120
   analyze_gas_water_heater_display_init:
     url: !secret analyze_gas_water_heater_display_url_init
     method: GET
+    timeout: 120
 
 automation:
   - alias: "Turn on cloak room light on motion"
@@ -155,7 +157,10 @@ automation:
         event: start
 
     action:
+      - delay: '00:02:00'
+
       - action: rest_command.analyze_gas_water_heater_display_init
+        continue_on_error: true
 
 
   - alias: "Alert if water heater is out of order"

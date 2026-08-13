@@ -77,9 +77,11 @@ rest_command:
   analyze_laundry:
     url: !secret analyze_laundry_image_url
     method: GET
+    timeout: 120
   analyze_laundry_init:
     url: !secret analyze_laundry_image_url_init
     method: GET
+    timeout: 120
   analyze_lpg_auto_switcher:
     url: !secret analyze_lpg_auto_switcher_url
     method: GET
@@ -613,7 +615,10 @@ automation:
         event: start
 
     action:
+      - delay: '00:02:00'
+
       - action: rest_command.analyze_laundry_init
+        continue_on_error: true
 
 
 # =========================

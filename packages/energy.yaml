@@ -17,7 +17,7 @@ template:
         unique_id: "energy_should_display_energy_badge"
         delay_off: "01:00:00"
         state: >-
-          {{ states('sensor.solaredge_current_power') | int > 0 }}
+          {{ states('sensor.solaredge_current_power') | int(0) > 0 }}
 
       - name: "Last Three Days of Month"
         state: >
