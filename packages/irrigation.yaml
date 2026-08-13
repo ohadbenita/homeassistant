@@ -10,6 +10,7 @@
 sensor:
   - platform: history_stats
     name: Irrigation L3 On Time Last Week
+    unique_id: irrigation_l3_on_time_last_week
     entity_id: switch.irrigation_l3
     state: "on"
     type: time
@@ -19,6 +20,7 @@ sensor:
 
   - platform: history_stats
     name: Irrigation L3 On Time Last Month
+    unique_id: irrigation_l3_on_time_last_month
     entity_id: switch.irrigation_l3
     state: "on"
     type: time
@@ -28,6 +30,7 @@ sensor:
 
   - platform: history_stats
     name: Irrigation L4 On Time Last Week
+    unique_id: irrigation_l4_on_time_last_week
     entity_id: switch.irrigation_l4
     state: "on"
     type: time
@@ -37,6 +40,7 @@ sensor:
 
   - platform: history_stats
     name: Irrigation L4 On Time Last Month
+    unique_id: irrigation_l4_on_time_last_month
     entity_id: switch.irrigation_l4
     state: "on"
     type: time
@@ -46,6 +50,7 @@ sensor:
 
   - platform: history_stats
     name: Irrigation L5 On Time Last Week
+    unique_id: irrigation_l5_on_time_last_week
     entity_id: switch.irrigation_l5
     state: "on"
     type: time
@@ -55,6 +60,7 @@ sensor:
 
   - platform: history_stats
     name: Irrigation L5 On Time Last Month
+    unique_id: irrigation_l5_on_time_last_month
     entity_id: switch.irrigation_l5
     state: "on"
     type: time
