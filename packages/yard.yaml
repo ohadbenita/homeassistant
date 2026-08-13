@@ -615,7 +615,7 @@ automation:
         event: start
 
     action:
-      - delay: '00:02:00'
+      - delay: '00:00:30'
 
       - action: rest_command.analyze_laundry_init
         continue_on_error: true
