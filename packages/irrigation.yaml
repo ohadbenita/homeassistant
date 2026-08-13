@@ -13,6 +13,7 @@ sensor:
     entity_id: switch.irrigation_l3
     state: "on"
     type: time
+    min_state_duration: "00:00:00"
     start: "{{ now().replace(hour=0, minute=0, second=0) - timedelta(days=7) }}"
     end: "{{ now() }}"
 
@@ -21,6 +22,7 @@ sensor:
     entity_id: switch.irrigation_l3
     state: "on"
     type: time
+    min_state_duration: "00:00:00"
     start: "{{ now().replace(day=1, hour=0, minute=0, second=0) - timedelta(days=30) }}"
     end: "{{ now() }}"
 
@@ -29,6 +31,7 @@ sensor:
     entity_id: switch.irrigation_l4
     state: "on"
     type: time
+    min_state_duration: "00:00:00"
     start: "{{ now().replace(hour=0, minute=0, second=0) - timedelta(days=7) }}"
     end: "{{ now() }}"
 
@@ -37,6 +40,7 @@ sensor:
     entity_id: switch.irrigation_l4
     state: "on"
     type: time
+    min_state_duration: "00:00:00"
     start: "{{ now().replace(day=1, hour=0, minute=0, second=0) - timedelta(days=30) }}"
     end: "{{ now() }}"
 
@@ -45,6 +49,7 @@ sensor:
     entity_id: switch.irrigation_l5
     state: "on"
     type: time
+    min_state_duration: "00:00:00"
     start: "{{ now().replace(hour=0, minute=0, second=0) - timedelta(days=7) }}"
     end: "{{ now() }}"
 
@@ -53,6 +58,7 @@ sensor:
     entity_id: switch.irrigation_l5
     state: "on"
     type: time
+    min_state_duration: "00:00:00"
     start: "{{ now().replace(day=1, hour=0, minute=0, second=0) - timedelta(days=30) }}"
     end: "{{ now() }}"
 

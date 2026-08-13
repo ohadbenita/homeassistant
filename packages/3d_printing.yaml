@@ -12,6 +12,7 @@ sensor:
     entity_id: sensor.creality_ender_v3_ke_current_print_state
     state: "printing"
     type: time
+    min_state_duration: "00:00:00"
     start: "{{ states('input_datetime.print_active_start_time') }}"
     end: "{{ now() }}"
 

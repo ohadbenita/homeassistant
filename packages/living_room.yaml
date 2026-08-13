@@ -15,6 +15,7 @@ sensor:
     entity_id: binary_sensor.living_room_presence
     state: 'on'
     type: time
+    min_state_duration: "00:00:00"
     start: "{{ today_at('00:00') }}"
     end: "{{ now() }}"
 

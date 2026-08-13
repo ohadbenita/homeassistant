@@ -40,6 +40,7 @@ sensor:
     entity_id: binary_sensor.ketem  # yamllint disable-line rule:indentation
     state: "on"
     type: time
+    min_state_duration: "00:00:00"
     start: "{{ now().replace(hour=0, minute=0, second=0) }}"
     end: "{{ now() }}"
 
@@ -48,6 +49,7 @@ sensor:
     entity_id: binary_sensor.ketem
     state: "off"
     type: time
+    min_state_duration: "00:00:00"
     start: "{{ now().replace(hour=0, minute=0, second=0) }}"
     end: "{{ now() }}"
 
