@@ -337,7 +337,9 @@ automation:
           command: app_segment_clean
           params:
             - segments:
+                - 16
                 - 18
+                - 23
                 - 24
                 - 25
                 - 26
@@ -349,7 +351,7 @@ automation:
         data:
           alexa_device: media_player.kitchen_echo
           volume: 0.4
-          message: I just sent Yulanda to clean the living room, dining room, kitchen and hallway
+          message: I just sent Yulanda to clean the entrance, dining room, pantry, kitchen, living room and hallway
 
 
   - alias: Tami4 button - Toggle vacuum intensity
