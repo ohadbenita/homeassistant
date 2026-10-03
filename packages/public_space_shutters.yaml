@@ -76,13 +76,22 @@ automation:
     id: dining_room_shutters_close_before_sunset
     initial_state: true
     trigger:
-      - platform: sun
-        event: sunset
-        offset: "-01:00:00"
+      - trigger: sun.elevation_crossed_threshold
         id: offset_trigger
+        options:
+          threshold:
+            type: below
+            value:
+              number: 25
       - platform: sun
         event: sunset
-        id: sunset_trigger
+        id: sunset_trigger      # - platform: sun
+      #   event: sunset
+      #   offset: "-01:00:00"
+      #   id: offset_trigger
+      # - platform: sun
+      #   event: sunset
+      #   id: sunset_trigger
 
     condition:
       - condition: template
@@ -119,18 +128,15 @@ automation:
 
         - cover: cover.shelly2pmg3_e4b32313d15c_cover_0
           sensors:
-            - binary_sensor.living_room_left_window_01_contact
-            - binary_sensor.living_room_left_window_02_contact
+            - binary_sensor.living_room_left_window_contact
 
         - cover: cover.living_room_middle_window
           sensors:
-            - binary_sensor.living_room_middle_window_01_contact
+            - binary_sensor.living_room_middle_window_contact
 
         - cover: cover.living_room_right_window
           sensors:
-            - binary_sensor.living_room_right_window_01_contact
-            - binary_sensor.living_room_right_window_02_contact
-
+            - binary_sensor.living_room_right_window_contact
 
     action:
       - repeat:
@@ -204,6 +210,7 @@ automation:
         - cover: cover.living_room_middle_window
           sensors:
             - binary_sensor.living_room_middle_window_01_contact
+            - binary_sensor.living_room_middle_window_02_contact
 
         - cover: cover.living_room_right_window
           sensors:
@@ -650,6 +657,88 @@ automation:
     variables:
       button_action: "{{ trigger.to_state.state if trigger.to_state is not none else '' }}"
       cover_entity: cover.living_room_middle_window
+      cover_state: "{{ states(cover_entity) }}"
+      current_position: "{{ state_attr(cover_entity, 'current_position') | int(0) }}"
+
+    action:
+      - choose:
+          # Any button 1/2 press while the shutter is moving -> stop
+          - conditions:
+              - condition: template
+                value_template: >
+                  {{ button_action in [
+                    'button_1_single',
+                    'button_2_single',
+                    'button_1_double',
+                    'button_2_double'
+                  ] and cover_state in ['opening', 'closing'] }}
+            sequence:
+              - action: cover.stop_cover
+                target:
+                  entity_id: "{{ cover_entity }}"
+
+          # Button 1 single: open fully
+          - conditions:
+              - condition: template
+                value_template: "{{ button_action == 'button_1_single' }}"
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: "{{ cover_entity }}"
+                data:
+                  position: 100
+
+          # Button 2 single: close fully
+          - conditions:
+              - condition: template
+                value_template: "{{ button_action == 'button_2_single' }}"
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: "{{ cover_entity }}"
+                data:
+                  position: 0
+
+          # Button 1 double: +20% (cap at 100)
+          - conditions:
+              - condition: template
+                value_template: "{{ button_action == 'button_1_double' }}"
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: "{{ cover_entity }}"
+                data:
+                  position: >
+                    {% set nxt = current_position + 20 %}
+                    {{ [nxt, 100] | min }}
+
+          # Button 2 double: -20% (floor at 0)
+          - conditions:
+              - condition: template
+                value_template: "{{ button_action == 'button_2_double' }}"
+            sequence:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: "{{ cover_entity }}"
+                data:
+                  position: >
+                    {% set nxt = current_position - 20 %}
+                    {{ [nxt, 0] | max }}
+
+
+  - alias: "Living Room Left - Shutter button actions"
+    id: living_room_left_shutter_button_actions
+    initial_state: true
+    mode: queued
+    max: 3
+
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_left_shutter_button_action
+
+    variables:
+      button_action: "{{ trigger.to_state.state if trigger.to_state is not none else '' }}"
+      cover_entity: cover.shelly2pmg3_e4b32313d15c_cover_0
       cover_state: "{{ states(cover_entity) }}"
       current_position: "{{ state_attr(cover_entity, 'current_position') | int(0) }}"
 

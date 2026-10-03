@@ -74,30 +74,37 @@ automation:
   - alias: Washing Machine Cycle Detection and Count Increment
     id: chore_stats_update_washing_machine_cycles
     description: >
-      Detects when the washing machine power goes above 2000W and then waits for the sensor to show 0 for 10 minutes,
-      indicating that the cycle is complete. The cycle counter is then incremented.
+      Detect a sustained high-power start, then count the cycle after power stays near its observed idle level
+      (about 6 W) for 30 minutes so pauses within a wash are not counted as completion.
     trigger:
       - platform: numeric_state
         entity_id: sensor.washing_machine_energy_power
         above: 2000
+        for:
+          minutes: 1
     action:
-      - alias: Wait for sustained power-off (0 for 10 minutes)
+      - alias: Wait for sustained idle power
         wait_for_trigger:
           - platform: numeric_state
             entity_id: sensor.washing_machine_energy_power
-            below: 1
+            below: 10
             for:
-              minutes: 5
-        timeout: "03:30:00"
+              minutes: 30
+        timeout: "04:00:00"
         continue_on_timeout: false
-      - alias: Increment cycle count
+      - alias: Increment weekly cycle count
         service: input_text.set_value
         target:
           entity_id: input_text.washing_machine_cycles_completed_this_week
         data:
           value: "{{ (states('input_text.washing_machine_cycles_completed_this_week')|int + 1) }}"
+      - alias: Increment daily cycle count
+        service: input_text.set_value
+        target:
+          entity_id: input_text.washing_machine_cycles_completed_today
+        data:
+          value: "{{ (states('input_text.washing_machine_cycles_completed_today')|int + 1) }}"
     mode: single
-
   # - alias: Update washing machine cycles
   #   id: chore_stats_update_washing_machine_cycles
   #   initial_state: true

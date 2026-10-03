@@ -344,7 +344,7 @@ automation:
             data:
               additional_switches:
                 - switch.irrigation_l3
-              irrigation_duration_minutes: 7
+              irrigation_duration_minutes: 9
         else:
           - condition: state
             entity_id: input_boolean.away_mode
@@ -524,14 +524,6 @@ automation:
           last_watered_entity: input_datetime.zz_plant_snake_plant_last_watered
           summer: 21
           winter: 40
-
-        "2c912420-46f7-43ce-a89c-7a74e04a892e":
-          name: "Areca palm"
-          area: "Study"
-          location: "Near the SKADIS boards"
-          last_watered_entity: input_datetime.areca_palm_last_watered
-          summer: 7
-          winter: 9
 
         "f961c817-e892-4db0-96d4-4a894bf238b1":
           name: "Mount Everest succulent"

@@ -11,19 +11,17 @@ input_number:
 script:
   turn_balcony_fan_on:
     alias: 'Turn balcony fan on'
+    mode: restart
     sequence:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
-                state: 'off'
-            sequence:
-              - action: homeassistant.turn_on
-                entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
-              - delay: '00:00:05'
-        default:
-          - action: homeassistant.turn_on
-            entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
+      - action: homeassistant.turn_on
+        target:
+          entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
+
+      - wait_template: "{{ is_state('switch.shelly1pmminig3_34b7dac88574_switch_0', 'on') }}"
+        timeout: '00:01:00'
+        continue_on_timeout: false
+
+      - delay: '00:00:07'
 
       - choose:
           - conditions:
@@ -33,7 +31,6 @@ script:
               - action: light.turn_off
                 target:
                   entity_id: light.balcony_fan_light
-        default: []
 
       - action: remote.send_command
         target:
@@ -54,12 +51,27 @@ script:
 
   balcony_fan_set_speed:
     alias: "Set balcony fan speed"
+    mode: restart
     sequence:
       - action: input_number.set_value
         target:
           entity_id: input_number.balcony_fan_percentage
         data:
           value: "{{ percentage }}"
+
+      - if:
+          - condition: template
+            value_template: "{{ percentage | int > 0 }}"
+        then:
+          - action: homeassistant.turn_on
+            target:
+              entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
+
+          - wait_template: "{{ is_state('switch.shelly1pmminig3_34b7dac88574_switch_0', 'on') }}"
+            timeout: '00:01:00'
+            continue_on_timeout: false
+
+          - delay: '00:00:07'
 
       - choose:
           - conditions:
@@ -317,7 +329,7 @@ automation:
         entity_id: binary_sensor.parking_stairs_01_occupancy
         to: 'off'
         for:
-          minutes: 5
+          minutes: 15
 
     condition:
       - condition: state
@@ -417,12 +429,10 @@ automation:
         state: "off"
 
     action:
-      # Turn flood off (existing behavior)
       - action: homeassistant.turn_off
         entity_id:
           - light.parking_flood_light
 
-      # Restore balcony fan light to its previous state, if a snapshot exists
       - choose:
           - conditions:
               - condition: template
@@ -432,24 +442,3 @@ automation:
                 target:
                   entity_id: scene.pergola_fan_light_before_flood
         default: []
-
-  # - alias: "Turn off pergola fan light when no motion is detected"
-  #   id: balcony_turn_off_pergola_fan_light_when_no_motion_detected
-  #   initial_state: true
-  #   mode: single
-  #   trigger:
-  #     - platform: state
-  #       entity_id: binary_sensor.parking_stairs_01_occupancy
-  #       to: 'off'
-
-  #   condition:
-  #     - condition: state
-  #       entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0
-  #       state: 'on'
-  #     - condition: state
-  #       entity_id: automation.turn_off_parking_flood_lights_when_no_motion_is_detected
-  #       state: 'on'
-
-  #   action:
-  #     - action: homeassistant.turn_off
-  #       entity_id: switch.shelly1pmminig3_34b7dac88574_switch_0

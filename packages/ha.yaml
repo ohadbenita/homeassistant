@@ -302,7 +302,7 @@ automation:
 
   - alias: "Weekly Battery Level Check"
     id: ha_weekly_battery_level_check
-    initial_state: true
+    initial_state: false
     trigger:
       platform: time
       at: "09:00:00"

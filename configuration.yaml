@@ -6,7 +6,7 @@ default_config:
 frontend:
   themes: !include_dir_merge_named themes
   extra_module_url:
-    - /local/card-mod.js
+    - /hacsfiles/lovelace-card-mod/card-mod.js
 
 homeassistant:
   packages: !include_dir_named packages/
@@ -16,8 +16,19 @@ homeassistant:
     - /config/www/snapshots
 
 recorder:
-  purge_keep_days: 90
+  purge_keep_days: 30
   db_url: !secret hass_db_url
+  commit_interval: 30
+  exclude:
+    entity_globs:
+      - sensor.*_rssi
+      - sensor.*_signal
+      - sensor.*_uptime
+      - sensor.*_wifi_signal_strength*
+      - sensor.*estimated_distance*
+      - sensor.*illuminance*
+    domains:
+      - device_tracker
 
 automation: !include_dir_merge_list automations
 input_text: !include input_text.yaml

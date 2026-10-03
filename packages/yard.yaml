@@ -9,7 +9,7 @@ script:
             - switch.shellyplus2pm_d48afc581860_switch_1
             - switch.roof_lights_output_0
             - switch.roof_lights_output_1
-            - switch.shelly1pmminig3_34b7dac88574_switch_0
+            - light.parking_flood_light
             - switch.shelly1pmminig3_34b7dac9ea68_switch_0
             - switch.clinic_door_flood_light
 
@@ -23,7 +23,7 @@ template:
             is_state('switch.shellyplus2pm_d48afc581860_switch_1', 'on') and
             is_state('switch.roof_lights_output_0', 'on') and
             is_state('switch.roof_lights_output_1', 'on') and
-            is_state('switch.shelly1pmminig3_34b7dac88574_switch_0', 'on') and
+            is_state('light.parking_flood_light', 'on') and
             is_state('switch.clinic_door_flood_light', 'on') and
             is_state('switch.shelly1pmminig3_34b7dac9ea68_switch_0', 'on') and
             is_state('switch.backyard_flood_light_near_clinic', 'on')
@@ -38,7 +38,7 @@ template:
               - switch.shellyplus2pm_d48afc581860_switch_1
               - switch.roof_lights_output_0
               - switch.roof_lights_output_1
-              - switch.shelly1pmminig3_34b7dac88574_switch_0
+              - light.parking_flood_light
               - switch.shelly1pmminig3_34b7dac9ea68_switch_0
               - switch.backyard_flood_light_near_clinic
               - switch.clinic_door_flood_light
@@ -512,7 +512,7 @@ automation:
           - switch.shellyplus2pm_d48afc581860_switch_1
           - switch.roof_lights_output_0
           - switch.roof_lights_output_1
-          - switch.shelly1pmminig3_34b7dac88574_switch_0
+          - light.parking_flood_light
           - switch.shelly1pmminig3_34b7dac9ea68_switch_0
           - switch.backyard_flood_light_near_clinic
           - switch.clinic_door_flood_light

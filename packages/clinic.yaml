@@ -76,8 +76,8 @@ automation:
           entity_id: input_number.monthly_kwh_offset
           value: "{{ states('sensor.clinic_aggregated_energy_consumption') | float(0) }}"
 
-  - alias: Clinic Door — Turn Off Flood Light After 5 Minutes Locked
-    id: clinic_door_turn_off_flood_light_after_locked_5m
+  - alias: Clinic Door — Turn Off Lights After 5 Minutes Locked
+    id: clinic_door_turn_off_lights_after_locked_5m
     mode: single
     trigger:
       - platform: state
@@ -95,9 +95,11 @@ automation:
         state: "off"
 
     action:
-      - action: switch.turn_off
+      - action: homeassistant.turn_off
         target:
-          entity_id: switch.clinic_door_flood_light
+          entity_id:
+            - switch.clinic_door_flood_light
+            - light.clinic_ceiling_led
 
 
   - alias: Clinic Door — Turn on Flood Light when door is unlocked after sunset
@@ -187,3 +189,37 @@ automation:
         data_template:
           title: "Hazards"
           message: "Smoke is not detected in the clinic, density is {{states('sensor.clinic_smoke_density')}}%"
+
+
+  - alias: "Clinic door lock - Sync ceiling LED"
+    id: clinic_door_lock_sync_ceiling_led
+    mode: restart
+
+    trigger:
+      - platform: state
+        entity_id: lock.clinic_door
+        to: "locked"
+        id: locked
+
+      - platform: state
+        entity_id: lock.clinic_door
+        to: "unlocked"
+        id: unlocked
+
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: locked
+            sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: light.clinic_ceiling_led
+
+          - conditions:
+              - condition: trigger
+                id: unlocked
+            sequence:
+              - action: light.turn_on
+                target:
+                  entity_id: light.clinic_ceiling_led

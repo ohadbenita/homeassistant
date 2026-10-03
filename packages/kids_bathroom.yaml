@@ -115,7 +115,9 @@ automation:
             sequence:
               - action: lock.unlock
                 target:
-                  entity_id: lock.clinic_door
+                  entity_id:
+                    - lock.clinic_door
+                    - lock.kids_bathroom_door
         default:
           - action: lock.lock
             target:

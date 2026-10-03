@@ -394,21 +394,6 @@ automation:
             - cover.shellyplus2pm_e465b8f38f54  # left
 
 
-  - alias: 'Master bedroom bedside switch 02 - control night light'
-    id: master_bedroom_bedside_switch_02_night_light
-    initial_state: true
-    mode: single
-    trigger:
-      - platform: state
-        entity_id: sensor.master_bedroom_bedside_02_action
-        to: '5_single'
-
-    action:
-      - action: switch.toggle
-        target:
-          entity_id: switch.sonoff_s20_02
-
-
   - alias: "Master bedroom - Turn AC off when no one is in the room"
     id: master_bedroom_no_presence_turn_ac_off
     initial_state: false
@@ -655,48 +640,66 @@ automation:
   - alias: Warn if vacuum mop/water not ready when leaving dock (Muhammad S8)
     id: master_bedroom_vacuum_mop_warning
     description: >
-      When vacuum.muhammad_s8 leaves the dock, build one coherent TTS sentence describing
-      all mop/water issues, announce it on the Master Bedroom Echo, then wait 5 seconds
-      and pause the robot.
+      When Muhammad leaves the dock, allow its accessory sensors to update. If a
+      mop or water problem remains, announce it, pause the vacuum, and return it
+      to the dock.
     mode: queued
     max: 5
 
     trigger:
       - platform: state
         entity_id: vacuum.muhammad_s8
-        to: cleaning
-
-    variables:
-      mop_attached: "{{ is_state('binary_sensor.muhammad_s8_mop_attached', 'on') }}"
-      water_shortage: "{{ is_state('binary_sensor.muhammad_s8_water_shortage', 'on') }}"
-      water_box_attached: "{{ is_state('binary_sensor.muhammad_s8_water_box_attached', 'on') }}"
-
-      problems: >-
-        {%- set items = [] -%}
-        {%- if not mop_attached -%}
-          {%- set items = items + ['the mop is not attached'] -%}
-        {%- endif -%}
-        {%- if water_shortage -%}
-          {%- set items = items + ['there is a water shortage'] -%}
-        {%- endif -%}
-        {%- if not water_box_attached -%}
-          {%- set items = items + ['the water box is not attached'] -%}
-        {%- endif -%}
-        {{ items }}
-
-      message: >-
-        {%- set items = problems -%}
-        {%- if items | length == 0 -%}
-          {{ '' }}
-        {%- elif items | length == 1 -%}
-          {{ 'Attention: ' ~ items[0] ~ '.' }}
-        {%- elif items | length == 2 -%}
-          {{ 'Attention: ' ~ items[0] ~ ' and ' ~ items[1] ~ '.' }}
-        {%- else -%}
-          {{ 'Attention: ' ~ (items[0:-1] | join(', ')) ~ ', and ' ~ items[-1] ~ '.' }}
-        {%- endif -%}
+        to: "cleaning"
 
     action:
+      # Allow the vacuum integration to begin refreshing its accessory sensors.
+      - delay: "00:00:03"
+
+      # Continue immediately when everything is ready, or after the grace period.
+      - wait_template: >-
+          {{
+            is_state('binary_sensor.muhammad_s8_mop_attached', 'on')
+            and is_state('binary_sensor.muhammad_s8_water_shortage', 'off')
+            and is_state('binary_sensor.muhammad_s8_water_box_attached', 'on')
+          }}
+        timeout: "00:00:12"
+        continue_on_timeout: true
+
+      # Capture a fresh sensor snapshot only after the update grace period.
+      - variables:
+          mop_attached: >-
+            {{ is_state('binary_sensor.muhammad_s8_mop_attached', 'on') }}
+          water_shortage: >-
+            {{ is_state('binary_sensor.muhammad_s8_water_shortage', 'on') }}
+          water_box_attached: >-
+            {{ is_state('binary_sensor.muhammad_s8_water_box_attached', 'on') }}
+
+          problems: >-
+            {%- set items = [] -%}
+            {%- if not mop_attached -%}
+              {%- set items = items + ['the mop is not attached'] -%}
+            {%- endif -%}
+            {%- if water_shortage -%}
+              {%- set items = items + ['there is a water shortage'] -%}
+            {%- endif -%}
+            {%- if not water_box_attached -%}
+              {%- set items = items + ['the water box is not attached'] -%}
+            {%- endif -%}
+            {{ items }}
+
+          message: >-
+            {%- set items = problems -%}
+            {%- if items | length == 0 -%}
+              {{ '' }}
+            {%- elif items | length == 1 -%}
+              {{ 'Attention: ' ~ items[0] ~ '.' }}
+            {%- elif items | length == 2 -%}
+              {{ 'Attention: ' ~ items[0] ~ ' and ' ~ items[1] ~ '.' }}
+            {%- else -%}
+              {{ 'Attention: ' ~ (items[0:-1] | join(', ')) ~
+                ', and ' ~ items[-1] ~ '.' }}
+            {%- endif -%}
+
       - choose:
           - conditions:
               - condition: template
@@ -713,7 +716,7 @@ automation:
                   alexa_device: media_player.master_bedroom_echo
                   volume: 0.4
                   message: >-
-                    {{ message }}, I'm sending Muhammad to its dock
+                    {{ message }} I'm sending Muhammad back to its dock.
 
               - delay: "00:00:05"
 
@@ -724,11 +727,11 @@ automation:
               - wait_for_trigger:
                   - platform: state
                     entity_id: vacuum.muhammad_s8
-                    to: cleaning
+                    to: "cleaning"
                 timeout: "00:15:00"
                 continue_on_timeout: true
 
-              # NEW: if it wasn't started again, start it anyway
+              # Resume cleaning if nobody manually restarted it.
               - choose:
                   - conditions:
                       - condition: template

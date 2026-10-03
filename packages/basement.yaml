@@ -28,23 +28,6 @@ template:
 
 
 automation:
-  - alias: 'Restart Xiaomi Basement TV'
-    id: basement_xiaomi_tv_restart
-    initial_state: true
-    trigger:
-      - platform: time
-        at: '05:00:00'
-
-    action:
-      - action: switch.turn_off
-        entity_id: switch.athom_01
-
-      - delay: '00:02:00'
-
-      - action: switch.turn_on
-        entity_id: switch.athom_01
-
-
   - alias: "Turn on basement lights on motion"
     id: basement_turn_lights_on_motion
     initial_state: true

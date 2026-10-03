@@ -238,26 +238,36 @@ automation:
         event_data:
           entity_id: timer.roborock_clean_delay
         id: timer_done
+      - platform: state
+        entity_id: input_boolean.turn_everything_off_started
+        to: "on"
+        id: turn_everything_off_started
 
     action:
       # Only proceed if at least one helper is on
       - condition: template
         value_template: >
           {% set s = [] %}
-          {% if is_state('input_boolean.clean_roi_room','on') %}{% set s = s + [16] %}{% endif %}
-          {% if is_state('input_boolean.clean_adi_room','on') %}{% set s = s + [17] %}{% endif %}
-          {% if is_state('input_boolean.clean_kitchen','on') %}{% set s = s + [18] %}{% endif %}
-          {% if is_state('input_boolean.clean_study','on') %}{% set s = s + [19] %}{% endif %}
-          {% if is_state('input_boolean.clean_pantry','on') %}{% set s = s + [20] %}{% endif %}
-          {% if is_state('input_boolean.clean_corridor1','on') %}{% set s = s + [21] %}{% endif %}
-          {% if is_state('input_boolean.clean_dining_room','on') %}{% set s = s + [23] %}{% endif %}
-          {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set s = s + [24] %}{% endif %}
-          {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set s = s + [25] %}{% endif %}
-          {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set s = s + [26] %}{% endif %}
-          {% if is_state('input_boolean.clean_living_room','on') %}{% set s = s + [27] %}{% endif %}
-          {% if is_state('input_boolean.clean_entrance','on') %}{% set s = s + [28] %}{% endif %}
-          {% if is_state('input_boolean.clean_hall','on') %}{% set s = s + [29] %}{% endif %}
+          {% if is_state('input_boolean.clean_roi_room','on') %}{% set s = s + [21] %}{% endif %}
+          {% if is_state('input_boolean.clean_adi_room','on') %}{% set s = s + [19] %}{% endif %}
+          {% if is_state('input_boolean.clean_kitchen','on') %}{% set s = s + [24] %}{% endif %}
+          {% if is_state('input_boolean.clean_study','on') %}{% set s = s + [22] %}{% endif %}
+          {% if is_state('input_boolean.clean_pantry','on') %}{% set s = s + [23] %}{% endif %}
+          {% if is_state('input_boolean.clean_corridor1','on') %}{% set s = s + [26] %}{% endif %}
+          {% if is_state('input_boolean.clean_dining_room','on') %}{% set s = s + [18] %}{% endif %}
+          {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set s = s + [20] %}{% endif %}
+          {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set s = s + [26] %}{% endif %}
+          {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set s = s + [17] %}{% endif %}
+          {% if is_state('input_boolean.clean_living_room','on') %}{% set s = s + [25] %}{% endif %}
+          {% if is_state('input_boolean.clean_entrance','on') %}{% set s = s + [16] %}{% endif %}
+          {% if is_state('input_boolean.clean_hall','on') %}{% set s = s + [26] %}{% endif %}
           {{ s | length > 0 }}
+
+      # The shutdown flow may start cleaning early, but only while a delay timer is running.
+      - condition: template
+        value_template: >
+          {{ trigger.id != 'turn_everything_off_started'
+             or is_state('timer.roborock_clean_delay', 'active') }}
 
       - choose:
           # Button pressed + delay enabled -> start timer and exit
@@ -273,27 +283,52 @@ automation:
                   entity_id: timer.roborock_clean_delay
 
         default:
-          # Timer finished OR button pressed with delay OFF -> do the cleaning
+          # If shutdown started while a clean delay is active, wait until everyone leaves.
+          - choose:
+              - conditions:
+                  - condition: trigger
+                    id: turn_everything_off_started
+                sequence:
+                  - wait_for_trigger:
+                      - platform: numeric_state
+                        entity_id: sensor.people_at_home
+                        below: 1
+                        for:
+                          seconds: 10
+                    timeout: "00:05:00"
+                    continue_on_timeout: false
+                  - condition: state
+                    entity_id: timer.roborock_clean_delay
+                    state: active
+                  - action: timer.cancel
+                    target:
+                      entity_id: timer.roborock_clean_delay
+
+          # Timer finished OR shutdown flow saw everyone leave while timer was running OR button pressed with delay OFF -> do the cleaning
           - action: vacuum.send_command
             data:
               entity_id: vacuum.yulanda
               command: app_segment_clean
               params: >
                 {% set s = [] %}
-                {% if is_state('input_boolean.clean_roi_room','on') %}{% set s = s + [16] %}{% endif %}
-                {% if is_state('input_boolean.clean_adi_room','on') %}{% set s = s + [17] %}{% endif %}
-                {% if is_state('input_boolean.clean_kitchen','on') %}{% set s = s + [18] %}{% endif %}
-                {% if is_state('input_boolean.clean_study','on') %}{% set s = s + [19] %}{% endif %}
-                {% if is_state('input_boolean.clean_pantry','on') %}{% set s = s + [20] %}{% endif %}
-                {% if is_state('input_boolean.clean_corridor1','on') %}{% set s = s + [21] %}{% endif %}
-                {% if is_state('input_boolean.clean_dining_room','on') %}{% set s = s + [23] %}{% endif %}
-                {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set s = s + [24] %}{% endif %}
-                {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set s = s + [25] %}{% endif %}
-                {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set s = s + [26] %}{% endif %}
-                {% if is_state('input_boolean.clean_living_room','on') %}{% set s = s + [27] %}{% endif %}
-                {% if is_state('input_boolean.clean_entrance','on') %}{% set s = s + [28] %}{% endif %}
-                {% if is_state('input_boolean.clean_hall','on') %}{% set s = s + [29] %}{% endif %}
+                {% if is_state('input_boolean.clean_roi_room','on') %}{% set s = s + [21] %}{% endif %}
+                {% if is_state('input_boolean.clean_adi_room','on') %}{% set s = s + [19] %}{% endif %}
+                {% if is_state('input_boolean.clean_kitchen','on') %}{% set s = s + [24] %}{% endif %}
+                {% if is_state('input_boolean.clean_study','on') %}{% set s = s + [22] %}{% endif %}
+                {% if is_state('input_boolean.clean_pantry','on') %}{% set s = s + [23] %}{% endif %}
+                {% if is_state('input_boolean.clean_corridor1','on') %}{% set s = s + [26] %}{% endif %}
+                {% if is_state('input_boolean.clean_dining_room','on') %}{% set s = s + [18] %}{% endif %}
+                {% if is_state('input_boolean.clean_kids_bathroom','on') %}{% set s = s + [20] %}{% endif %}
+                {% if is_state('input_boolean.clean_living_room_corridor','on') %}{% set s = s + [26] %}{% endif %}
+                {% if is_state('input_boolean.clean_guest_bathroom','on') %}{% set s = s + [17] %}{% endif %}
+                {% if is_state('input_boolean.clean_living_room','on') %}{% set s = s + [25] %}{% endif %}
+                {% if is_state('input_boolean.clean_entrance','on') %}{% set s = s + [16] %}{% endif %}
+                {% if is_state('input_boolean.clean_hall','on') %}{% set s = s + [26] %}{% endif %}
                 {{ [{'segments': s, 'repeat': states('input_number.clean_passes') | int(1)}] }}
+
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.clean_with_delay
 
           # Turn off every helper that was on
           - action: input_boolean.turn_off
@@ -333,6 +368,10 @@ automation:
         event_data:
           entity_id: timer.roborock_clean_delay_upper_s8
         id: timer_done
+      - platform: state
+        entity_id: input_boolean.turn_everything_off_started
+        to: "on"
+        id: turn_everything_off_started
 
     action:
       # Only proceed if at least one helper is on
@@ -346,6 +385,12 @@ automation:
           {% if is_state('input_boolean.clean_upper_ella_room','on') %}{% set s = s + [20] %}{% endif %}
           {% if is_state('input_boolean.clean_upper_stairs','on') %}{% set s = s + [22] %}{% endif %}
           {{ s | length > 0 }}
+
+      # The shutdown flow may start cleaning early, but only while a delay timer is running.
+      - condition: template
+        value_template: >
+          {{ trigger.id != 'turn_everything_off_started'
+             or is_state('timer.roborock_clean_delay_upper_s8', 'active') }}
 
       - choose:
           # Button pressed + delay enabled -> start timer and exit
@@ -361,7 +406,28 @@ automation:
                   entity_id: timer.roborock_clean_delay_upper_s8
 
         default:
-          # Timer finished OR button pressed with delay OFF -> do the cleaning
+          # If shutdown started while a clean delay is active, wait until everyone leaves.
+          - choose:
+              - conditions:
+                  - condition: trigger
+                    id: turn_everything_off_started
+                sequence:
+                  - wait_for_trigger:
+                      - platform: numeric_state
+                        entity_id: sensor.people_at_home
+                        below: 1
+                        for:
+                          seconds: 10
+                    timeout: "00:05:00"
+                    continue_on_timeout: false
+                  - condition: state
+                    entity_id: timer.roborock_clean_delay_upper_s8
+                    state: active
+                  - action: timer.cancel
+                    target:
+                      entity_id: timer.roborock_clean_delay_upper_s8
+
+          # Timer finished OR shutdown flow saw everyone leave while timer was running OR button pressed with delay OFF -> do the cleaning
           - action: vacuum.send_command
             data:
               entity_id: vacuum.muhammad_s8
@@ -376,6 +442,10 @@ automation:
                 {% if is_state('input_boolean.clean_upper_stairs','on') %}{% set s = s + [22] %}{% endif %}
                 {{ [{'segments': s, 'repeat': states('input_number.clean_upper_passes_s8') | int(1)}] }}
 
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.clean_upper_with_delay_s8
+
           # Turn off every helper that was on
           - action: input_boolean.turn_off
             data:
@@ -388,3 +458,51 @@ automation:
                 {% if is_state('input_boolean.clean_upper_ella_room','on') %}{% set o = o + ['input_boolean.clean_upper_ella_room'] %}{% endif %}
                 {% if is_state('input_boolean.clean_upper_stairs','on') %}{% set o = o + ['input_boolean.clean_upper_stairs'] %}{% endif %}
                 {{ o }}
+
+
+group:
+  clean_yulanda_public:
+    name: Yulanda Public Areas Selected
+    all: false
+    entities:
+      - input_boolean.clean_kitchen
+      - input_boolean.clean_pantry
+      - input_boolean.clean_dining_room
+      - input_boolean.clean_living_room
+  clean_yulanda_hallways:
+    name: Yulanda Hallways Selected
+    all: false
+    entities:
+      - input_boolean.clean_entrance
+      - input_boolean.clean_hall
+  clean_yulanda_rooms:
+    name: Yulanda Rooms Selected
+    all: false
+    entities:
+      - input_boolean.clean_roi_room
+      - input_boolean.clean_adi_room
+      - input_boolean.clean_study
+  clean_yulanda_bathrooms:
+    name: Yulanda Bathrooms Selected
+    all: false
+    entities:
+      - input_boolean.clean_guest_bathroom
+      - input_boolean.clean_kids_bathroom
+  clean_muhammad_rooms:
+    name: Muhammad Rooms Selected
+    all: false
+    entities:
+      - input_boolean.clean_upper_master_bedroom
+      - input_boolean.clean_upper_ella_room
+      - input_boolean.clean_upper_closet
+  clean_muhammad_hallways:
+    name: Muhammad Hallways Selected
+    all: false
+    entities:
+      - input_boolean.clean_upper_hallway
+      - input_boolean.clean_upper_stairs
+  clean_muhammad_bathrooms:
+    name: Muhammad Bathrooms Selected
+    all: false
+    entities:
+      - input_boolean.clean_upper_master_bathroom

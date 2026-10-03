@@ -465,15 +465,6 @@ automation:
             ((as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60)
             | int }} minutes
 
-      - action: notify.send_message
-        data:
-          entity_id: notify.telegram_bot_659000495_155103022
-          message: >
-            The pantry freezer door has been closed after being open for {{
-            ((as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed)) / 60)
-            | int }} minutes
-          title: Appliance Alert
-
       - action: input_boolean.turn_off
         target:
           entity_id: input_boolean.should_announce_pantry_freezer_door_closed
@@ -605,20 +596,6 @@ automation:
         entity_id: input_boolean.dishwasher_message_scheduled
         state: 'on'
     action:
-      - repeat:
-          count: 10
-          sequence:
-            - action: switch.turn_on
-              target:
-                entity_id: switch.weto_03
-            - delay:
-                milliseconds: 2
-            - action: switch.turn_off
-              target:
-                entity_id: switch.weto_03
-            - delay:
-                seconds: 2
-
       # 2.a Set up unique action IDs to avoid conflicts
       - variables:
           # action_start: "{{ 'START_' ~ context.id }}"
@@ -810,53 +787,6 @@ automation:
                   position: >
                     {% set nxt = current_position - 20 %}
                     {{ [nxt, 0] | max }}
-
-
-  - alias: Kitchen night light
-    id: kitchen_night_light_fp2_main_off
-    mode: queued
-    max: 5
-    initial_state: false
-
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
-        to: "on"
-      - platform: state
-        entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
-        to: "off"
-        for:
-          seconds: 10
-
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
-                state: "on"
-              - condition: state
-                entity_id: switch.shellyplus2pm_fcb4670e68e8_switch_0
-                state: "off"
-              - condition: state
-                entity_id: switch.shellyplus2pm_fcb4670e68e8_switch_1
-                state: "off"
-              - condition: state
-                entity_id: sun.sun
-                state: below_horizon
-            sequence:
-              - action: switch.turn_on
-                target:
-                  entity_id: switch.weto_03
-
-          # Presence no longer detected -> turn off night light
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
-                state: "off"
-            sequence:
-              - action: switch.turn_off
-                target:
-                  entity_id: switch.weto_03
 
 
   - alias: Kitchen Stop Kitchen Echo When Turn Everything Off Starts

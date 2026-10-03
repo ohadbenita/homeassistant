@@ -1,0 +1,43 @@
+---
+automation:
+  - id: transmission_full_speed_when_shutdown_starts
+    alias: Transmission - Full speed when away
+    description: >-
+      When the Turn Everything Off flow starts or away mode turns on, disable
+      Transmission turtle mode so downloads run at full speed while the house is
+      empty.
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_boolean.turn_everything_off_started
+        to: "on"
+      - platform: state
+        entity_id: input_boolean.away_mode
+        to: "on"
+    action:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.transmission_turtle_mode
+
+
+  - id: transmission_turtle_mode_when_someone_returns
+    alias: Transmission - Turtle mode when returning home
+    description: >-
+      When away mode turns off or one of the main home doors is unlocked, enable
+      Transmission turtle mode so it uses the alternative speed limits while
+      people are home.
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_boolean.away_mode
+        to: "off"
+      - platform: state
+        entity_id:
+          - lock.entrance_door
+          - lock.kitchen_door
+          - lock.kids_bathroom_door
+        to: "unlocked"
+    action:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.transmission_turtle_mode

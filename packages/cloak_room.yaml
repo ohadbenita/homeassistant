@@ -33,24 +33,34 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.occupancy_sensor_a2f5_occupancy
+        entity_id: binary_sensor.cloak_room_fp1_presence
         to: 'on'
-      - platform: state
-        entity_id: binary_sensor.cloak_room_occupancy
-        to: 'on'
+      # - platform: state
+      #   entity_id: binary_sensor.occupancy_sensor_a2f5_occupancy
+      #   to: 'on'
+      # - platform: state
+      #   entity_id: binary_sensor.cloak_room_occupancy
+      #   to: 'on'
       - platform: homeassistant
         event: start
 
     condition:
-      - condition: state
-        entity_id: binary_sensor.occupancy_sensor_a2f5_occupancy
-        state: 'on'
-      - condition: state
-        entity_id: binary_sensor.cloak_room_occupancy
-        state: 'on'
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: binary_sensor.cloak_room_fp1_presence
+            state: "on"
+          # - condition: state
+          #   entity_id: binary_sensor.occupancy_sensor_a2f5_occupancy
+          #   state: "on"
+          # - condition: state
+          #   entity_id: binary_sensor.cloak_room_occupancy
+          #   state: "on"
+
       - condition: state
         entity_id: input_boolean.away_mode
-        state: 'off'
+        state: "off"
+
       - condition: numeric_state
         entity_id: sensor.people_at_home
         above: 0
@@ -65,19 +75,23 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.occupancy_sensor_a2f5_occupancy
+        entity_id:
+          # - binary_sensor.occupancy_sensor_a2f5_occupancy
+          # - binary_sensor.cloak_room_occupancy
+          - binary_sensor.cloak_room_fp1_presence
         to: 'off'
-        for:
-          minutes: 1
       - platform: homeassistant
         event: start
     condition:
       - condition: state
-        entity_id: binary_sensor.occupancy_sensor_a2f5_occupancy
+        entity_id: binary_sensor.cloak_room_fp1_presence
         state: 'off'
-      - condition: state
-        entity_id: binary_sensor.cloak_room_occupancy
-        state: 'off'
+      # - condition: state
+      #   entity_id: binary_sensor.occupancy_sensor_a2f5_occupancy
+      #   state: 'off'
+      # - condition: state
+      #   entity_id: binary_sensor.cloak_room_occupancy
+      #   state: 'off'
     action:
       - action: homeassistant.turn_off
         entity_id: switch.shellyplus2pm_fcb467a684e8_switch_0
@@ -200,6 +214,39 @@ automation:
                   [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.gas_heater_cam_gas_heater_esp32_cam?token={{ state_attr('camera.gas_heater_cam_gas_heater_esp32_cam', 'access_token') }})
                 parse_mode: markdown
 
-      # - action: switch.toggle
-      #   target:
-      #     entity_id: switch.gas_water_heater
+
+  - alias: Cloak Room Breaker Panel Contact Controls Sonoff S20
+    id: cloak_room_breaker_panel_contact_controls_sonoff_s20
+    description: >
+      Turns the cloak room Sonoff S20 on when the breaker panel contact is closed,
+      and off when the contact is open.
+    mode: single
+
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.breaker_panel_01_contact
+        to: "off"
+        id: closed
+
+      - platform: state
+        entity_id: binary_sensor.breaker_panel_01_contact
+        to: "on"
+        id: open
+
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: closed
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.sonoff_s20_02
+
+          - conditions:
+              - condition: trigger
+                id: open
+            sequence:
+              - service: switch.turn_off
+                target:
+                  entity_id: switch.sonoff_s20_02

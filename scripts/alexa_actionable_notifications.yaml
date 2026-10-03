@@ -21,7 +21,7 @@ alexa_notification:
     - variables:
         mp: "{{ alexa_device }}"
         original_volume: "{{ state_attr(mp, 'volume_level') | float(0.25) }}"
-        temp_volume: "{{ volume | float(0.25) }}"
+        temp_volume: "{{ volume | default(0.25) | float(0.25) }}"
 
     - action: media_player.volume_set
       continue_on_error: true
@@ -76,6 +76,3 @@ activate_alexa_actionable_notification:
         entity_id: "{{ alexa_device }}"
         media_content_type: skill
         media_content_id: !secret alexa_actionable_actions_skill_id
-
-    - action: script.turn_on
-      entity_id: script.alexa_notification

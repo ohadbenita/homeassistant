@@ -33,7 +33,7 @@ turn_everything_off_live_activity:
           url: /lovelace/sections
 
     - condition: template
-      value_template: "{{ notify_rinat | default(true) | bool and is_state('person.rinat', 'home') }}"
+      value_template: "{{ notify_rinat | default(true) | bool and is_state('person.rinat_benita', 'home') }}"
 
     - action: notify.mobile_app_rinats_iphone
       data:
@@ -57,6 +57,8 @@ turn_everything_off_live_activity_clear:
   fields:
     tag:
       description: 'Live Activity tag'
+    notify_rinat:
+      description: 'Whether to notify Rinat when she is home'
   sequence:
     - action: notify.mobile_app_ohadbenita
       data:
@@ -65,7 +67,7 @@ turn_everything_off_live_activity_clear:
           tag: "{{ tag | default('turn_everything_off') }}"
 
     - condition: template
-      value_template: "{{ notify_rinat | default(true) | bool and is_state('person.rinat', 'home') }}"
+      value_template: "{{ notify_rinat | default(true) | bool and is_state('person.rinat_benita', 'home') }}"
 
     - action: notify.mobile_app_rinats_iphone
       data:
@@ -80,7 +82,6 @@ turn_everything_off_live_activity_demo:
     - action: script.turn_everything_off_live_activity
       data:
         tag: turn_everything_off_demo
-        notify_rinat: false
         message: 'Starting shutdown'
         progress: 5
         color: '#2196F3'
@@ -91,7 +92,6 @@ turn_everything_off_live_activity_demo:
     - action: script.turn_everything_off_live_activity
       data:
         tag: turn_everything_off_demo
-        notify_rinat: false
         message: 'Goodbye announced'
         progress: 15
         color: '#2196F3'
@@ -102,75 +102,8 @@ turn_everything_off_live_activity_demo:
     - action: script.turn_everything_off_live_activity
       data:
         tag: turn_everything_off_demo
-        notify_rinat: false
-        message: 'Closing small shutters'
-        progress: 30
-        color: '#2196F3'
-        icon: mdi:blinds
-
-    - delay: '00:00:08'
-
-    - action: script.turn_everything_off_live_activity
-      data:
-        tag: turn_everything_off_demo
-        notify_rinat: false
-        message: 'Waiting for exit'
-        progress: 40
-        color: '#FFC107'
-        icon: mdi:timer-sand
-
-    - delay: '00:00:08'
-
-    - action: script.turn_everything_off_live_activity
-      data:
-        tag: turn_everything_off_demo
-        notify_rinat: false
-        message: 'Locking doors'
-        progress: 55
-        color: '#FFC107'
-        icon: mdi:door-closed-lock
-
-    - delay: '00:00:08'
-
-    - action: script.turn_everything_off_live_activity
-      data:
-        tag: turn_everything_off_demo
-        notify_rinat: false
-        message: 'Doors locked'
-        progress: 65
-        color: '#2196F3'
-        icon: mdi:lock-check
-
-    - delay: '00:00:08'
-
-    - action: script.turn_everything_off_live_activity
-      data:
-        tag: turn_everything_off_demo
-        notify_rinat: false
-        message: 'Closing main shutters'
-        progress: 75
-        color: '#2196F3'
-        icon: mdi:blinds
-
-    - delay: '00:00:08'
-
-    - action: script.turn_everything_off_live_activity
-      data:
-        tag: turn_everything_off_demo
-        notify_rinat: false
-        message: 'Closing upstairs shutters'
-        progress: 85
-        color: '#2196F3'
-        icon: mdi:blinds-horizontal-closed
-
-    - delay: '00:00:08'
-
-    - action: script.turn_everything_off_live_activity
-      data:
-        tag: turn_everything_off_demo
-        notify_rinat: false
         message: 'Turning off AC and lights'
-        progress: 95
+        progress: 25
         color: '#2196F3'
         icon: mdi:lightbulb-off
 
@@ -179,7 +112,66 @@ turn_everything_off_live_activity_demo:
     - action: script.turn_everything_off_live_activity
       data:
         tag: turn_everything_off_demo
-        notify_rinat: false
+        message: 'Closing small shutters'
+        progress: 40
+        color: '#2196F3'
+        icon: mdi:blinds
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        message: 'Waiting for exit'
+        progress: 55
+        color: '#FFC107'
+        icon: mdi:timer-sand
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        message: 'Locking doors'
+        progress: 65
+        color: '#FFC107'
+        icon: mdi:door-closed-lock
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        message: 'Doors locked'
+        progress: 75
+        color: '#2196F3'
+        icon: mdi:lock-check
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        message: 'Closing main shutters'
+        progress: 85
+        color: '#2196F3'
+        icon: mdi:blinds
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
+        message: 'Closing upstairs shutters'
+        progress: 95
+        color: '#2196F3'
+        icon: mdi:blinds-horizontal-closed
+
+    - delay: '00:00:08'
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        tag: turn_everything_off_demo
         message: 'Shutdown complete'
         progress: 100
         color: '#4CAF50'
@@ -234,6 +226,21 @@ turn_everything_off:
         color: '#2196F3'
         icon: mdi:speaker-message
 
+    # Turn off AC and lights before moving shutters or locking doors.
+    - action: homeassistant.turn_off
+      continue_on_error: true
+      target:
+        entity_id:
+          - group.all_ac
+          - group.all_lights
+
+    - action: script.turn_everything_off_live_activity
+      data:
+        message: 'Turning off AC and lights'
+        progress: 25
+        color: '#2196F3'
+        icon: mdi:lightbulb-off
+
     # Compute the shutter target position once using the existing rules:
     # - If sun is above horizon AND next sunset is >= 3h away -> position 15
     # - Otherwise -> position 0
@@ -259,7 +266,7 @@ turn_everything_off:
     - action: script.turn_everything_off_live_activity
       data:
         message: 'Closing small shutters'
-        progress: 30
+        progress: 40
         color: '#2196F3'
         icon: mdi:blinds
 
@@ -269,7 +276,7 @@ turn_everything_off:
     - action: script.turn_everything_off_live_activity
       data:
         message: 'Waiting for exit'
-        progress: 40
+        progress: 55
         color: '#FFC107'
         icon: mdi:timer-sand
 
@@ -290,7 +297,7 @@ turn_everything_off:
     - action: script.turn_everything_off_live_activity
       data:
         message: 'Locking doors'
-        progress: 55
+        progress: 65
         color: '#FFC107'
         icon: mdi:door-closed-lock
 
@@ -305,7 +312,7 @@ turn_everything_off:
     - action: script.turn_everything_off_live_activity
       data:
         message: 'Doors locked'
-        progress: 65
+        progress: 75
         color: '#2196F3'
         icon: mdi:lock-check
 
@@ -319,7 +326,7 @@ turn_everything_off:
     - action: script.turn_everything_off_live_activity
       data:
         message: 'Closing main shutters'
-        progress: 75
+        progress: 85
         color: '#2196F3'
         icon: mdi:blinds
 
@@ -333,24 +340,9 @@ turn_everything_off:
     - action: script.turn_everything_off_live_activity
       data:
         message: 'Closing upstairs shutters'
-        progress: 85
-        color: '#2196F3'
-        icon: mdi:blinds-horizontal-closed
-
-    # Turn off AC and lights
-    - action: homeassistant.turn_off
-      continue_on_error: true
-      target:
-        entity_id:
-          - group.all_ac
-          - group.all_lights
-
-    - action: script.turn_everything_off_live_activity
-      data:
-        message: 'Turning off AC and lights'
         progress: 95
         color: '#2196F3'
-        icon: mdi:lightbulb-off
+        icon: mdi:blinds-horizontal-closed
 
     - action: input_boolean.turn_off
       entity_id: input_boolean.turn_everything_off_failed
@@ -365,7 +357,7 @@ turn_everything_off:
         color: '#4CAF50'
         icon: mdi:check-circle
 
-    - delay: '00:10:00'
+    - delay: '00:02:00'
 
     - action: script.turn_everything_off_live_activity_clear
 

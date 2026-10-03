@@ -163,31 +163,6 @@ automation:
             {{ max(state_attr('cover.study_room', 'current_position') | int, 25) }}
 
 
-  - alias: Turn off Bike Charger when charging is complete
-    id: study_room_turn_off_bike_charger_when_complete
-    initial_state: true
-    trigger:
-      platform: numeric_state
-      entity_id: sensor.study_room_e_bike_charger_energy_power
-      below: 5
-      for:
-        hours: 1
-
-    condition:
-      - condition: state
-        entity_id: switch.study_room_e_bike_charger
-        state: 'on'
-
-    action:
-      - action: switch.turn_off
-        entity_id: switch.study_room_e_bike_charger
-      - action: notify.send_message
-        data:
-          entity_id: notify.telegram_bot_659000495_155103022
-          title: Appliances
-          message: Bike charge cycle is completed
-
-
   - alias: 'Study room - Handle 3D printer stand button actions'
     id: study_room_3d_printer_stand_button_actions
     initial_state: true
