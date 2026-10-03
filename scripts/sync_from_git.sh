@@ -22,6 +22,12 @@ write_status() {
   local message="$2"
   local commit="${3:-}"
   local now
+  local commit_message
+
+  if [[ -n "$commit" ]]; then
+    commit_message="$(git log -1 --format=%s "$commit" 2>/dev/null || true)"
+    [[ -z "$commit_message" ]] || message="$message Commit: $commit_message"
+  fi
 
   now="$(date -Iseconds)"
   mkdir -p "$(dirname "$STATUS_FILE")"
