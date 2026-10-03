@@ -16,7 +16,7 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   lint:
     name: Lint configuration files
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         tool: [yamllint, jsonlint, markdownlint]
@@ -46,7 +46,7 @@ jobs:
 
   validate:
     name: Validate HASS configuration
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: lint
 
     steps:
@@ -64,7 +64,7 @@ jobs:
 
   sync:
     name: Request live Home Assistant sync
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: validate
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
 
