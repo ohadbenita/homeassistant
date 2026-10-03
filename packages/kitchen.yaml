@@ -186,24 +186,19 @@ automation:
           - switch.shellyplus2pm_fcb4670e68e8_switch_1
 
 
-  # maps:
-  #   - flag: 0
-  #     name: Main floor
-  #     rooms:
-  #       "16": Roi’s room
-  #       "17": Adi’s room
-  #       "18": Kitchen
-  #       "19": Study
-  #       "20": Pantry
-  #       "21": Corridor1
-  #       "22": Guest bedroom
-  #       "23": Dining room
-  #       "24": Kids bathroom
-  #       "25": Living room corridor
-  #       "26": Bathroom
-  #       "27": Living room
-  #       "28": Entrance
-  #       "29": Hall
+  # Current vacuum.yulanda Main floor map:
+  #   rooms:
+  #     "16": Entrance
+  #     "17": Bathroom
+  #     "18": Dining room
+  #     "19": Adi’s room
+  #     "20": Main bathroom
+  #     "21": Roi’s room
+  #     "22": Study
+  #     "23": Pantry
+  #     "24": Kitchen
+  #     "25": Living room
+  #     "26": Corridor
 
 
   - alias: Tami4 button - dock Yulanda
@@ -281,7 +276,7 @@ automation:
           command: app_segment_clean
           params:
             - segments:
-                - 16
+                - 21
               repeat: 2
         target:
           entity_id: vacuum.yulanda
@@ -312,7 +307,7 @@ automation:
           command: app_segment_clean
           params:
             - segments:
-                - 17
+                - 19
               repeat: 2
         target:
           entity_id: vacuum.yulanda
@@ -343,13 +338,9 @@ automation:
           params:
             - segments:
                 - 18
-                - 20
-                - 21
-                - 23
+                - 24
                 - 25
-                - 27
-                - 28
-                - 29
+                - 26
               repeat: 2
         target:
           entity_id: vacuum.yulanda
