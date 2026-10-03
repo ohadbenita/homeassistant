@@ -308,4 +308,4 @@ automation:
           entity_id: vacuum.yulanda
           command: app_segment_clean
           params:
-            - 17
+            - 19
