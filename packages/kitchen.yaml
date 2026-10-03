@@ -250,7 +250,7 @@ automation:
           command: app_segment_clean
           params:
             - segments:
-                - 18
+                - 24
               repeat: 2
         target:
           entity_id: vacuum.yulanda
