@@ -1,0 +1,34 @@
+---
+automation:
+  - id: vacation_flight_departure_tami4_reminder
+    alias: "Vacations: Unplug Tami4 before a TLV flight"
+    description: "Remind Ohad and Rinat to unplug the Tami4 five hours before a flight departing TLV."
+    triggers:
+      - trigger: calendar
+        entity_id: calendar.ohadbenita_gmail_com
+        event: start
+        offset: "-05:00:00"
+    conditions:
+      - condition: template
+        value_template: >
+          {% set summary = trigger.calendar_event.summary | default('', true) | lower %}
+          {% set location = trigger.calendar_event.location | default('', true) | lower %}
+          {{ summary.startswith('flight to ')
+             and 'tlv' in location
+             and 'tel aviv' not in summary
+             and 'tel-aviv' not in summary }}
+    actions:
+      - variables:
+          message: >-
+            {{ trigger.calendar_event.summary }} departs from TLV at
+            {{ as_timestamp(trigger.calendar_event.start) | timestamp_custom('%H:%M', true) }}.
+            Please unplug the Tami4 from its socket.
+      - action: notify.mobile_app_rinats_iphone
+        data:
+          title: "Upcoming flight"
+          message: "{{ message }}"
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          message: "{{ message }}"
+    mode: single
