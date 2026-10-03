@@ -351,7 +351,7 @@ automation:
         data:
           alexa_device: media_player.kitchen_echo
           volume: 0.4
-          message: I just sent Yulanda to clean the entrance, dining room, pantry, kitchen, living room and hallway
+          message: I just sent Yulanda to clean all public spaces
 
 
   - alias: Tami4 button - Toggle vacuum intensity
