@@ -749,7 +749,7 @@ automation:
           message: >-
             🔋 **LPG Camera Battery Low**
 
-            Battery voltage is **{{ states('sensor.lpg_timercamera_battery_voltage') }} V**.
+            Battery voltage is **{{ '%.2f' | format(states('sensor.lpg_timercamera_battery_voltage') | float) }} V**.
 
             Please charge the LPG camera to keep LPG monitoring active.
           parse_mode: markdown
