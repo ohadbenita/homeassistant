@@ -71,7 +71,7 @@ automation:
 
   - alias: Lehavim red alert
     id: red_alert_lehavim
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
         entity_id: sensor.oref_alert_lehavim

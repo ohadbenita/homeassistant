@@ -193,6 +193,7 @@ automation:
 
   - alias: "Clinic door lock - Sync ceiling LED"
     id: clinic_door_lock_sync_ceiling_led
+    initial_state: false
     mode: restart
 
     trigger:
