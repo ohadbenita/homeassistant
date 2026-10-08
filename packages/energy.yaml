@@ -17,7 +17,7 @@ template:
         unique_id: "energy_should_display_energy_badge"
         delay_off: "01:00:00"
         state: >-
-          {{ states('sensor.solaredge_current_power') | int(0) > 0 }}
+          {{ states('sensor.solaredge_se15k_power') | int(0) > 0 }}
 
       - name: "Last Three Days of Month"
         state: >
@@ -50,9 +50,9 @@ template:
         state: >
           {{
             (
-              (states('sensor.solaredge_energy_this_month') | float(0) / 1000 * 0.8 * (states('input_number.kwh_sold') | float(0)))
+              (states('sensor.solaredge_energy_this_month') | float(0) * 0.8 * (states('input_number.kwh_sold') | float(0)))
               +
-              (states('sensor.solaredge_energy_this_month') | float(0) / 1000 * 0.2 * (states('input_number.kwh_cost_net') | float(0)))
+              (states('sensor.solaredge_energy_this_month') | float(0) * 0.2 * (states('input_number.kwh_cost_net') | float(0)))
             ) | round(2)
           }}
 
@@ -138,7 +138,7 @@ template:
         unit_of_measurement: "kWh"
         state_class: total_increasing
         state: >
-          {% set production = states('sensor.solaredge_produced_energy') | float(0) %}
+          {% set production = states('sensor.solaredge_se15k_energy') | float(0) %}
           {% set consumption = states('sensor.aggregated_house_consumption') | float(0) %}
           {{ (production - consumption) if (production > consumption) else 0 }}
 
@@ -153,8 +153,7 @@ template:
             7:2284, 8:2123, 9:1822, 10:1506, 11:1097, 12:926
           } %}
           {% set expected = expected_map[now().month] | float(0) %}
-          {% set actual_wh = states(monthly_sensor) | float(0) %}
-          {% set actual = (actual_wh / 1000) %}
+          {% set actual = states(monthly_sensor) | float(0) %}
           {% if expected > 0 %}
             {{ ((actual - expected) / expected * 100) | round(1) }}
           {% else %}
@@ -168,8 +167,8 @@ template:
             } %}
             {{ expected_map[now().month] | float(0) }}
           actual_kwh: >
-            {% set actual_wh = states('sensor.solaredge_energy_this_month') | float(0) %}
-            {{ (actual_wh / 1000) | round(2) }}
+            {% set actual = states('sensor.solaredge_energy_this_month') | float(0) %}
+            {{ actual | round(2) }}
           nice_month: "{{ now().strftime('%B') }}"
 
       - name: "Solar Expected MTD kWh"
@@ -209,9 +208,8 @@ template:
         unit_of_measurement: "kWh"
         icon: mdi:solar-power
         state: >
-          {# SolarEdge monthly sensor is in Wh -> convert to kWh #}
-          {% set actual_wh = states('sensor.solaredge_energy_this_month') | float(0) %}
-          {{ (actual_wh / 1000) | round(2) }}
+          {% set actual = states('sensor.solaredge_energy_this_month') | float(0) %}
+          {{ actual | round(2) }}
         attributes:
           nice_month: "{{ now().strftime('%B') }}"
 
@@ -286,8 +284,8 @@ automation:
     initial_state: true
     trigger:
       - platform: state
-        entity_id: sensor.solaredge_site_details
-        from: Active
+        entity_id: sensor.solaredge_se15k_status
+        to: unavailable
         for:
           minutes: 10
 
@@ -297,7 +295,37 @@ automation:
           entity_id: notify.telegram_bot_659000495_155103022
           message: >-
             An issue has been identified in the Solar panels system,
-            current system state is {{  states('sensor.solaredge_site_details') }}
+            inverter status has been unavailable for 10 minutes.
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Solar inverter unavailable"
+          message: "SolarEdge inverter status has been unavailable for 10 minutes."
+      - action: notify.mobile_app_rinats_iphone
+        data:
+          title: "Solar inverter unavailable"
+          message: "SolarEdge inverter status has been unavailable for 10 minutes."
+
+  - alias: "Solar inverter fault"
+    id: energy_alert_when_solar_inverter_reports_fault
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.solaredge_se15k_problem
+        to: "on"
+    action:
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          message: >-
+            SolarEdge inverter reports a fault and has stopped producing.
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: "Solar inverter fault"
+          message: "SolarEdge inverter reports a fault and has stopped producing."
+      - action: notify.mobile_app_rinats_iphone
+        data:
+          title: "Solar inverter fault"
+          message: "SolarEdge inverter reports a fault and has stopped producing."
 
 ###############################################################################
 # Automation: at sunset on the last day, send UNDER / WITHIN / ABOVE notification
@@ -390,3 +418,11 @@ automation:
           - sun
     actions:
       - action: script.solar_panels_cleanliness_refresh_and_alert
+
+utility_meter:
+  solaredge_energy_today:
+    source: sensor.solaredge_se15k_energy
+    cycle: daily
+  solaredge_energy_this_month:
+    source: sensor.solaredge_se15k_energy
+    cycle: monthly
