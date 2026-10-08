@@ -20,11 +20,7 @@ sensor:
 command_line:
   - sensor:
       name: 3D print latest timelapse filename
-      command: >
-        find /config/www -type f -name '*.mp4' -printf '%T@ %f\n' |
-        sort -n |
-        tail -1 |
-        awk '{print $2}'
+      command: python3 /config/scripts/latest_timelapse_filename.py
       scan_interval: 300
 
 
