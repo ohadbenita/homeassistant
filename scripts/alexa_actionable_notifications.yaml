@@ -21,7 +21,9 @@ alexa_notification:
     - variables:
         mp: "{{ alexa_device }}"
         original_volume: "{{ state_attr(mp, 'volume_level') | float(0.25) }}"
-        temp_volume: "{{ volume | default(0.25) | float(0.25) }}"
+        requested_volume: "{{ volume | default(0.25) | float(0.25) }}"
+        temp_volume: >-
+          {{ ((requested_volume | float(0.25)) * (0.7 if now().hour >= 21 or now().hour < 7 else 1)) | round(3) }}
 
     - action: media_player.volume_set
       continue_on_error: true
@@ -60,10 +62,19 @@ activate_alexa_actionable_notification:
     alexa_device:
       description: 'Alexa device you want to trigger'
       example: 'media_player.bedroom_echo'
+    volume:
+      description: 'Temporary volume (0-1)'
+      example: 0.3
+      default: 0.3
   sequence:
+    - variables:
+        requested_volume: "{{ volume | default(0.3) | float(0.3) }}"
+        temp_volume: >-
+          {{ ((requested_volume | float(0.3)) * (0.7 if now().hour >= 21 or now().hour < 7 else 1)) | round(3) }}
+
     - action: media_player.volume_set
       data:
-        volume_level: 0.3
+        volume_level: "{{ temp_volume }}"
         entity_id: "{{ alexa_device }}"
 
     - action: input_text.set_value
