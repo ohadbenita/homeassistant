@@ -287,7 +287,7 @@ automation:
         entity_id: sensor.solaredge_se15k_status
         to: unavailable
         for:
-          minutes: 10
+          minutes: 30
 
     action:
       - action: notify.send_message
@@ -295,15 +295,12 @@ automation:
           entity_id: notify.telegram_bot_659000495_155103022
           message: >-
             An issue has been identified in the Solar panels system,
-            inverter status has been unavailable for 10 minutes.
+            inverter status has been unavailable for 30 minutes.
       - action: notify.mobile_app_ohadbenita
         data:
           title: "Solar inverter unavailable"
-          message: "SolarEdge inverter status has been unavailable for 10 minutes."
-      - action: notify.mobile_app_rinats_iphone
-        data:
-          title: "Solar inverter unavailable"
-          message: "SolarEdge inverter status has been unavailable for 10 minutes."
+          message: "SolarEdge inverter status has been unavailable for 30 minutes."
+
 
   - alias: "Solar inverter fault"
     id: energy_alert_when_solar_inverter_reports_fault
@@ -322,10 +319,7 @@ automation:
         data:
           title: "Solar inverter fault"
           message: "SolarEdge inverter reports a fault and has stopped producing."
-      - action: notify.mobile_app_rinats_iphone
-        data:
-          title: "Solar inverter fault"
-          message: "SolarEdge inverter reports a fault and has stopped producing."
+
 
 ###############################################################################
 # Automation: at sunset on the last day, send UNDER / WITHIN / ABOVE notification
