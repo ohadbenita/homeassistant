@@ -2,7 +2,7 @@
 template:
   - binary_sensor:
       - name: "Washing machine active"
-        state: "{{ states('sensor.washing_machine_energy_power') | default(0) | float > 5 }}"
+        state: "{{ states('sensor.washing_machine_energy_power') | float(0) > 5 }}"
       - name: "Kids bathroom occupancy"
         device_class: occupancy
         state: >-

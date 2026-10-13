@@ -30,8 +30,10 @@ template:
 
       - name: "Ella room AC temperature difference"
         unit_of_measurement: "°C"
-        state: "{{ (states('sensor.ella_room_temperature_temperature') - state_attr('climate.ella_room_ac_smartair', 'temperature')) | abs }}"
-        availability: "{{ state_attr('climate.ella_room_ac_smartair', 'temperature') is not none }}"
+        state: "{{ (states('sensor.ella_room_temperature_temperature') | float(0) - state_attr('climate.ella_room_ac_smartair', 'temperature') | float(0)) | abs }}"
+        availability: >
+          {{ states('sensor.ella_room_temperature_temperature') not in ['unknown', 'unavailable']
+             and state_attr('climate.ella_room_ac_smartair', 'temperature') is not none }}
         device_class: temperature
         icon: mdi:thermometer
 

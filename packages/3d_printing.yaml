@@ -13,7 +13,7 @@ sensor:
     state: "printing"
     type: time
     min_state_duration: "00:00:00"
-    start: "{{ states('input_datetime.print_active_start_time') }}"
+    start: "{{ as_datetime(states('input_datetime.print_active_start_time')) if states('input_datetime.print_active_start_time') not in ['unknown', 'unavailable', ''] else now() }}"
     end: "{{ now() }}"
 
 

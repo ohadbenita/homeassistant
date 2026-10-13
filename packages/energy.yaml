@@ -217,7 +217,7 @@ template:
         unique_id: solar_expected_monthly_kwh
         unit_of_measurement: "kWh"
         device_class: energy
-        state_class: measurement
+        state_class: total
         state: >
           {{ state_attr('sensor.solar_monthly_difference', 'expected_kwh') | float(0) }}
 

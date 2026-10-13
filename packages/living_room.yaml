@@ -32,13 +32,13 @@ template:
       device_class: temperature
       unit_of_measurement: "°C"
       state: >
-        {{ states('sensor.living_room_ac_temperature') | int }}
+        {{ states('sensor.living_room_ac_temperature') | int(0) }}
 
     - name: "Living room AC humidity rounded"
       device_class: humidity
       unit_of_measurement: "%"
       state: >
-        {{ states('sensor.living_room_ac_humidity') | int }}
+        {{ states('sensor.living_room_ac_humidity') | int(0) }}
 
   light:
     - name: public_space_lights
