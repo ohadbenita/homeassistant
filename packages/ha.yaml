@@ -531,15 +531,39 @@ automation:
     condition:
       - condition: template
         value_template: >
-          {{ state_attr('binary_sensor.dst', 'next').days_to_event in [7,1] }}
+          {% set current_dst = now().dst() %}
+          {% set next_change = namespace(days=0) %}
+          {% for day in range(1, 8) %}
+            {% if next_change.days == 0 and (now() + timedelta(days=day)).dst() != current_dst %}
+              {% set next_change.days = day %}
+            {% endif %}
+          {% endfor %}
+          {{ next_change.days in [1, 7] }}
     action:
+      - variables:
+          days_to_event: >-
+            {% set current_dst = now().dst() %}
+            {% set next_change = namespace(days=0) %}
+            {% for day in range(1, 8) %}
+              {% if next_change.days == 0 and (now() + timedelta(days=day)).dst() != current_dst %}
+                {% set next_change.days = day %}
+              {% endif %}
+            {% endfor %}
+            {{ next_change.days }}
+          phrase: >-
+            {% set current_dst = now().dst() %}
+            {% set future_dst = namespace(value=current_dst) %}
+            {% for day in range(1, 8) %}
+              {% if future_dst.value == current_dst and (now() + timedelta(days=day)).dst() != current_dst %}
+                {% set future_dst.value = (now() + timedelta(days=day)).dst() %}
+              {% endif %}
+            {% endfor %}
+            {{ 'lose an hour' if future_dst.value > current_dst else 'gain an hour' }}
       - action: notify.send_message
         data:
           entity_id: notify.telegram_bot_659000495_155103022
           message: >
-            {%- set next = state_attr('binary_sensor.dst', 'next') %}
-            {%- set plural = 's' if next.days_to_event > 1 else '' %}
-            "Daylight savings in {{ next.days_to_event }} day{{plural}}, you will {{ next.phrase }}!"
+            Daylight saving time changes in {{ days_to_event }} day{{ 's' if days_to_event | int > 1 else '' }}. You will {{ phrase }}.
 
 
   - alias: Reboot Shelly devices

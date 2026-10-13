@@ -62,7 +62,7 @@ template:
         {% set wd = now().isoweekday() %}
         {% set t = now().strftime('%H:%M') %}
         {% set is_open = states('binary_sensor.post_office_open') == 'on' %}
-        {% set is_holiday = (states('binary_sensor.israel_workday_sensor') == 'off') %}
+        {% set is_holiday = is_state('binary_sensor.workday_sensor', 'off') %}
 
         {% set hours = {
           1: ['11:00','15:00'],
