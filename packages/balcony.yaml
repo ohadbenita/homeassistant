@@ -216,6 +216,7 @@ template:
         {{ states('sensor.shelly1pmminig3_34b7dac88574_switch_0_power') | float > 20 }}
 
     - name: "Parking flood light"
+      unique_id: parking_flood_light_combined
       turn_on:
         action: script.turn_parking_flood_light_on
       turn_off:

@@ -16,7 +16,7 @@ input_text:
 input_boolean:
   req_is_4k:
     name: Request 4K
-    icon: mdi:television-4k
+    icon: mdi:television
 
   req_all_seasons:
     name: All seasons
