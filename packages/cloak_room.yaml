@@ -30,7 +30,7 @@ rest_command:
 automation:
   - alias: "Turn on cloak room light on motion"
     id: cloak_room_turn_light_on_motion
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.cloak_room_fp1_presence
