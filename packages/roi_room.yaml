@@ -105,7 +105,7 @@ automation:
 
   - alias: "Turn on Roi room light on motion"
     id: roi_room_turn_light_on_motion
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
         entity_id: binary_sensor.roi_room_occupancy
@@ -134,24 +134,21 @@ automation:
 
   - alias: "Turn off Roi room appliances when no motion is detected"
     id: roi_room_turn_appliances_off_no_motion_detected
-    initial_state: false
+    initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.roi_room_occupancy
+        entity_id: binary_sensor.roi_room_fp1_presence
         to: 'off'
         for:
-          minutes: 5
+          minutes: 10
 
       - platform: homeassistant
         event: start
 
     condition:
       - condition: state
-        entity_id: binary_sensor.roi_room_occupancy
+        entity_id: binary_sensor.roi_room_fp1_presence
         state: 'off'
-      - condition: time
-        before: '23:00:00'
-        after: '07:00:00'
       - condition: template
         value_template: >
           {{ not (
