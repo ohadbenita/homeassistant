@@ -105,7 +105,7 @@ automation:
 
   - alias: "Turn on Roi room light on motion"
     id: roi_room_turn_light_on_motion
-    initial_state: true
+    initial_state: false
     trigger:
       - platform: state
         entity_id: binary_sensor.roi_room_occupancy
