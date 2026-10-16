@@ -8,6 +8,11 @@ automation:
         entity_id: binary_sensor.kids_hallway_01_occupancy
         from: 'off'
         to: 'on'
+      - platform: state
+        entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
+        to: 'on'
+        for:
+          minutes: 2
 
     condition:
       condition: and
@@ -21,12 +26,10 @@ automation:
         - condition: state
           entity_id: input_boolean.away_mode
           state: 'off'
-        - condition: state
-          entity_id: binary_sensor.living_room_presence
-          state: 'off'
         - condition: template
           value_template: >-
-            {{ (as_timestamp(now()) - as_timestamp(states.binary_sensor.living_room_presence.last_changed)) > 600 }}
+            {{ is_number(states('sensor.living_room_presence_hours_today'))
+              and states('sensor.living_room_presence_hours_today') | float(0) < 2 }}
 
     action:
       - action: cover.set_cover_position
