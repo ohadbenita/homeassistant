@@ -28,8 +28,8 @@ automation:
           state: 'off'
         - condition: template
           value_template: >-
-            {{ is_number(states('sensor.living_room_presence_hours_today'))
-              and states('sensor.living_room_presence_hours_today') | float(0) < 2 }}
+            {{ is_number(states('sensor.living_room_presence_hours_between_4_and_6'))
+              and states('sensor.living_room_presence_hours_between_4_and_6') | float(0) <= 1 }}
 
     action:
       - action: cover.set_cover_position

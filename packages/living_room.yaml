@@ -19,6 +19,14 @@ sensor:
     start: "{{ today_at('00:00') }}"
     end: "{{ now() }}"
 
+  - platform: history_stats
+    name: living_room_presence_hours_between_4_and_6
+    entity_id: binary_sensor.living_room_presence
+    state: 'on'
+    type: time
+    start: "{{ [today_at('04:00'), now()] | min }}"
+    end: "{{ [today_at('06:00'), now()] | min }}"
+
 template:
   binary_sensor:
     - name: "Living Room AC Active"
