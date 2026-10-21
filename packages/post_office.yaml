@@ -82,15 +82,14 @@ template:
             {{ today_window[0] }}
           {% else %}
             {# Otherwise, find the next non-Saturday day with a window #}
-            {% set next_open = None %}
+            {% set next_open = namespace(time='Unknown') %}
             {% for i in range(1, 8) %}
               {% set d = ((wd + i - 1) % 7) + 1 %}
               {% if d != 6 and hours.get(d) is not none %}
-                {% set _ = namespace(time=next_open) %}
-                {% set next_open = hours.get(d)[0] %}
+                {% set next_open.time = hours.get(d)[0] %}
                 {% break %}
               {% endif %}
             {% endfor %}
-            {{ next_open if next_open is not none else 'Unknown' }}
+            {{ next_open.time }}
           {% endif %}
         {% endif %}
