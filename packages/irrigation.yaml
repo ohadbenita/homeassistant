@@ -438,6 +438,7 @@ automation:
 
 
   - alias: Plants - NFC watering tracker
+    initial_state: false
     mode: single
 
     triggers:
