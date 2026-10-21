@@ -72,6 +72,7 @@ template:
           5: ['09:00','12:00'],
           7: ['13:00','18:00']
         } %}
+        {% set day_names = {1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 7: 'Sun'} %}
 
         {% if is_open %}
           Open now
@@ -79,14 +80,14 @@ template:
           {% set today_window = hours.get(wd) %}
           {# If today has hours, not Saturday or holiday, and we're before open -> return today's open #}
           {% if today_window is not none and wd != 6 and not is_holiday and t < today_window[0] %}
-            {{ today_window[0] }}
+            Today @ {{ today_window[0] }}
           {% else %}
             {# Otherwise, find the next non-Saturday day with a window #}
             {% set next_open = namespace(time='Unknown') %}
             {% for i in range(1, 8) %}
               {% set d = ((wd + i - 1) % 7) + 1 %}
               {% if d != 6 and hours.get(d) is not none %}
-                {% set next_open.time = hours.get(d)[0] %}
+                {% set next_open.time = day_names[d] ~ ' @ ' ~ hours.get(d)[0] %}
                 {% break %}
               {% endif %}
             {% endfor %}
