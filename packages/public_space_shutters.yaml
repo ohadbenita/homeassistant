@@ -143,24 +143,6 @@ automation:
             - binary_sensor.living_room_right_window_contact
 
     action:
-      - repeat:
-          for_each: "{{ shutter_windows }}"
-          sequence:
-            - if:
-                - condition: template
-                  value_template: >-
-                    {{ expand(repeat.item.sensors | default([]))
-                      | selectattr('state', 'eq', 'on')
-                      | list
-                      | count == 0 }}
-              then:
-                - action: cover.set_cover_position
-                  target:
-                    entity_id: "{{ repeat.item.cover }}"
-                  data:
-                    position: >-
-                      {{ [state_attr(repeat.item.cover, 'current_position') | int(100), target_position] | min }}
-
       - if:
           - condition: template
             value_template: >-
@@ -176,6 +158,16 @@ automation:
               text: 'Some windows are open. Close shutters anyway?'
               event_id: actionable_notification_close_dining_room_shutters_sunset
               alexa_device: media_player.kitchen_echo
+        else:
+          - repeat:
+              for_each: "{{ shutter_windows }}"
+              sequence:
+                - action: cover.set_cover_position
+                  target:
+                    entity_id: "{{ repeat.item.cover }}"
+                  data:
+                    position: >-
+                      {{ [state_attr(repeat.item.cover, 'current_position') | int(100), target_position] | min }}
 
 
   - alias: 'Close dining room shutters before sunset - actionable notification'
@@ -187,7 +179,6 @@ automation:
         event_data:
           event_id: actionable_notification_close_dining_room_shutters_sunset
           event_response_type: ResponseYes
-
     variables:
       target_position: 35
       shutter_windows:
@@ -225,20 +216,12 @@ automation:
       - repeat:
           for_each: "{{ shutter_windows }}"
           sequence:
-            - if:
-                - condition: template
-                  value_template: >-
-                    {{ expand(repeat.item.sensors | default([]))
-                      | selectattr('state', 'eq', 'on')
-                      | list
-                      | count == 0 }}
-              then:
-                - action: cover.set_cover_position
-                  target:
-                    entity_id: "{{ repeat.item.cover }}"
-                  data:
-                    position: >-
-                      {{ [state_attr(repeat.item.cover, 'current_position') | int(100), target_position] | min }}
+            - action: cover.set_cover_position
+              target:
+                entity_id: "{{ repeat.item.cover }}"
+              data:
+                position: >-
+                  {{ [state_attr(repeat.item.cover, 'current_position') | int(100), target_position] | min }}
 
 
   - alias: 'Close public space shutters at night'
@@ -314,6 +297,16 @@ automation:
               text: 'Some windows are open. Close shutters anyway?'
               event_id: actionable_notification_close_public_space_open_windows
               alexa_device: media_player.kitchen_echo
+        else:
+          - repeat:
+              for_each: "{{ shutter_windows }}"
+              sequence:
+                - action: cover.set_cover_position
+                  target:
+                    entity_id: "{{ repeat.item.cover }}"
+                  data:
+                    position: >-
+                      {{ [state_attr(repeat.item.cover, 'current_position') | int(100), target_position] | min }}
 
 
   - alias: 'Close public space shutters via actionable notification'
@@ -325,7 +318,6 @@ automation:
         event_data:
           event_id: actionable_notification_close_public_space_open_windows
           event_response_type: ResponseYes
-
     variables:
       target_position: 15
       shutter_windows:
@@ -355,23 +347,11 @@ automation:
             - binary_sensor.kitchen_window_01_contact
 
     action:
-      - repeat:
-          for_each: "{{ shutter_windows }}"
-          sequence:
-            - if:
-                - condition: template
-                  value_template: >-
-                    {{ expand(repeat.item.sensors | default([]))
-                      | selectattr('state', 'eq', 'on')
-                      | list
-                      | count == 0 }}
-              then:
-                - action: cover.set_cover_position
-                  target:
-                    entity_id: "{{ repeat.item.cover }}"
-                  data:
-                    position: >-
-                      {{ [state_attr(repeat.item.cover, 'current_position') | int(100), target_position] | min }}
+      - action: cover.set_cover_position
+        target:
+          entity_id: group.public_space_shutters
+        data:
+          position: "{{ target_position }}"
 
 
   - alias: 'Ask if public space shutters at night actionable notification @ midnight'
