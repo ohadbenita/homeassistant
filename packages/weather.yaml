@@ -13,6 +13,12 @@ input_boolean:
     name: Rain Expected in Next 12 Hours
     initial: false
 
+input_datetime:
+  last_rain_detected:
+    name: Last rain detected
+    has_date: true
+    has_time: true
+
 template:
   - sensor:
       - name: "Openweather map temperature feels like rounded"
@@ -34,6 +40,22 @@ rest_command:
 
 
 automation:
+  - alias: Record recent rain
+    id: weather_record_recent_rain
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.openweathermap_rain
+        above: 0
+      - platform: state
+        entity_id: sensor.rain_visual_assessment
+        to: raining
+    action:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.last_rain_detected
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
   - alias: "Update Daily Max Temperature"
     id: weather_update_daily_max_temperature
     trigger:

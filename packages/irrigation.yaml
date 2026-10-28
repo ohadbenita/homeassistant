@@ -300,16 +300,20 @@ automation:
 
     action:
       - if:
-        - condition: state  # yamllint disable-line rule:indentation
-          entity_id: input_boolean.rain_expected_next_12_hours
-          state: 'off'
+        - condition: template  # yamllint disable-line rule:indentation
+          value_template: >-
+            {{ is_state('input_boolean.rain_expected_next_12_hours', 'off')
+               and states('sensor.openweathermap_rain') | float(0) <= 0
+               and (as_timestamp(now()) - as_timestamp(states('input_datetime.last_rain_detected'), 0)) > 36 * 3600
+               and states('input_number.daily_expected_max_temperature') | float(0) >= 15 }}
         then:
           - action: script.irrigation_cycle
             data:
               additional_switches:
                 - switch.irrigation_l4
                 - switch.irrigation_l5
-              irrigation_duration_minutes: 45
+              irrigation_duration_minutes: >-
+                {{ 30 if states('input_number.daily_expected_max_temperature') | float(0) < 25 else 45 }}
         else:
           - condition: state
             entity_id: input_boolean.away_mode
@@ -318,7 +322,8 @@ automation:
             data:
               entity_id: notify.telegram_bot_659000495_155103022
               title: "Irrigation"
-              message: "[Trees] Irrigation cycle skipped as it's probably going to rain soon"
+              message: >-
+                [Trees] Irrigation cycle skipped: {% if is_state('input_boolean.rain_expected_next_12_hours', 'on') %}rain is forecast{% elif states('sensor.openweathermap_rain') | float(0) > 0 %}rain is currently falling{% elif (as_timestamp(now()) - as_timestamp(states('input_datetime.last_rain_detected'), 0)) <= 36 * 3600 %}rain was detected in the last 36 hours{% else %}the forecast high is below 15°C{% endif %}.
 
 
   - alias: Weekly Irrigation Cycle - flowers and herbs
