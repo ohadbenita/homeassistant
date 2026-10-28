@@ -70,13 +70,13 @@ jobs:
 
     env:
       HA_URL: ${{ secrets.HA_URL }}
-      HA_SYNC_WEBHOOK_URL: ${{ secrets.HA_SYNC_WEBHOOK_URL }}
+      HA_TOKEN: ${{ secrets.HA_TOKEN }}
 
     steps:
       - name: Check Home Assistant sync configuration
         id: sync_config
         run: |
-          if [ -z "$HA_URL" ] || [ -z "$HA_SYNC_WEBHOOK_URL" ]; then
+          if [ -z "$HA_URL" ] || [ -z "$HA_TOKEN" ]; then
             echo "::notice::HA sync secrets are not configured; skipping."
             echo "configured=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -93,8 +93,11 @@ jobs:
 
           curl --fail --show-error --silent \
             --request POST \
-            --max-time 10 \
-            "$HA_SYNC_WEBHOOK_URL"
+            --header "Authorization: Bearer $HA_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            --max-time 30 \
+            "$HA_URL/api/services/shell_command/sync_home_assistant_from_git"
 
           for _ in $(seq 1 60); do
             status_json="$(curl --fail --show-error --silent \
