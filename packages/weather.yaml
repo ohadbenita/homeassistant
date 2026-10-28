@@ -147,11 +147,11 @@ automation:
             Confidence: {{ (state_attr('sensor.rain_visual_assessment', 'confidence')
                | float(0) * 100) | round(0) }}%.
             {% if is_state('binary_sensor.all_windows', 'on') %}
-              One or more windows are open. Close them, then tap “Close all shutters”.
+              One or more windows are open. Should I close all shutters now? Please close the windows too.
             {% elif is_state('binary_sensor.all_windows', 'off') %}
               No open windows are detected. Should I close all shutters?
             {% else %}
-              I cannot confirm the window sensors. Check that all windows are closed before asking me to close the shutters.
+              I cannot confirm the window sensors. Should I close all shutters? Please check and close any open windows too.
             {% endif %}
           data:
             actions:
@@ -169,31 +169,41 @@ automation:
         event_data:
           action: CLOSE_ALL_RAIN_SHUTTERS
     action:
-      - if:
-          - condition: state
-            entity_id: binary_sensor.all_windows
-            state: "off"
-        then:
-          - action: cover.close_cover
-            target:
-              entity_id:
-                - cover.living_room_middle_window
-                - cover.shelly2pmg3_e4b32313d15c_cover_0
-                - cover.living_room_right_window
-                - cover.dining_room_left_window
-                - cover.shelly2pmg3_34cdb0776380_cover_0
-                - cover.dining_room_main_window
-                - cover.kitchen_window
-                - cover.ella_room_small_shutter
-                - cover.ella_big_shutter
-                - cover.master_bedroom_main_window
-                - cover.shellyplus2pm_e465b8f38f54
-                - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter
-                - cover.study_room
-        else:
-          - action: notify.mobile_app_ohadbenita
-            data:
-              title: Shutters left open
-              message: >-
-                I could not confirm that all windows are closed.
-                Close any open windows, then tap “Close all shutters” again.
+      - action: cover.close_cover
+        target:
+          entity_id:
+            - cover.living_room_middle_window
+            - cover.shelly2pmg3_e4b32313d15c_cover_0
+            - cover.living_room_right_window
+            - cover.dining_room_left_window
+            - cover.shelly2pmg3_34cdb0776380_cover_0
+            - cover.dining_room_main_window
+            - cover.kitchen_window
+            - cover.ella_room_small_shutter
+            - cover.ella_big_shutter
+            - cover.master_bedroom_main_window
+            - cover.shellyplus2pm_e465b8f38f54
+            - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter
+            - cover.study_room
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.all_windows
+                state: "on"
+            sequence:
+              - action: notify.mobile_app_ohadbenita
+                data:
+                  title: Shutters closing
+                  message: >-
+                    I sent the close command to all shutters. One or more windows are open;
+                    please close them too.
+          - conditions:
+              - condition: template
+                value_template: "{{ not is_state('binary_sensor.all_windows', 'off') }}"
+            sequence:
+              - action: notify.mobile_app_ohadbenita
+                data:
+                  title: Shutters closing
+                  message: >-
+                    I sent the close command to all shutters, but I cannot confirm the window states.
+                    Please check the windows and close any that are open.
