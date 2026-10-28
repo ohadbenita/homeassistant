@@ -50,10 +50,14 @@ WATERING_LEAKAGE_CAMERA_ENTITY_ID = os.environ.get(
 )
 WATERING_LEAKAGE_TARGET_ENTITY_ID = os.environ.get("WATERING_LEAKAGE_TARGET_ENTITY_ID")
 
-RAIN_VISUAL_CAMERA_ENTITY_ID = os.environ.get(
-    "RAIN_VISUAL_CAMERA_ENTITY_ID",
-    "camera.backyard_pano_snapshots_clear",
-)
+RAIN_VISUAL_CAMERA_ENTITY_IDS = [
+    camera.strip()
+    for camera in os.environ.get(
+        "RAIN_VISUAL_CAMERA_ENTITY_IDS",
+        os.environ.get("RAIN_VISUAL_CAMERA_ENTITY_ID", "camera.backyard_pano_snapshots_clear"),
+    ).split(",")
+    if camera.strip()
+]
 RAIN_VISUAL_TARGET_ENTITY_ID = os.environ.get(
     "RAIN_VISUAL_TARGET_ENTITY_ID",
     "sensor.rain_visual_assessment",
@@ -249,21 +253,31 @@ def capture_image_from_ha(camera_entity_id: str) -> bytes:
     raise ConnectionError(f"Failed to retrieve snapshot. Status: {resp.status_code}, Response: {resp.text}")
 
 
-def analyze_image_with_bedrock(image_bytes: bytes, system_prompt: str, user_prompt: str) -> Dict[str, Any]:
+def analyze_image_with_bedrock(
+    image_bytes: bytes | list[bytes], system_prompt: str, user_prompt: str
+) -> Dict[str, Any]:
     """
     Send the base64-encoded image to AWS Bedrock for analysis.
     """
     if not BEDROCK_MODEL_ID:
         raise EnvironmentError("AWS Bedrock Model ID is not configured.")
 
-    base64_image = base64.b64encode(image_bytes).decode("utf-8")
+    images = image_bytes if isinstance(image_bytes, list) else [image_bytes]
     system_prompt = [{"text": system_prompt}]
 
     user_message = [
         {
             "role": "user",
             "content": [
-                {"image": {"format": "jpg", "source": {"bytes": base64_image}}},
+                *[
+                    {
+                        "image": {
+                            "format": "jpg",
+                            "source": {"bytes": base64.b64encode(image).decode("utf-8")},
+                        }
+                    }
+                    for image in images
+                ],
                 {"text": user_prompt},
             ],
         }
@@ -550,7 +564,8 @@ def update_rain_visual_assessment_ha_entity(result: Dict[str, Any]) -> Dict[str,
         "status": status,
         "confidence": round(confidence, 3),
         "assessment": assessment,
-        "camera_entity": RAIN_VISUAL_CAMERA_ENTITY_ID,
+        "camera_entity": RAIN_VISUAL_CAMERA_ENTITY_IDS[0] if RAIN_VISUAL_CAMERA_ENTITY_IDS else "",
+        "camera_entities": RAIN_VISUAL_CAMERA_ENTITY_IDS,
         "last_checked": int(time.time()),
         "input_tokens": result.get("usage", {}).get("inputTokens", 0),
         "output_tokens": result.get("usage", {}).get("outputTokens", 0),
@@ -919,13 +934,14 @@ def analyze_visual_rain():
             )
             return jsonify({**update_rain_visual_assessment_ha_entity(fake), "mode": "init"}), 200
 
-        if not RAIN_VISUAL_CAMERA_ENTITY_ID:
-            raise ValueError("RAIN_VISUAL_CAMERA_ENTITY_ID is not set.")
-        image_bytes = capture_image_from_ha(RAIN_VISUAL_CAMERA_ENTITY_ID)
+        if not RAIN_VISUAL_CAMERA_ENTITY_IDS:
+            raise ValueError("RAIN_VISUAL_CAMERA_ENTITY_IDS is not set.")
+        images = [capture_image_from_ha(camera) for camera in RAIN_VISUAL_CAMERA_ENTITY_IDS]
         detection_result = analyze_image_with_bedrock(
-            image_bytes=image_bytes,
+            image_bytes=images,
             system_prompt=(
-                "You are a visual rain detector. Return STRICT JSON ONLY with exactly these keys: "
+                "You are a visual rain detector analyzing multiple outdoor camera views of the same property. "
+                "Return STRICT JSON ONLY with exactly these keys: "
                 "'status' ('raining', 'not_raining', or 'uncertain'), "
                 "'confidence' (number from 0 to 1), and 'assessment' (short string). "
                 "Use 'raining' only when current falling rain is visible. "
@@ -935,9 +951,13 @@ def analyze_visual_rain():
                 "do not prove that rain is falling. Do not add markdown or text outside the JSON object."
             ),
             user_prompt=(
-                "Is rain falling now in this outdoor camera view? Look for visible falling drops or streaks, "
-                "splashing, or rain visibly hitting surfaces. Do not infer current rain from surfaces that are "
-                "already wet. Return only this JSON shape: "
+                "The attached images are different outdoor camera views of the same property, in this order: "
+                f"{', '.join(RAIN_VISUAL_CAMERA_ENTITY_IDS)}. "
+                "Is rain falling now in any of these views? Look for visible falling drops or streaks, "
+                "splashing, or rain visibly hitting surfaces. Consider all images together; if any clear view "
+                "shows current rain, return raining. Return not_raining only if the views are clear enough and "
+                "none show rain. Return uncertain if the images do not support a reliable decision. "
+                "Do not infer current rain from surfaces that are already wet. Return only this JSON shape: "
                 "{\"status\":\"raining|not_raining|uncertain\",\"confidence\":0.0,"
                 "\"assessment\":\"short reason\"}."
             ),
