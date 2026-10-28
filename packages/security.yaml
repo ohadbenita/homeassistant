@@ -53,17 +53,38 @@ template:
     - name: all_windows
       device_class: opening
       state: >
-        {{
-          is_state('binary_sensor.dining_room_left_window_01_contact', 'on') or
-          is_state('binary_sensor.dining_room_right_window_01_contact', 'on') or
-          is_state('binary_sensor.dining_room_main_window_contact', 'on') or
-          is_state('binary_sensor.living_room_middle_window_contact', 'on') or
-          is_state('binary_sensor.living_room_right_window_contact', 'on') or
-          is_state('binary_sensor.living_room_left_window_contact', 'on') or
-          is_state('binary_sensor.study_window_contact', 'on') or
-          is_state('binary_sensor.roi_window_contact', 'on') or
-          is_state('binary_sensor.adi_window_contact', 'on')
-        }}
+        {% set windows = [
+          'binary_sensor.kitchen_window_01_contact',
+          'binary_sensor.dining_room_left_window_01_contact',
+          'binary_sensor.dining_room_right_window_01_contact',
+          'binary_sensor.dining_room_main_window_01_contact',
+          'binary_sensor.dining_room_main_window_02_contact',
+          'binary_sensor.living_room_middle_window_01_contact',
+          'binary_sensor.living_room_middle_window_02_contact',
+          'binary_sensor.living_room_right_window_01_contact',
+          'binary_sensor.living_room_right_window_02_contact',
+          'binary_sensor.living_room_left_window_01_contact',
+          'binary_sensor.living_room_left_window_02_contact',
+          'binary_sensor.study_window_contact',
+          'binary_sensor.roi_window_contact',
+          'binary_sensor.adi_window_contact'
+        ] %}
+        {% set ns = namespace(open=false, invalid=false) %}
+        {% for window in windows %}
+          {% set state = states(window) %}
+          {% if state == 'on' %}
+            {% set ns.open = true %}
+          {% elif state != 'off' %}
+            {% set ns.invalid = true %}
+          {% endif %}
+        {% endfor %}
+        {% if ns.open %}
+          true
+        {% elif ns.invalid %}
+          unknown
+        {% else %}
+          false
+        {% endif %}
 
   lock:
     - name: "All doors"

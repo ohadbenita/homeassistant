@@ -21,6 +21,17 @@ template:
         state: >
           {{ states('sensor.openweathermap_feels_like_temperature') | int }}
 
+rest_command:
+  rain_visual_init:
+    url: !secret rain_visual_init_url
+    method: GET
+    timeout: 90
+
+  rain_visual_analyze:
+    url: !secret rain_visual_analysis_url
+    method: GET
+    timeout: 90
+
 
 automation:
   - alias: "Update Daily Max Temperature"
@@ -76,3 +87,113 @@ automation:
           - action: input_boolean.turn_off
             target:
               entity_id: input_boolean.rain_expected_next_12_hours
+
+  - alias: Initialize visual rain sensor
+    id: weather_initialize_visual_rain_sensor
+    initial_state: true
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - action: rest_command.rain_visual_init
+
+  - alias: Check cameras for rain every 10 minutes during wet weather
+    id: weather_check_visual_rain_during_wet_weather
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: time_pattern
+        minutes: "/10"
+      - platform: state
+        entity_id: weather.openweathermap
+        to: rainy
+      # Check once more when the weather provider says the rain has stopped.
+      - platform: state
+        entity_id: weather.openweathermap
+        from: rainy
+    condition:
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: weather.openweathermap
+            state: rainy
+          - condition: state
+            entity_id: input_boolean.rain_expected_next_12_hours
+            state: "on"
+          - condition: template
+            value_template: >-
+              {{ trigger.platform == 'state'
+                 and trigger.entity_id == 'weather.openweathermap'
+                 and trigger.from_state is not none
+                 and trigger.from_state.state == 'rainy' }}
+    action:
+      - action: rest_command.rain_visual_analyze
+
+  - alias: Notify when cameras confirm rain
+    id: weather_notify_when_visual_rain_detected
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.rain_visual_assessment
+        to: raining
+    action:
+      - action: notify.mobile_app_ohadbenita
+        data:
+          title: Rain detected — shutter action?
+          message: >-
+            {{ state_attr('sensor.rain_visual_assessment', 'assessment')
+               | default('The outdoor cameras show rain.', true) }}
+            Confidence: {{ (state_attr('sensor.rain_visual_assessment', 'confidence')
+               | float(0) * 100) | round(0) }}%.
+            {% if is_state('binary_sensor.all_windows', 'on') %}
+              One or more windows are open. Close them, then tap “Close all shutters”.
+            {% elif is_state('binary_sensor.all_windows', 'off') %}
+              No open windows are detected. Should I close all shutters?
+            {% else %}
+              I cannot confirm the window sensors. Check that all windows are closed before asking me to close the shutters.
+            {% endif %}
+          data:
+            actions:
+              - action: CLOSE_ALL_RAIN_SHUTTERS
+                title: Close all shutters
+                icon: mdi:window-shutter
+
+  - alias: Close all shutters from rain notification
+    id: weather_close_all_shutters_from_rain_notification
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: CLOSE_ALL_RAIN_SHUTTERS
+    action:
+      - if:
+          - condition: state
+            entity_id: binary_sensor.all_windows
+            state: "off"
+        then:
+          - action: cover.close_cover
+            target:
+              entity_id:
+                - cover.living_room_middle_window
+                - cover.shelly2pmg3_e4b32313d15c_cover_0
+                - cover.living_room_right_window
+                - cover.dining_room_left_window
+                - cover.shelly2pmg3_34cdb0776380_cover_0
+                - cover.dining_room_main_window
+                - cover.kitchen_window
+                - cover.ella_room_small_shutter
+                - cover.ella_big_shutter
+                - cover.master_bedroom_main_window
+                - cover.shellyplus2pm_e465b8f38f54
+                - cover.master_bedroom_bed_right_shutter_master_bedroom_right_window_shutter
+                - cover.study_room
+        else:
+          - action: notify.mobile_app_ohadbenita
+            data:
+              title: Shutters left open
+              message: >-
+                I could not confirm that all windows are closed.
+                Close any open windows, then tap “Close all shutters” again.

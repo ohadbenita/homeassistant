@@ -50,6 +50,15 @@ WATERING_LEAKAGE_CAMERA_ENTITY_ID = os.environ.get(
 )
 WATERING_LEAKAGE_TARGET_ENTITY_ID = os.environ.get("WATERING_LEAKAGE_TARGET_ENTITY_ID")
 
+RAIN_VISUAL_CAMERA_ENTITY_ID = os.environ.get(
+    "RAIN_VISUAL_CAMERA_ENTITY_ID",
+    "camera.backyard_pano_snapshots_clear",
+)
+RAIN_VISUAL_TARGET_ENTITY_ID = os.environ.get(
+    "RAIN_VISUAL_TARGET_ENTITY_ID",
+    "sensor.rain_visual_assessment",
+)
+
 SOLAR_PANELS_CAMERA_ENTITY_ID = os.environ.get(
     "SOLAR_PANELS_CAMERA_ENTITY_ID",
     "camera.northern_roof_clear",
@@ -84,6 +93,8 @@ DEFAULTS_LPG_AUTO_SWITCHER_CONFIDENCE = float(os.environ.get("DEFAULTS_LPG_AUTO_
 # NEW: watering leakage defaults
 DEFAULTS_WATERING_LEAKAGE_STATE = os.environ.get("DEFAULTS_WATERING_LEAKAGE_STATE", "off")  # 'on' when leaking
 DEFAULTS_WATERING_LEAKAGE_CONFIDENCE = float(os.environ.get("DEFAULTS_WATERING_LEAKAGE_CONFIDENCE", "0.0"))
+DEFAULTS_RAIN_VISUAL_STATE = os.environ.get("DEFAULTS_RAIN_VISUAL_STATE", "unknown")
+DEFAULTS_RAIN_VISUAL_CONFIDENCE = float(os.environ.get("DEFAULTS_RAIN_VISUAL_CONFIDENCE", "0.0"))
 
 # NEW: solar panels cleanliness defaults
 DEFAULTS_SOLAR_PANELS_CLEANLINESS = float(
@@ -523,6 +534,37 @@ def update_watering_leakage_ha_entity(result: Dict[str, Any]) -> Tuple[bool, flo
     return leak_detected, confidence
 
 
+def update_rain_visual_assessment_ha_entity(result: Dict[str, Any]) -> Dict[str, Any]:
+    """Update the Home Assistant sensor with the latest visual rain assessment."""
+    if not (HA_BASE_URL and HA_TOKEN and RAIN_VISUAL_TARGET_ENTITY_ID):
+        raise ValueError("Cannot update rain assessment entity. Missing HA config or target entity.")
+
+    detection = _parse_bedrock_content_json(result)
+    status = str(detection.get("status", "")).strip().lower()
+    if status not in {"raining", "not_raining", "uncertain", "unknown"}:
+        raise ValueError(f"Invalid rain assessment status: {status!r}.")
+
+    confidence = _clamp_json_number(detection.get("confidence", 0), "confidence", 0, 1)
+    assessment = str(detection.get("assessment", ""))[:240]
+    attributes = {
+        "status": status,
+        "confidence": round(confidence, 3),
+        "assessment": assessment,
+        "camera_entity": RAIN_VISUAL_CAMERA_ENTITY_ID,
+        "last_checked": int(time.time()),
+        "input_tokens": result.get("usage", {}).get("inputTokens", 0),
+        "output_tokens": result.get("usage", {}).get("outputTokens", 0),
+    }
+
+    url = f"{HA_BASE_URL}/api/states/{RAIN_VISUAL_TARGET_ENTITY_ID}"
+    headers = {"Authorization": f"Bearer {HA_TOKEN}", "Content-Type": "application/json"}
+    response = requests.post(url, headers=headers, json={"state": status, "attributes": attributes}, timeout=5)
+    if response.status_code not in (200, 201):
+        logger.error("Failed to update rain assessment entity. Status: %s, Error: %s", response.status_code, response.text)
+        response.raise_for_status()
+    return {"status": status, "confidence": round(confidence, 3), "assessment": assessment}
+
+
 def update_solar_panels_ha_entity(result: Dict[str, Any]) -> Dict[str, Any]:
     """
     Update the HA sensor with the visible solar panel cleanliness score.
@@ -857,6 +899,60 @@ def analyze_watering_leakage():
 
     except Exception as ex:
         logger.exception(f"Analysis workflow failed: {ex}")
+        return jsonify({"error": str(ex)}), 500
+
+
+@app.route("/analyze/visual-rain", methods=["GET"])
+def analyze_visual_rain():
+    """Check the outdoor camera image for rain currently falling."""
+    try:
+        if _is_truthy(request.args.get("init")):
+            initial_state = DEFAULTS_RAIN_VISUAL_STATE.lower()
+            if initial_state not in {"raining", "not_raining", "uncertain", "unknown"}:
+                initial_state = "unknown"
+            fake = _make_fake_bedrock_result(
+                {
+                    "status": initial_state,
+                    "confidence": DEFAULTS_RAIN_VISUAL_CONFIDENCE,
+                    "assessment": "Waiting for the first camera check.",
+                }
+            )
+            return jsonify({**update_rain_visual_assessment_ha_entity(fake), "mode": "init"}), 200
+
+        if not RAIN_VISUAL_CAMERA_ENTITY_ID:
+            raise ValueError("RAIN_VISUAL_CAMERA_ENTITY_ID is not set.")
+        image_bytes = capture_image_from_ha(RAIN_VISUAL_CAMERA_ENTITY_ID)
+        detection_result = analyze_image_with_bedrock(
+            image_bytes=image_bytes,
+            system_prompt=(
+                "You are a visual rain detector. Return STRICT JSON ONLY with exactly these keys: "
+                "'status' ('raining', 'not_raining', or 'uncertain'), "
+                "'confidence' (number from 0 to 1), and 'assessment' (short string). "
+                "Use 'raining' only when current falling rain is visible. "
+                "Use 'not_raining' only when the outdoor scene is clear enough to judge and no rain is visible. "
+                "Use 'uncertain' when the view, lighting, or image quality does not support a reliable decision. "
+                "Wet ground, puddles, overcast sky, glare, reflections, or water on the camera lens alone "
+                "do not prove that rain is falling. Do not add markdown or text outside the JSON object."
+            ),
+            user_prompt=(
+                "Is rain falling now in this outdoor camera view? Look for visible falling drops or streaks, "
+                "splashing, or rain visibly hitting surfaces. Do not infer current rain from surfaces that are "
+                "already wet. Return only this JSON shape: "
+                "{\"status\":\"raining|not_raining|uncertain\",\"confidence\":0.0,"
+                "\"assessment\":\"short reason\"}."
+            ),
+        )
+        return jsonify(update_rain_visual_assessment_ha_entity(detection_result)), 200
+
+    except Exception as ex:
+        logger.exception("Visual rain analysis failed: %s", ex)
+        try:
+            uncertain = _make_fake_bedrock_result(
+                {"status": "uncertain", "confidence": 0, "assessment": "Camera analysis unavailable."}
+            )
+            update_rain_visual_assessment_ha_entity(uncertain)
+        except Exception:
+            logger.exception("Could not mark the visual rain assessment as uncertain.")
         return jsonify({"error": str(ex)}), 500
 
 
