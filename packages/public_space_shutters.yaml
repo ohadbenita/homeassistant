@@ -501,6 +501,17 @@ automation:
         data:
           position: 35
 
+      - if:
+          - condition: state
+            entity_id: sun.sun
+            state: 'below_horizon'
+        then:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.kitchen_window
+            data:
+              position: 35
+
 
   - alias: 'Living room fireplace switch - Open public space shutters'
     id: living_room_fireplace_open_public_space_shutters
