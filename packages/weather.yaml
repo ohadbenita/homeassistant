@@ -160,6 +160,19 @@ automation:
         entity_id: sensor.rain_visual_assessment
         to: raining
     action:
+      - action: script.activate_alexa_actionable_notification
+        data:
+          text: >-
+            The outdoor cameras confirm that it is raining.
+            {% if is_state('binary_sensor.all_windows', 'on') %}
+              One or more windows are open. Should I close all shutters? Please close the windows too.
+            {% elif is_state('binary_sensor.all_windows', 'off') %}
+              Should I close all shutters?
+            {% else %}
+              Should I close all shutters? I cannot confirm whether any windows are open.
+            {% endif %}
+          event_id: actionable_notification_close_all_rain_shutters
+          alexa_device: media_player.kitchen_echo
       - action: notify.mobile_app_ohadbenita
         data:
           title: Rain detected — shutter action?
@@ -190,6 +203,11 @@ automation:
         event_type: mobile_app_notification_action
         event_data:
           action: CLOSE_ALL_RAIN_SHUTTERS
+      - platform: event
+        event_type: alexa_actionable_notification
+        event_data:
+          event_id: actionable_notification_close_all_rain_shutters
+          event_response_type: ResponseYes
     action:
       - action: cover.close_cover
         target:
