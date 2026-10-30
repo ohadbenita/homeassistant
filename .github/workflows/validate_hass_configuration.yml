@@ -14,17 +14,23 @@ on:  # yamllint disable-line rule:truthy
       - master
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   lint:
     name: Lint configuration files
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
     strategy:
       matrix:
         tool: [yamllint, jsonlint, markdownlint]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install dependencies
         run: |
@@ -48,21 +54,46 @@ jobs:
   lint-dockerfile:
     name: Lint generative-ai Dockerfile
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Run Hadolint
         run: docker run --rm -i hadolint/hadolint:v2.15.1 < generative-ai/Dockerfile
 
+  zizmor:
+    name: Audit GitHub Actions with zizmor
+    runs-on: ubuntu-26.04
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b  # v0.8.0
+
   validate:
     name: Validate HASS configuration
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
     needs: [lint, lint-dockerfile]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Pull Home Assistant Docker image
         run: docker pull ghcr.io/home-assistant/home-assistant:stable
