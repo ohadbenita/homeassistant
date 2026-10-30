@@ -106,7 +106,15 @@ jobs:
             commit="$(printf '%s' "$status_json" | jq -r '.commit // ""')"
 
             if [ "$status" = "success" ] && [ "$commit" = "$short_sha" ]; then
-              echo "Home Assistant synced $short_sha."
+              curl --fail --show-error --silent \
+                --request POST \
+                --header "Authorization: Bearer $HA_TOKEN" \
+                --header "Content-Type: application/json" \
+                --data '{}' \
+                --max-time 30 \
+                "$HA_URL/api/services/automation/reload"
+
+              echo "Home Assistant synced and reloaded automations for $short_sha."
               exit 0
             fi
 
