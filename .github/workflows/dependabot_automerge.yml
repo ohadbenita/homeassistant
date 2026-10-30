@@ -1,0 +1,58 @@
+name: Dependabot auto-merge
+
+on:
+  workflow_run:
+    workflows:
+      - Home Assistant CI
+    types:
+      - completed
+
+permissions:
+  actions: write
+  checks: read
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      startsWith(github.event.workflow_run.head_branch, 'dependabot/') &&
+      github.event.workflow_run.pull_requests[0].base.ref == 'master'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    steps:
+      - name: Wait for CI and merge the tested Dependabot commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          set -euo pipefail
+
+          pr_json="$(gh pr view "$PR_NUMBER" --json author,baseRefName,headRefOid,isDraft,state)"
+          author="$(printf '%s' "$pr_json" | jq -r '.author.login')"
+          base="$(printf '%s' "$pr_json" | jq -r '.baseRefName')"
+          head_sha="$(printf '%s' "$pr_json" | jq -r '.headRefOid')"
+
+          if [[ "$author" != "dependabot[bot]" || "$base" != "master" ]] || \
+             [[ "$(printf '%s' "$pr_json" | jq -r '.isDraft')" == "true" ]] || \
+             [[ "$(printf '%s' "$pr_json" | jq -r '.state')" != "OPEN" ]]; then
+            echo "Pull request is not an open Dependabot update for master."
+            exit 1
+          fi
+
+          gh pr checks "$PR_NUMBER" --watch --fail-fast
+
+          checked_head_sha="$(gh pr view "$PR_NUMBER" --json headRefOid --jq '.headRefOid')"
+          if [[ "$checked_head_sha" != "$head_sha" ]]; then
+            echo "Pull request changed while CI was running; waiting for its new CI run."
+            exit 1
+          fi
+
+          gh pr merge "$PR_NUMBER" --rebase --match-head-commit "$head_sha"
+
+      - name: Run validation and Home Assistant sync after merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run validate_hass_configuration.yml --ref master

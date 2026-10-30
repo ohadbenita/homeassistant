@@ -12,6 +12,7 @@ on:  # yamllint disable-line rule:truthy
   pull_request:
     branches:
       - master
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -66,7 +67,9 @@ jobs:
     name: Request live Home Assistant sync
     runs-on: ubuntu-26.04
     needs: validate
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: >-
+      github.ref == 'refs/heads/master' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
     env:
       HA_URL: ${{ secrets.HA_URL }}
