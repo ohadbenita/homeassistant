@@ -1,6 +1,7 @@
+---
 name: Dependabot auto-merge
 
-on:
+on:  # yamllint disable-line rule:truthy
   workflow_run:
     workflows:
       - Home Assistant CI
