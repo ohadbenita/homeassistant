@@ -44,6 +44,7 @@ shell_command:
     bash -lc 'cd /config &&
     STATUS_FILE=www/github_sync_status.json
     HA_CHECK_CMD=true
+    RELOAD_AFTER_SYNC=1
     ./scripts/sync_from_git.sh'
 
 automation:
