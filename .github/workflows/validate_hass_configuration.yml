@@ -45,10 +45,20 @@ jobs:
             markdownlint **/*.md
           fi
 
+  lint-dockerfile:
+    name: Lint generative-ai Dockerfile
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run Hadolint
+        run: docker run --rm -i hadolint/hadolint:v2.15.1 < generative-ai/Dockerfile
+
   validate:
     name: Validate HASS configuration
     runs-on: ubuntu-26.04
-    needs: lint
+    needs: [lint, lint-dockerfile]
 
     steps:
       - name: Checkout repository
