@@ -223,16 +223,18 @@ automation:
       - platform: state
         entity_id: binary_sensor.solaredge_se15k_problem
         to: "on"
+        for:
+          hours: 1
     action:
       - action: notify.send_message
         data:
           entity_id: notify.telegram_bot_659000495_155103022
           message: >-
-            SolarEdge inverter reports a fault and has stopped producing.
+            SolarEdge inverter has reported a fault for 1 hour and has stopped producing.
       - action: notify.mobile_app_ohadbenita
         data:
           title: "Solar inverter fault"
-          message: "SolarEdge inverter reports a fault and has stopped producing."
+          message: "SolarEdge inverter has reported a fault for 1 hour and has stopped producing."
 
 
 ###############################################################################
