@@ -124,6 +124,28 @@ automation:
         state: 'off'
 
     action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.study_window_contact
+                state: 'on'
+            sequence:
+              - action: notify.send_message
+                data:
+                  entity_id: notify.telegram_bot_659000495_155103022
+                  title: "Study room - window is open"
+                  message: >-
+                    The study room window is open. Please close it so I can close the shutter.
+              - wait_for_trigger:
+                  - platform: state
+                    entity_id: binary_sensor.study_window_contact
+                    to: 'off'
+                    for:
+                      seconds: 5
+                timeout:
+                  hours: 1
+                continue_on_timeout: false
+
       - action: cover.close_cover
         entity_id: cover.study_room
 
