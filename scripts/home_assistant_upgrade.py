@@ -10,6 +10,7 @@ import re
 import socket
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -29,13 +30,17 @@ IMAGE_PATTERN = re.compile(
 VERSION_PATTERN = re.compile(r"^\d{4}\.\d{1,2}\.\d+$")
 
 
-def write_status(status, message, version=None, pull_request=None):
+def write_status(
+    status, message, version=None, pull_request=None, pull_request_number=None
+):
     STATUS.parent.mkdir(parents=True, exist_ok=True)
     data = {"status": status, "message": message}
     if version:
         data["version"] = version
     if pull_request:
         data["pull_request"] = pull_request
+    if pull_request_number:
+        data["pull_request_number"] = pull_request_number
     temporary = STATUS.with_suffix(".tmp")
     temporary.write_text(json.dumps(data), encoding="utf-8")
     temporary.replace(STATUS)
@@ -113,7 +118,7 @@ def open_or_create_pr(latest, token):
     })
     _, prs = github_request(f"/repos/{REPO}/pulls?{query}", token=token)
     if prs:
-        return prs[0]["html_url"]
+        return prs[0]
 
     _, master = github_request(f"/repos/{REPO}/git/ref/heads/master", token=token)
     try:
@@ -160,7 +165,48 @@ def open_or_create_pr(latest, token):
             ),
         },
     )
-    return pr["html_url"]
+    return pr
+
+
+def wait_for_merge(pull_request, version, token):
+    number = pull_request["number"]
+    url = pull_request["html_url"]
+    write_status(
+        "waiting_for_merge",
+        f"Compose PR #{number} is ready. Merge it to continue the upgrade.",
+        version,
+        url,
+        number,
+    )
+    while True:
+        _, current_pr = github_request(
+            f"/repos/{REPO}/pulls/{number}", token=token
+        )
+        if current_pr.get("merged_at"):
+            break
+        if current_pr.get("state") == "closed":
+            write_status(
+                "failed",
+                f"Compose PR #{number} closed without a merge. Tap to start again.",
+                version,
+                url,
+                number,
+            )
+            return None
+        time.sleep(60)
+
+    merged_compose, _ = get_compose("master", token)
+    merged_version = compose_version(merged_compose)
+    if merged_version != version:
+        write_status(
+            "failed",
+            f"Compose PR #{number} merged, but master now targets {merged_version}. Tap to check again.",
+            version,
+            url,
+            number,
+        )
+        return None
+    return merged_compose
 
 
 class UnixHTTPConnection(http.client.HTTPConnection):
@@ -194,10 +240,19 @@ def deploy(version, compose_content):
     helper_dir = CONFIG / "www/home_assistant_upgrade"
     helper_dir.mkdir(parents=True, exist_ok=True)
     (helper_dir / "docker-compose.yaml").write_text(compose_content, encoding="utf-8")
-    write_status("applying", f"Applying Home Assistant {version} on Synology.", version)
+    write_status(
+        "applying",
+        f"Preparing the Synology deployment for Home Assistant {version}.",
+        version,
+    )
 
     image_query = urllib.parse.urlencode({"fromImage": "docker", "tag": "cli"})
     docker_request("POST", f"/images/create?{image_query}", timeout=900)
+    write_status(
+        "applying",
+        f"Docker helper is ready. Updating Home Assistant {version} on Synology.",
+        version,
+    )
     compose_command = (
         "docker compose --project-name hass --project-directory /repo/hass "
         "-f /upgrade/docker-compose.yaml up -d --pull always --no-deps homeassistant"
@@ -209,11 +264,11 @@ def deploy(version, compose_content):
     })
     failure = json.dumps({
         "status": "failed",
-        "message": f"Synology could not apply Home Assistant {version}; check the HA logs.",
+        "message": f"Synology could not apply Home Assistant {version}; see deploy.log in the upgrade folder.",
         "version": version,
     })
     command = (
-        f"{compose_command}; result=$?; "
+        f"{compose_command} > /upgrade/deploy.log 2>&1; result=$?; "
         f"if [ \"$result\" -eq 0 ]; then printf '%s\\n' '{success}' > /upgrade/status.json; "
         f"else printf '%s\\n' '{failure}' > /upgrade/status.json; fi; exit \"$result\""
     )
@@ -248,13 +303,9 @@ def run_upgrade():
             write_status("current", f"Compose already targets {current}.", current)
             return
         pull_request = open_or_create_pr(latest, token)
-        write_status(
-            "review",
-            f"PR opened for Home Assistant {latest}. Merge it, then press the button again to deploy.",
-            latest,
-            pull_request,
-        )
-        return
+        master_compose = wait_for_merge(pull_request, latest, token)
+        if master_compose is None:
+            return
 
     deploy(latest, master_compose)
 
@@ -264,7 +315,6 @@ def start():
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            write_status("running", "A Home Assistant upgrade check is already running.")
             return
         write_status("running", "Checking the latest Home Assistant release and Compose PR.")
         child = subprocess.Popen(
