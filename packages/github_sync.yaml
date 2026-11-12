@@ -3,6 +3,18 @@
 
 command_line:
   - sensor:
+      name: Home Assistant Upgrade Status
+      unique_id: home_assistant_upgrade_status
+      command: >-
+        cat /config/www/home_assistant_upgrade/status.json 2>/dev/null
+        || echo '{"status":"idle","message":"Press to check for an upgrade."}'
+      value_template: "{{ value_json.status }}"
+      json_attributes:
+        - message
+        - version
+        - pull_request
+
+  - sensor:
       name: GitHub Sync Status
       unique_id: github_sync_status
       command: >-
