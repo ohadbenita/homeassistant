@@ -45,6 +45,22 @@ input_boolean:
   clean_with_delay:
     name: Delay start
     initial: false
+  clean_yulanda_public_all:
+    name: Select all public spaces
+    icon: mdi:select-all
+    initial: false
+  clean_yulanda_hallways_all:
+    name: Select all hallways
+    icon: mdi:select-all
+    initial: false
+  clean_yulanda_rooms_all:
+    name: Select all rooms
+    icon: mdi:select-all
+    initial: false
+  clean_yulanda_bathrooms_all:
+    name: Select all bathrooms
+    icon: mdi:select-all
+    initial: false
 
   # ---------------------------------------------------------------------------
   # Upstairs / vacuum.muhammad_s8 (Upper floor)
@@ -71,6 +87,18 @@ input_boolean:
   # S8-scoped delay toggle so it won't interfere with downstairs
   clean_upper_with_delay_s8:
     name: Delay start (Upper floor / S8)
+    initial: false
+  clean_muhammad_rooms_all:
+    name: Select all rooms (Upper floor)
+    icon: mdi:select-all
+    initial: false
+  clean_muhammad_hallways_all:
+    name: Select all hallways (Upper floor)
+    icon: mdi:select-all
+    initial: false
+  clean_muhammad_bathrooms_all:
+    name: Select all bathrooms (Upper floor)
+    icon: mdi:select-all
     initial: false
 
 
@@ -220,6 +248,139 @@ script:
 
 
 automation:
+  - alias: "Select all cleaning areas by group"
+    id: select_all_cleaning_areas_by_group
+    mode: queued
+    trigger:
+      - platform: state
+        entity_id:
+          - input_boolean.clean_yulanda_public_all
+          - input_boolean.clean_yulanda_hallways_all
+          - input_boolean.clean_yulanda_rooms_all
+          - input_boolean.clean_yulanda_bathrooms_all
+          - input_boolean.clean_muhammad_rooms_all
+          - input_boolean.clean_muhammad_hallways_all
+          - input_boolean.clean_muhammad_bathrooms_all
+    action:
+      - variables:
+          group_entities:
+            input_boolean.clean_yulanda_public_all:
+              - input_boolean.clean_kitchen
+              - input_boolean.clean_pantry
+              - input_boolean.clean_dining_room
+              - input_boolean.clean_living_room
+            input_boolean.clean_yulanda_hallways_all:
+              - input_boolean.clean_entrance
+              - input_boolean.clean_hall
+            input_boolean.clean_yulanda_rooms_all:
+              - input_boolean.clean_roi_room
+              - input_boolean.clean_adi_room
+              - input_boolean.clean_study
+            input_boolean.clean_yulanda_bathrooms_all:
+              - input_boolean.clean_guest_bathroom
+              - input_boolean.clean_kids_bathroom
+            input_boolean.clean_muhammad_rooms_all:
+              - input_boolean.clean_upper_master_bedroom
+              - input_boolean.clean_upper_ella_room
+              - input_boolean.clean_upper_closet
+            input_boolean.clean_muhammad_hallways_all:
+              - input_boolean.clean_upper_hallway
+              - input_boolean.clean_upper_stairs
+            input_boolean.clean_muhammad_bathrooms_all:
+              - input_boolean.clean_upper_master_bathroom
+          targets: "{{ group_entities.get(trigger.entity_id, []) }}"
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'on' }}"
+            sequence:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: "{{ targets }}"
+        default:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: "{{ targets }}"
+  - alias: "Keep cleaning group sliders in sync"
+    id: keep_cleaning_group_sliders_in_sync
+    mode: queued
+    trigger:
+      - platform: homeassistant
+        event: start
+        id: startup
+      - platform: state
+        id: room_selection
+        entity_id:
+          - input_boolean.clean_kitchen
+          - input_boolean.clean_pantry
+          - input_boolean.clean_dining_room
+          - input_boolean.clean_living_room
+          - input_boolean.clean_entrance
+          - input_boolean.clean_hall
+          - input_boolean.clean_roi_room
+          - input_boolean.clean_adi_room
+          - input_boolean.clean_study
+          - input_boolean.clean_guest_bathroom
+          - input_boolean.clean_kids_bathroom
+          - input_boolean.clean_upper_master_bedroom
+          - input_boolean.clean_upper_ella_room
+          - input_boolean.clean_upper_closet
+          - input_boolean.clean_upper_hallway
+          - input_boolean.clean_upper_stairs
+          - input_boolean.clean_upper_master_bathroom
+    action:
+      - variables:
+          group_entities:
+            input_boolean.clean_yulanda_public_all:
+              - input_boolean.clean_kitchen
+              - input_boolean.clean_pantry
+              - input_boolean.clean_dining_room
+              - input_boolean.clean_living_room
+            input_boolean.clean_yulanda_hallways_all:
+              - input_boolean.clean_entrance
+              - input_boolean.clean_hall
+            input_boolean.clean_yulanda_rooms_all:
+              - input_boolean.clean_roi_room
+              - input_boolean.clean_adi_room
+              - input_boolean.clean_study
+            input_boolean.clean_yulanda_bathrooms_all:
+              - input_boolean.clean_guest_bathroom
+              - input_boolean.clean_kids_bathroom
+            input_boolean.clean_muhammad_rooms_all:
+              - input_boolean.clean_upper_master_bedroom
+              - input_boolean.clean_upper_ella_room
+              - input_boolean.clean_upper_closet
+            input_boolean.clean_muhammad_hallways_all:
+              - input_boolean.clean_upper_hallway
+              - input_boolean.clean_upper_stairs
+            input_boolean.clean_muhammad_bathrooms_all:
+              - input_boolean.clean_upper_master_bathroom
+          matching_groups: >-
+            {% set ns = namespace(groups=[]) %}
+            {% for group, entities in group_entities.items() %}
+              {% if trigger.id == 'startup' or trigger.entity_id in entities %}
+                {% set ns.groups = ns.groups + [group] %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.groups }}
+      - repeat:
+          for_each: "{{ matching_groups }}"
+          sequence:
+            - choose:
+                - conditions:
+                    - condition: template
+                      value_template: >-
+                        {{ expand(group_entities[repeat.item])
+                           | selectattr('state', 'eq', 'on') | list | count
+                           == group_entities[repeat.item] | count }}
+                  sequence:
+                    - action: input_boolean.turn_on
+                      target:
+                        entity_id: "{{ repeat.item }}"
+              default:
+                - action: input_boolean.turn_off
+                  target:
+                    entity_id: "{{ repeat.item }}"
   # ---------------------------------------------------------------------------
   # Downstairs / vacuum.yulanda
   # ---------------------------------------------------------------------------
@@ -461,48 +622,3 @@ automation:
 
 
 group:
-  clean_yulanda_public:
-    name: Yulanda Public Areas Selected
-    all: false
-    entities:
-      - input_boolean.clean_kitchen
-      - input_boolean.clean_pantry
-      - input_boolean.clean_dining_room
-      - input_boolean.clean_living_room
-  clean_yulanda_hallways:
-    name: Yulanda Hallways Selected
-    all: false
-    entities:
-      - input_boolean.clean_entrance
-      - input_boolean.clean_hall
-  clean_yulanda_rooms:
-    name: Yulanda Rooms Selected
-    all: false
-    entities:
-      - input_boolean.clean_roi_room
-      - input_boolean.clean_adi_room
-      - input_boolean.clean_study
-  clean_yulanda_bathrooms:
-    name: Yulanda Bathrooms Selected
-    all: false
-    entities:
-      - input_boolean.clean_guest_bathroom
-      - input_boolean.clean_kids_bathroom
-  clean_muhammad_rooms:
-    name: Muhammad Rooms Selected
-    all: false
-    entities:
-      - input_boolean.clean_upper_master_bedroom
-      - input_boolean.clean_upper_ella_room
-      - input_boolean.clean_upper_closet
-  clean_muhammad_hallways:
-    name: Muhammad Hallways Selected
-    all: false
-    entities:
-      - input_boolean.clean_upper_hallway
-      - input_boolean.clean_upper_stairs
-  clean_muhammad_bathrooms:
-    name: Muhammad Bathrooms Selected
-    all: false
-    entities:
-      - input_boolean.clean_upper_master_bathroom
