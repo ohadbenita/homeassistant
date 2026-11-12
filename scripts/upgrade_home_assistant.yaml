@@ -1,0 +1,7 @@
+request_home_assistant_upgrade:
+  alias: Prepare Home Assistant upgrade
+  description: Open a Compose PR or apply the merged Home Assistant version on Synology.
+  icon: mdi:home-assistant
+  mode: single
+  sequence:
+    - action: shell_command.start_home_assistant_upgrade

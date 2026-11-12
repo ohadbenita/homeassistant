@@ -128,6 +128,10 @@ rest_command:
       content-type: "application/json"
     payload: '{"id":1,"method":"Shelly.Reboot"}'
 
+shell_command:
+  start_home_assistant_upgrade: >-
+    python3 /config/scripts/home_assistant_upgrade.py start
+
 sensor:
   - platform: rest
     name: Home Assistant Released Version
