@@ -8,11 +8,13 @@ command_line:
       command: >-
         cat /config/www/home_assistant_upgrade/status.json 2>/dev/null
         || echo '{"status":"idle","message":"Press to check for an upgrade."}'
+      scan_interval: 5
       value_template: "{{ value_json.status }}"
       json_attributes:
         - message
         - version
         - pull_request
+        - pull_request_number
 
   - sensor:
       name: GitHub Sync Status
