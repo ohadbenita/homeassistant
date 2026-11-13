@@ -16,6 +16,11 @@ Parameters:
     Type: String
     Default: https://hass.benita.click
     Description: Home Assistant base URL. Do not include /api.
+  MonitorAlarmThreshold:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    Description: Number of Lambda errors in one minute that marks the monitor down.
 
 Resources:
   AlexaActionsLogGroup:
@@ -91,6 +96,125 @@ Resources:
       Principal: alexa-appkit.amazon.com
       EventSourceToken: !Ref SkillId
 
+  AlexaActionsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-AlexaActionsErrors"
+      AlarmDescription: Alexa Actionable Actions Lambda errors.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref AlexaActionsFunction
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: !Ref MonitorAlarmThreshold
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  AlexaActionsMonitorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ReadAlarmAndWriteLogs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/alexa-actionable-actions-monitor:*"
+              - Effect: Allow
+                Action: cloudwatch:DescribeAlarms
+                Resource: !Sub "arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${AWS::StackName}-AlexaActionsErrors"
+
+  AlexaActionsMonitorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/alexa-actionable-actions-monitor
+      RetentionInDays: 14
+
+  AlexaActionsMonitor:
+    Type: AWS::Lambda::Function
+    DependsOn: AlexaActionsMonitorLogGroup
+    Properties:
+      Runtime: python3.13
+      Handler: index.handler
+      Role: !GetAtt AlexaActionsMonitorRole.Arn
+      Timeout: 5
+      Environment:
+        Variables:
+          ALARM_NAME: !Ref AlexaActionsAlarm
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import boto3
+
+          cloudwatch = boto3.client("cloudwatch")
+
+          def handler(event, context):
+              result = cloudwatch.describe_alarms(AlarmNames=[os.environ["ALARM_NAME"]])
+              alarms = result.get("MetricAlarms", [])
+              state = alarms[0]["StateValue"] if alarms else "UNKNOWN"
+              return {
+                  "statusCode": 200 if state == "OK" else 503,
+                  "headers": {"Content-Type": "application/json", "Cache-Control": "no-store"},
+                  "body": json.dumps({"status": state}),
+              }
+
+  AlexaActionsMonitorApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: Alexa Actionable Actions monitor
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  AlexaActionsMonitorResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref AlexaActionsMonitorApi
+      ParentId: !GetAtt AlexaActionsMonitorApi.RootResourceId
+      PathPart: status
+
+  AlexaActionsMonitorMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AlexaActionsMonitorApi
+      ResourceId: !Ref AlexaActionsMonitorResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AlexaActionsMonitor.Arn}/invocations"
+
+  AlexaActionsMonitorApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: AlexaActionsMonitorMethod
+    Properties:
+      RestApiId: !Ref AlexaActionsMonitorApi
+      StageName: live
+
+  AlexaActionsMonitorInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref AlexaActionsMonitor
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AlexaActionsMonitorApi}/*/GET/status"
+
 Outputs:
   LambdaFunctionArn:
     Description: Set this ARN in Alexa Developer Console > Build > Endpoint.
@@ -100,3 +224,6 @@ Outputs:
   HomeAssistantTokenSecretArn:
     Description: Put a new Home Assistant long-lived token in this secret as plain text.
     Value: !Ref AlexaActionsTokenSecret
+  UptimeRobotMonitorUrl:
+    Description: Configure an UptimeRobot HTTP monitor for this URL; non-2xx means the CloudWatch alarm is active.
+    Value: !Sub "https://${AlexaActionsMonitorApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live/status"
