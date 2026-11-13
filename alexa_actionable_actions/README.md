@@ -28,6 +28,8 @@ The API Gateway resource policy allows only UptimeRobot's published checker IPs.
 
 Set `MONITOR_ALARM_THRESHOLD` if you want a different error count threshold before deploying. The endpoint returns only the alarm state and accepts requests from the UptimeRobot checker IPs in the API resource policy.
 
+The monitor uses the custom URL `https://status.benita.click/alexa/status`. The API Gateway custom domain and `alexa` base path mapping are managed by the main CloudFormation stack. `benita.click` uses Cloudflare DNS, so request an ACM certificate in `us-east-1` for `status.benita.click`, add its validation CNAME in Cloudflare as DNS only, and wait for ACM to issue it. Then deploy with `API_CUSTOM_DOMAIN_CERTIFICATE_ARN` set to that certificate ARN. After deployment, add a DNS-only CNAME for `status` in Cloudflare pointing to the `ApiCustomDomainRegionalDomainName` stack output. Keep it DNS only so API Gateway sees UptimeRobot's checker IP instead of Cloudflare proxy addresses.
+
 The secret starts with the placeholder `REPLACE_WITH_NEW_HOME_ASSISTANT_TOKEN`. In Secrets Manager, replace its value with a newly generated Home Assistant long-lived access token as plain text. Do not put the token in this repository, a command line, or the CloudFormation template. The function reads the secret for each Alexa request, so updates apply on the next request. Keep the current Alexa endpoint until the new function can reach Home Assistant; then copy the stack's `LambdaFunctionArn` output into Alexa Developer Console > Build > Endpoint.
 
 `ENABLE_COMMANDS` remains false. The Lambda role has no Home Assistant or other AWS data access. The Alexa invoke permission allows only the configured skill ID.

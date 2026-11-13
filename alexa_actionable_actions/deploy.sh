@@ -8,6 +8,7 @@ ARTIFACT_STACK_NAME="${ARTIFACT_STACK_NAME:-AlexaActionableActionsArtifacts}"
 SKILL_ID="${ALEXA_SKILL_ID:-amzn1.ask.skill.d3fbfb9e-b9aa-454c-8f34-0da94050c526}"
 HA_URL="${HOME_ASSISTANT_URL:-https://hass.benita.click}"
 MONITOR_ALARM_THRESHOLD="${MONITOR_ALARM_THRESHOLD:-1}"
+CUSTOM_DOMAIN_CERTIFICATE_ARN="${API_CUSTOM_DOMAIN_CERTIFICATE_ARN:-}"
 EXPECTED_ACCOUNT="701255146615"
 
 if [[ "${1:-}" != "--confirm-security-changes" ]]; then
@@ -20,6 +21,11 @@ cd "$ROOT"
 ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 if [[ "$ACCOUNT_ID" != "$EXPECTED_ACCOUNT" ]]; then
   echo "Wrong AWS account: expected ${EXPECTED_ACCOUNT}, got ${ACCOUNT_ID}." >&2
+  exit 1
+fi
+
+if [[ -z "$CUSTOM_DOMAIN_CERTIFICATE_ARN" ]]; then
+  echo "Set API_CUSTOM_DOMAIN_CERTIFICATE_ARN to the validated us-east-1 ACM certificate ARN for status.benita.click." >&2
   exit 1
 fi
 
@@ -83,7 +89,7 @@ aws cloudformation deploy \
   --stack-name "$STACK_NAME" \
   --region "$REGION" \
   --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides PackageBucket="$BUCKET" PackageKey="$PACKAGE_KEY" SkillId="$SKILL_ID" HomeAssistantUrl="$HA_URL" MonitorAlarmThreshold="$MONITOR_ALARM_THRESHOLD" UptimeRobotIPv4Ranges="$UPTIMEROBOT_IPV4_RANGES" UptimeRobotIPv6Ranges="$UPTIMEROBOT_IPV6_RANGES" UptimeRobotIpListVersion="$UPTIMEROBOT_IP_LIST_VERSION"
+  --parameter-overrides PackageBucket="$BUCKET" PackageKey="$PACKAGE_KEY" SkillId="$SKILL_ID" HomeAssistantUrl="$HA_URL" MonitorAlarmThreshold="$MONITOR_ALARM_THRESHOLD" UptimeRobotIPv4Ranges="$UPTIMEROBOT_IPV4_RANGES" UptimeRobotIPv6Ranges="$UPTIMEROBOT_IPV6_RANGES" UptimeRobotIpListVersion="$UPTIMEROBOT_IP_LIST_VERSION" ApiCustomDomainCertificateArn="$CUSTOM_DOMAIN_CERTIFICATE_ARN"
 
 echo "CloudFormation-managed package bucket: ${BUCKET} (versioning retains previous ZIPs)."
 aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "$REGION" \
