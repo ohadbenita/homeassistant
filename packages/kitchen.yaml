@@ -395,7 +395,10 @@ automation:
                   - conditions:
                       - condition: numeric_state
                         entity_id: input_number.daily_expected_max_temperature
-                        above: 28
+                        above: 23
+                      - condition: template
+                        value_template: >
+                          {{ state_attr('weather.openweathermap', 'temperature') | float(0) > 23 }}
                     sequence:
                       - action: climate.set_hvac_mode
                         target:
