@@ -255,6 +255,9 @@ automation:
               - condition: numeric_state
                 entity_id: input_number.daily_expected_max_temperature
                 above: 23
+              - condition: template
+                value_template: >
+                  {{ state_attr('weather.openweathermap', 'temperature') | float(0) > 23 }}
             sequence:
               - service: climate.set_hvac_mode
                 target:
@@ -283,6 +286,9 @@ automation:
               - condition: numeric_state
                 entity_id: input_number.daily_expected_max_temperature
                 above: 23
+              - condition: template
+                value_template: >
+                  {{ state_attr('weather.openweathermap', 'temperature') | float(0) > 23 }}
             sequence:
               - action: climate.set_hvac_mode
                 target:
@@ -330,6 +336,9 @@ automation:
               - condition: numeric_state
                 entity_id: input_number.daily_expected_max_temperature
                 above: 23
+              - condition: template
+                value_template: >
+                  {{ state_attr('weather.openweathermap', 'temperature') | float(0) > 23 }}
             sequence:
               - action: climate.set_hvac_mode
                 target:
