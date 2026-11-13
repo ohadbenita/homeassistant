@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Python 3.13 AWS Lambda backend for Alexa Actionable Actions.
 

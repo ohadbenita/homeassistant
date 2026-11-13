@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Private artifact bucket for Alexa Actionable Actions Lambda packages.
 
