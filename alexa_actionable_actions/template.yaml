@@ -30,6 +30,9 @@ Parameters:
   UptimeRobotIpListVersion:
     Type: String
     Description: Hash of the UptimeRobot checker IP list fetched by deploy.sh.
+  ApiCustomDomainCertificateArn:
+    Type: String
+    Description: ACM certificate ARN in this region for status.benita.click, validated through Cloudflare DNS.
 
 Resources:
   AlexaActionsLogGroup:
@@ -226,6 +229,18 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AlexaActionsMonitor.Arn}/invocations"
 
+  AlexaActionsMonitorHeadMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref AlexaActionsMonitorApi
+      ResourceId: !Ref AlexaActionsMonitorResource
+      HttpMethod: HEAD
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AlexaActionsMonitor.Arn}/invocations"
+
   AlexaActionsMonitorDeployerRole:
     Type: AWS::IAM::Role
     Properties:
@@ -293,7 +308,12 @@ Resources:
                   deployment = apigateway.create_deployment(
                       restApiId=properties["RestApiId"],
                       stageName="live",
-                      description="UptimeRobot IP list " + properties["IpListVersion"],
+                  description=(
+                      "API definition "
+                      + properties["ApiDefinitionVersion"]
+                      + "; UptimeRobot IP list "
+                      + properties["IpListVersion"]
+                  ),
                   )
                   cfnresponse.send(
                       event,
@@ -307,11 +327,33 @@ Resources:
 
   AlexaActionsMonitorApiDeploymentTrigger:
     Type: Custom::ApiGatewayDeployment
-    DependsOn: AlexaActionsMonitorMethod
+    DependsOn:
+      - AlexaActionsMonitorMethod
+      - AlexaActionsMonitorHeadMethod
     Properties:
       ServiceToken: !GetAtt AlexaActionsMonitorDeployer.Arn
       RestApiId: !Ref AlexaActionsMonitorApi
+      ApiDefinitionVersion: "2"
       IpListVersion: !Ref UptimeRobotIpListVersion
+
+  AlexaActionsMonitorCustomDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: status.benita.click
+      RegionalCertificateArn: !Ref ApiCustomDomainCertificateArn
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      SecurityPolicy: TLS_1_2
+
+  AlexaActionsMonitorBasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: AlexaActionsMonitorApiDeploymentTrigger
+    Properties:
+      BasePath: alexa
+      DomainName: !Ref AlexaActionsMonitorCustomDomain
+      RestApiId: !Ref AlexaActionsMonitorApi
+      Stage: live
 
   AlexaActionsMonitorInvokePermission:
     Type: AWS::Lambda::Permission
@@ -320,6 +362,14 @@ Resources:
       FunctionName: !Ref AlexaActionsMonitor
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AlexaActionsMonitorApi}/*/GET/status"
+
+  AlexaActionsMonitorHeadInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref AlexaActionsMonitor
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${AlexaActionsMonitorApi}/*/HEAD/status"
 
 Outputs:
   LambdaFunctionArn:
@@ -332,6 +382,9 @@ Outputs:
     Value: !Ref AlexaActionsTokenSecret
   UptimeRobotMonitorUrl:
     Description: Configure an UptimeRobot HTTP monitor for this URL; non-2xx means the CloudWatch alarm is active.
-    Value: !Sub "https://${AlexaActionsMonitorApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live/status"
+    Value: https://status.benita.click/alexa/status
+  ApiCustomDomainRegionalDomainName:
+    Description: Create a DNS-only CNAME for status.benita.click in Cloudflare pointing to this API Gateway target.
+    Value: !GetAtt AlexaActionsMonitorCustomDomain.RegionalDomainName
   UptimeRobotIpListVersion:
     Value: !Ref UptimeRobotIpListVersion
