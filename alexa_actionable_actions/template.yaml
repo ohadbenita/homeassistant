@@ -305,7 +305,7 @@ Resources:
               except Exception as error:
                   cfnresponse.send(event, context, cfnresponse.FAILED, {"Error": str(error)})
 
-  AlexaActionsMonitorApiDeployment:
+  AlexaActionsMonitorApiDeploymentTrigger:
     Type: Custom::ApiGatewayDeployment
     DependsOn: AlexaActionsMonitorMethod
     Properties:
