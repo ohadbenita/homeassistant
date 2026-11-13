@@ -26,6 +26,45 @@ fi
 if [[ ! -x "$ROOT/.venv/bin/python" ]]; then
   python3.13 -m venv "$ROOT/.venv"
 fi
+UPTIMEROBOT_RANGES="$("$ROOT/.venv/bin/python" - <<'PY'
+import ipaddress
+import hashlib
+import json
+from urllib.request import urlopen
+
+with urlopen("https://api.uptimerobot.com/meta/ips", timeout=20) as response:
+    prefixes = json.load(response)["prefixes"]
+
+ipv4 = sorted({item["ip_prefix"] for item in prefixes if item.get("service") == "checker" and "ip_prefix" in item})
+ipv6 = sorted({item["ipv6_prefix"] for item in prefixes if item.get("service") == "checker" and "ipv6_prefix" in item})
+if not ipv4 or not ipv6:
+    raise SystemExit("UptimeRobot returned an empty checker IP list.")
+for prefix in ipv4 + ipv6:
+    ipaddress.ip_network(prefix, strict=True)
+
+policy = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {"Effect": "Allow", "Principal": "*", "Action": "execute-api:Invoke", "Resource": "execute-api:/*",
+         "Condition": {"IpAddress": {"aws:SourceIp": ipv4}}},
+        {"Effect": "Allow", "Principal": "*", "Action": "execute-api:Invoke", "Resource": "execute-api:/*",
+         "Condition": {"IpAddress": {"aws:SourceIp": ipv6}}},
+    ],
+}
+if len(json.dumps(policy, separators=(",", ":")).encode()) > 8192:
+    raise SystemExit("UptimeRobot checker IP policy exceeds API Gateway's 8 KB limit.")
+version = hashlib.sha256((",".join(ipv4 + ipv6)).encode()).hexdigest()
+print("\t".join((",".join(ipv4), ",".join(ipv6), version)))
+PY
+)"
+IFS=$'\t' read -r UPTIMEROBOT_IPV4_RANGES UPTIMEROBOT_IPV6_RANGES UPTIMEROBOT_IP_LIST_VERSION <<< "$UPTIMEROBOT_RANGES"
+CURRENT_UPTIMEROBOT_IP_LIST_VERSION="$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "$REGION" \
+  --query "Stacks[0].Parameters[?ParameterKey=='UptimeRobotIpListVersion'].ParameterValue | [0]" --output text 2>/dev/null || true)"
+if [[ "$CURRENT_UPTIMEROBOT_IP_LIST_VERSION" == "$UPTIMEROBOT_IP_LIST_VERSION" ]]; then
+  echo "UptimeRobot checker IP list unchanged (${UPTIMEROBOT_IP_LIST_VERSION})."
+else
+  echo "UptimeRobot checker IP list changed; updating CloudFormation policy."
+fi
 "$ROOT/.venv/bin/python" scripts/build_package.py --kind pure --output dist
 PACKAGE_KEY="lambda/AlexaActionsNoBinaryLinux.zip"
 
@@ -44,7 +83,7 @@ aws cloudformation deploy \
   --stack-name "$STACK_NAME" \
   --region "$REGION" \
   --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides PackageBucket="$BUCKET" PackageKey="$PACKAGE_KEY" SkillId="$SKILL_ID" HomeAssistantUrl="$HA_URL" MonitorAlarmThreshold="$MONITOR_ALARM_THRESHOLD"
+  --parameter-overrides PackageBucket="$BUCKET" PackageKey="$PACKAGE_KEY" SkillId="$SKILL_ID" HomeAssistantUrl="$HA_URL" MonitorAlarmThreshold="$MONITOR_ALARM_THRESHOLD" UptimeRobotIPv4Ranges="$UPTIMEROBOT_IPV4_RANGES" UptimeRobotIPv6Ranges="$UPTIMEROBOT_IPV6_RANGES" UptimeRobotIpListVersion="$UPTIMEROBOT_IP_LIST_VERSION"
 
 echo "CloudFormation-managed package bucket: ${BUCKET} (versioning retains previous ZIPs)."
 aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "$REGION" \

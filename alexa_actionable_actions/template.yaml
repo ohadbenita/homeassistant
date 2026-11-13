@@ -21,6 +21,15 @@ Parameters:
     Default: 1
     MinValue: 1
     Description: Number of Lambda errors in one minute that marks the monitor down.
+  UptimeRobotIPv4Ranges:
+    Type: CommaDelimitedList
+    Description: Current UptimeRobot checker IPv4 ranges, fetched by deploy.sh.
+  UptimeRobotIPv6Ranges:
+    Type: CommaDelimitedList
+    Description: Current UptimeRobot checker IPv6 ranges, fetched by deploy.sh.
+  UptimeRobotIpListVersion:
+    Type: String
+    Description: Hash of the UptimeRobot checker IP list fetched by deploy.sh.
 
 Resources:
   AlexaActionsLogGroup:
@@ -177,6 +186,23 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: Alexa Actionable Actions monitor
+      Policy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: execute-api:Invoke
+            Resource: execute-api:/*
+            Condition:
+              IpAddress:
+                aws:SourceIp: !Ref UptimeRobotIPv4Ranges
+          - Effect: Allow
+            Principal: "*"
+            Action: execute-api:Invoke
+            Resource: execute-api:/*
+            Condition:
+              IpAddress:
+                aws:SourceIp: !Ref UptimeRobotIPv6Ranges
       EndpointConfiguration:
         Types:
           - REGIONAL
@@ -200,12 +226,92 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AlexaActionsMonitor.Arn}/invocations"
 
+  AlexaActionsMonitorDeployerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DeployMonitorApiAndWriteLogs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/alexa-actionable-actions-monitor-deployer:*"
+              - Effect: Allow
+                Action: apigateway:POST
+                Resource: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}::/restapis/${AlexaActionsMonitorApi}/deployments"
+              - Effect: Allow
+                Action: apigateway:DELETE
+                Resource: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}::/restapis/${AlexaActionsMonitorApi}/deployments/*"
+
+  AlexaActionsMonitorDeployerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/alexa-actionable-actions-monitor-deployer
+      RetentionInDays: 14
+
+  AlexaActionsMonitorDeployer:
+    Type: AWS::Lambda::Function
+    DependsOn: AlexaActionsMonitorDeployerLogGroup
+    Properties:
+      Runtime: python3.13
+      Handler: index.handler
+      Role: !GetAtt AlexaActionsMonitorDeployerRole.Arn
+      Timeout: 20
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          from botocore.exceptions import ClientError
+
+          apigateway = boto3.client("apigateway")
+
+          def handler(event, context):
+              if event["RequestType"] == "Delete":
+                  try:
+                      apigateway.delete_deployment(
+                          restApiId=event["ResourceProperties"]["RestApiId"],
+                          deploymentId=event["PhysicalResourceId"],
+                      )
+                  except ClientError as error:
+                      if error.response["Error"]["Code"] not in {"ConflictException", "NotFoundException"}:
+                          cfnresponse.send(event, context, cfnresponse.FAILED, {"Error": str(error)})
+                          return
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                  return
+              try:
+                  properties = event["ResourceProperties"]
+                  deployment = apigateway.create_deployment(
+                      restApiId=properties["RestApiId"],
+                      stageName="live",
+                      description="UptimeRobot IP list " + properties["IpListVersion"],
+                  )
+                  cfnresponse.send(
+                      event,
+                      context,
+                      cfnresponse.SUCCESS,
+                      {"DeploymentId": deployment["id"]},
+                      deployment["id"],
+                  )
+              except Exception as error:
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {"Error": str(error)})
+
   AlexaActionsMonitorApiDeployment:
-    Type: AWS::ApiGateway::Deployment
+    Type: Custom::ApiGatewayDeployment
     DependsOn: AlexaActionsMonitorMethod
     Properties:
+      ServiceToken: !GetAtt AlexaActionsMonitorDeployer.Arn
       RestApiId: !Ref AlexaActionsMonitorApi
-      StageName: live
+      IpListVersion: !Ref UptimeRobotIpListVersion
 
   AlexaActionsMonitorInvokePermission:
     Type: AWS::Lambda::Permission
@@ -227,3 +333,5 @@ Outputs:
   UptimeRobotMonitorUrl:
     Description: Configure an UptimeRobot HTTP monitor for this URL; non-2xx means the CloudWatch alarm is active.
     Value: !Sub "https://${AlexaActionsMonitorApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/live/status"
+  UptimeRobotIpListVersion:
+    Value: !Ref UptimeRobotIpListVersion
