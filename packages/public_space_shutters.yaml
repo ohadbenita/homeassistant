@@ -518,7 +518,7 @@ automation:
               position: 35
 
 
-  - alias: 'Living room fireplace switch - Open public space shutters'
+  - alias: 'Living room fireplace switch - Open living room shutters by triple click'
     id: living_room_fireplace_open_public_space_shutters
     initial_state: true
     mode: single
@@ -535,12 +535,15 @@ automation:
     action:
       - action: cover.set_cover_position
         target:
-          entity_id: group.public_space_shutters
+          entity_id:
+            - cover.living_room_right_window
+            - cover.living_room_middle_window
+            - cover.shelly2pmg3_e4b32313d15c_cover_0  # left window
         data:
           position: 100
 
 
-  - alias: 'Living room fireplace switch - Close public space shutters'
+  - alias: 'Living room fireplace switch - Close living room shutters by triple click'
     id: living_room_fireplace_close_public_space_shutters
     initial_state: true
     mode: single
@@ -557,9 +560,12 @@ automation:
     action:
       - action: cover.set_cover_position
         target:
-          entity_id: group.public_space_shutters
+          entity_id:
+            - cover.living_room_right_window
+            - cover.living_room_middle_window
+            - cover.shelly2pmg3_e4b32313d15c_cover_0  # left window
         data:
-          position: 15
+          position: 0
 
 
   - alias: "Living Room Right - Shutter button actions"
