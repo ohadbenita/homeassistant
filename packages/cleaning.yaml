@@ -45,6 +45,22 @@ input_boolean:
   clean_with_delay:
     name: Delay start
     initial: false
+  clean_yulanda_public_all:
+    name: Select all public spaces
+    icon: mdi:select-all
+    initial: false
+  clean_yulanda_hallways_all:
+    name: Select all hallways
+    icon: mdi:select-all
+    initial: false
+  clean_yulanda_rooms_all:
+    name: Select all rooms
+    icon: mdi:select-all
+    initial: false
+  clean_yulanda_bathrooms_all:
+    name: Select all bathrooms
+    icon: mdi:select-all
+    initial: false
 
   # ---------------------------------------------------------------------------
   # Upstairs / vacuum.muhammad_s8 (Upper floor)
@@ -71,6 +87,18 @@ input_boolean:
   # S8-scoped delay toggle so it won't interfere with downstairs
   clean_upper_with_delay_s8:
     name: Delay start (Upper floor / S8)
+    initial: false
+  clean_muhammad_rooms_all:
+    name: Select all rooms (Upper floor)
+    icon: mdi:select-all
+    initial: false
+  clean_muhammad_hallways_all:
+    name: Select all hallways (Upper floor)
+    icon: mdi:select-all
+    initial: false
+  clean_muhammad_bathrooms_all:
+    name: Select all bathrooms (Upper floor)
+    icon: mdi:select-all
     initial: false
 
 
@@ -356,6 +384,300 @@ script:
 
 
 automation:
+  - alias: "Select all cleaning areas by group"
+    id: select_all_cleaning_areas_by_group
+    mode: queued
+    trigger:
+      - platform: state
+        entity_id:
+          - input_boolean.clean_yulanda_public_all
+          - input_boolean.clean_yulanda_hallways_all
+          - input_boolean.clean_yulanda_rooms_all
+          - input_boolean.clean_yulanda_bathrooms_all
+          - input_boolean.clean_muhammad_rooms_all
+          - input_boolean.clean_muhammad_hallways_all
+          - input_boolean.clean_muhammad_bathrooms_all
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'on' }}"
+              - condition: template
+                value_template: "{{ trigger.entity_id == 'input_boolean.clean_yulanda_public_all' }}"
+            sequence:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id:
+                    - input_boolean.clean_kitchen
+                    - input_boolean.clean_pantry
+                    - input_boolean.clean_dining_room
+                    - input_boolean.clean_living_room
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'on' }}"
+              - condition: template
+                value_template: "{{ trigger.entity_id == 'input_boolean.clean_yulanda_hallways_all' }}"
+            sequence:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id:
+                    - input_boolean.clean_entrance
+                    - input_boolean.clean_hall
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'on' }}"
+              - condition: template
+                value_template: "{{ trigger.entity_id == 'input_boolean.clean_yulanda_rooms_all' }}"
+            sequence:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id:
+                    - input_boolean.clean_roi_room
+                    - input_boolean.clean_adi_room
+                    - input_boolean.clean_study
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'on' }}"
+              - condition: template
+                value_template: "{{ trigger.entity_id == 'input_boolean.clean_yulanda_bathrooms_all' }}"
+            sequence:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id:
+                    - input_boolean.clean_guest_bathroom
+                    - input_boolean.clean_kids_bathroom
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'on' }}"
+              - condition: template
+                value_template: "{{ trigger.entity_id == 'input_boolean.clean_muhammad_rooms_all' }}"
+            sequence:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id:
+                    - input_boolean.clean_upper_master_bedroom
+                    - input_boolean.clean_upper_ella_room
+                    - input_boolean.clean_upper_closet
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'on' }}"
+              - condition: template
+                value_template: "{{ trigger.entity_id == 'input_boolean.clean_muhammad_hallways_all' }}"
+            sequence:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id:
+                    - input_boolean.clean_upper_hallway
+                    - input_boolean.clean_upper_stairs
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.to_state.state == 'on' }}"
+              - condition: template
+                value_template: "{{ trigger.entity_id == 'input_boolean.clean_muhammad_bathrooms_all' }}"
+            sequence:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.clean_upper_master_bathroom
+        default:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.entity_id == 'input_boolean.clean_yulanda_public_all' }}"
+                sequence:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id:
+                        - input_boolean.clean_kitchen
+                        - input_boolean.clean_pantry
+                        - input_boolean.clean_dining_room
+                        - input_boolean.clean_living_room
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.entity_id == 'input_boolean.clean_yulanda_hallways_all' }}"
+                sequence:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id:
+                        - input_boolean.clean_entrance
+                        - input_boolean.clean_hall
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.entity_id == 'input_boolean.clean_yulanda_rooms_all' }}"
+                sequence:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id:
+                        - input_boolean.clean_roi_room
+                        - input_boolean.clean_adi_room
+                        - input_boolean.clean_study
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.entity_id == 'input_boolean.clean_yulanda_bathrooms_all' }}"
+                sequence:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id:
+                        - input_boolean.clean_guest_bathroom
+                        - input_boolean.clean_kids_bathroom
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.entity_id == 'input_boolean.clean_muhammad_rooms_all' }}"
+                sequence:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id:
+                        - input_boolean.clean_upper_master_bedroom
+                        - input_boolean.clean_upper_ella_room
+                        - input_boolean.clean_upper_closet
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.entity_id == 'input_boolean.clean_muhammad_hallways_all' }}"
+                sequence:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id:
+                        - input_boolean.clean_upper_hallway
+                        - input_boolean.clean_upper_stairs
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.entity_id == 'input_boolean.clean_muhammad_bathrooms_all' }}"
+                sequence:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id: input_boolean.clean_upper_master_bathroom
+  - alias: "Keep cleaning group sliders in sync"
+    id: keep_cleaning_group_sliders_in_sync
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id:
+          - input_boolean.clean_kitchen
+          - input_boolean.clean_pantry
+          - input_boolean.clean_dining_room
+          - input_boolean.clean_living_room
+          - input_boolean.clean_entrance
+          - input_boolean.clean_hall
+          - input_boolean.clean_roi_room
+          - input_boolean.clean_adi_room
+          - input_boolean.clean_study
+          - input_boolean.clean_guest_bathroom
+          - input_boolean.clean_kids_bathroom
+          - input_boolean.clean_upper_master_bedroom
+          - input_boolean.clean_upper_ella_room
+          - input_boolean.clean_upper_closet
+          - input_boolean.clean_upper_hallway
+          - input_boolean.clean_upper_stairs
+          - input_boolean.clean_upper_master_bathroom
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.entity_id in ['input_boolean.clean_kitchen', 'input_boolean.clean_pantry', 'input_boolean.clean_dining_room', 'input_boolean.clean_living_room'] }}"
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ expand(['input_boolean.clean_kitchen', 'input_boolean.clean_pantry', 'input_boolean.clean_dining_room', 'input_boolean.clean_living_room']) | selectattr('state', 'eq', 'on') | list | count == 4 and not is_state('input_boolean.clean_yulanda_public_all', 'on') }}"
+                    sequence:
+                      - action: input_boolean.turn_on
+                        target:
+                          entity_id: input_boolean.clean_yulanda_public_all
+                default:
+                  - if: "{{ expand(['input_boolean.clean_kitchen', 'input_boolean.clean_pantry', 'input_boolean.clean_dining_room', 'input_boolean.clean_living_room']) | selectattr('state', 'eq', 'on') | list | count != 4 and is_state('input_boolean.clean_yulanda_public_all', 'on') }}"
+                    then:
+                      - action: input_boolean.turn_off
+                        target:
+                          entity_id: input_boolean.clean_yulanda_public_all
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.entity_id in ['input_boolean.clean_entrance', 'input_boolean.clean_hall'] }}"
+            sequence:
+              - if: "{{ expand(['input_boolean.clean_entrance', 'input_boolean.clean_hall']) | selectattr('state', 'eq', 'on') | list | count == 2 and not is_state('input_boolean.clean_yulanda_hallways_all', 'on') }}"
+                then:
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.clean_yulanda_hallways_all
+                else:
+                  - if: "{{ expand(['input_boolean.clean_entrance', 'input_boolean.clean_hall']) | selectattr('state', 'eq', 'on') | list | count != 2 and is_state('input_boolean.clean_yulanda_hallways_all', 'on') }}"
+                    then:
+                      - action: input_boolean.turn_off
+                        target:
+                          entity_id: input_boolean.clean_yulanda_hallways_all
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.entity_id in ['input_boolean.clean_roi_room', 'input_boolean.clean_adi_room', 'input_boolean.clean_study'] }}"
+            sequence:
+              - if: "{{ expand(['input_boolean.clean_roi_room', 'input_boolean.clean_adi_room', 'input_boolean.clean_study']) | selectattr('state', 'eq', 'on') | list | count == 3 and not is_state('input_boolean.clean_yulanda_rooms_all', 'on') }}"
+                then:
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.clean_yulanda_rooms_all
+                else:
+                  - if: "{{ expand(['input_boolean.clean_roi_room', 'input_boolean.clean_adi_room', 'input_boolean.clean_study']) | selectattr('state', 'eq', 'on') | list | count != 3 and is_state('input_boolean.clean_yulanda_rooms_all', 'on') }}"
+                    then:
+                      - action: input_boolean.turn_off
+                        target:
+                          entity_id: input_boolean.clean_yulanda_rooms_all
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.entity_id in ['input_boolean.clean_guest_bathroom', 'input_boolean.clean_kids_bathroom'] }}"
+            sequence:
+              - if: "{{ expand(['input_boolean.clean_guest_bathroom', 'input_boolean.clean_kids_bathroom']) | selectattr('state', 'eq', 'on') | list | count == 2 and not is_state('input_boolean.clean_yulanda_bathrooms_all', 'on') }}"
+                then:
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.clean_yulanda_bathrooms_all
+                else:
+                  - if: "{{ expand(['input_boolean.clean_guest_bathroom', 'input_boolean.clean_kids_bathroom']) | selectattr('state', 'eq', 'on') | list | count != 2 and is_state('input_boolean.clean_yulanda_bathrooms_all', 'on') }}"
+                    then:
+                      - action: input_boolean.turn_off
+                        target:
+                          entity_id: input_boolean.clean_yulanda_bathrooms_all
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.entity_id in ['input_boolean.clean_upper_master_bedroom', 'input_boolean.clean_upper_ella_room', 'input_boolean.clean_upper_closet'] }}"
+            sequence:
+              - if: "{{ expand(['input_boolean.clean_upper_master_bedroom', 'input_boolean.clean_upper_ella_room', 'input_boolean.clean_upper_closet']) | selectattr('state', 'eq', 'on') | list | count == 3 and not is_state('input_boolean.clean_muhammad_rooms_all', 'on') }}"
+                then:
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.clean_muhammad_rooms_all
+                else:
+                  - if: "{{ expand(['input_boolean.clean_upper_master_bedroom', 'input_boolean.clean_upper_ella_room', 'input_boolean.clean_upper_closet']) | selectattr('state', 'eq', 'on') | list | count != 3 and is_state('input_boolean.clean_muhammad_rooms_all', 'on') }}"
+                    then:
+                      - action: input_boolean.turn_off
+                        target:
+                          entity_id: input_boolean.clean_muhammad_rooms_all
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.entity_id in ['input_boolean.clean_upper_hallway', 'input_boolean.clean_upper_stairs'] }}"
+            sequence:
+              - if: "{{ expand(['input_boolean.clean_upper_hallway', 'input_boolean.clean_upper_stairs']) | selectattr('state', 'eq', 'on') | list | count == 2 and not is_state('input_boolean.clean_muhammad_hallways_all', 'on') }}"
+                then:
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.clean_muhammad_hallways_all
+                else:
+                  - if: "{{ expand(['input_boolean.clean_upper_hallway', 'input_boolean.clean_upper_stairs']) | selectattr('state', 'eq', 'on') | list | count != 2 and is_state('input_boolean.clean_muhammad_hallways_all', 'on') }}"
+                    then:
+                      - action: input_boolean.turn_off
+                        target:
+                          entity_id: input_boolean.clean_muhammad_hallways_all
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.entity_id == 'input_boolean.clean_upper_master_bathroom' }}"
+            sequence:
+              - if: "{{ is_state('input_boolean.clean_upper_master_bathroom', 'on') and not is_state('input_boolean.clean_muhammad_bathrooms_all', 'on') }}"
+                then:
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.clean_muhammad_bathrooms_all
+                else:
+                  - if: "{{ is_state('input_boolean.clean_upper_master_bathroom', 'off') and is_state('input_boolean.clean_muhammad_bathrooms_all', 'on') }}"
+                    then:
+                      - action: input_boolean.turn_off
+                        target:
+                          entity_id: input_boolean.clean_muhammad_bathrooms_all
   # ---------------------------------------------------------------------------
   # Downstairs / vacuum.yulanda
   # ---------------------------------------------------------------------------
