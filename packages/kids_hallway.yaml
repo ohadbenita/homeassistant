@@ -142,22 +142,8 @@ automation:
     action:
       - action: homeassistant.turn_off
         entity_id:
-          - switch.shelly1pmminig3_34b7da92c7a4_switch_0  # book shelves hallway light
-          - switch.shelly1pmminig3_dcda0cafe368_switch_0  # kids hallway spot lights
-
-  - alias: "Nightly turn off hallway, stairs, shelter and basement lights"
-    id: nightly_turn_off_hallway_stairs_shelter_basement_lights
-    initial_state: true
-    trigger:
-      - platform: time
-        at: "00:30:00"
-
-    action:
-      - action: homeassistant.turn_off
-        entity_id:
           - switch.shelly1pmminig3_34b7da92c7a4_switch_0  # hallway printer ceiling light
-          - switch.shelly1pmminig3_34b7da8f85bc_switch_0  # upper stair lights
-          - light.upper_floor_u7_lite_led  # upper hallway
+          - switch.shelly1pmminig3_34b7da8f85bc_switch_0  # upstairs stairs and upper hallway
           - switch.shelly1pmminig3_dcda0cafe368_switch_0  # kids hallway spot lights
           - switch.shelly1pmminig3_34b7da8a0338_switch_0  # shelter main light
           - switch.shelly1pmminig3_34b7da8b78c4_switch_0  # shelter entrance light
