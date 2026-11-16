@@ -14,6 +14,11 @@ automation:
         to: 'on'
         for:
           minutes: 2
+      - platform: state
+        entity_id:
+          - switch.shellyplus2pm_fcb4670e68e8_switch_0
+          - switch.shellyplus2pm_fcb4670e68e8_switch_1
+        to: 'on'
 
     condition:
       condition: and
