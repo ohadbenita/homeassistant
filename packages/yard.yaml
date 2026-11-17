@@ -71,6 +71,24 @@ template:
             {% else %}
               {{ none }}
             {% endif %}
+      - name: "Meter 1018 Water Use Trend (14 days)"
+        unique_id: meter_1018_water_use_trend_14_days
+        state_class: measurement
+        unit_of_measurement: "%"
+        state: >-
+          {% set current = states('sensor.meter_1018_water_use_14_days') | float(none) %}
+          {% set total = states('sensor.meter_1018_water_use_28_days') | float(none) %}
+          {% if current is not none and total is not none and total > current and total - current > 0 %}
+            {{ ((current - (total - current)) / (total - current) * 100) | round(1) }}
+          {% else %}
+            {{ none }}
+          {% endif %}
+        attributes:
+          current_14_day_m3: "{{ states('sensor.meter_1018_water_use_14_days') }}"
+          previous_14_day_m3: >-
+            {% set total = states('sensor.meter_1018_water_use_28_days') | float(none) %}
+            {% set current = states('sensor.meter_1018_water_use_14_days') | float(none) %}
+            {{ (total - current) | round(1) if total is not none and current is not none and total > current else none }}
 
 sensor:
   - platform: statistics
@@ -80,6 +98,14 @@ sensor:
     state_characteristic: change
     max_age:
       days: 14
+    precision: 1
+  - platform: statistics
+    name: "Meter 1018 Water Use (28 days)"
+    unique_id: meter_1018_water_use_28_days
+    entity_id: sensor.meter_1018_total_consumption
+    state_characteristic: change
+    max_age:
+      days: 28
     precision: 1
 
 
@@ -402,15 +428,14 @@ automation:
     mode: single
     trigger:
       - platform: numeric_state
-        entity_id: sensor.meter_1018_water_use_14_days
-        above: 15.6
+        entity_id: sensor.meter_1018_water_use_trend_14_days
+        above: 20
       - platform: homeassistant
         event: start
 
     condition:
-      - condition: numeric_state
-        entity_id: sensor.meter_1018_water_use_14_days
-        above: 15.6
+      - condition: template
+        value_template: "{{ states('sensor.meter_1018_water_use_trend_14_days') | float(-999) > 20 }}"
       - condition: template  # once a week
         value_template: >-
           {% set last = state_attr('automation.alert_on_upward_water_use_trend', 'last_triggered') %}
@@ -422,8 +447,7 @@ automation:
           entity_id: notify.telegram_bot_659000495_155103022
           title: "Alert: Upward water-use trend"
           message: >-
-            Water use over the last 14 days is {{ states('sensor.meter_1018_water_use_14_days') }} m³.
-            This is more than 20% above the previous 14-day period (about 13.0 m³). Please check for unusual use or a leak.
+            Water use is up {{ states('sensor.meter_1018_water_use_trend_14_days') }}% compared with the previous 14-day period. Current period: {{ state_attr('sensor.meter_1018_water_use_trend_14_days', 'current_14_day_m3') }} m³; previous period: {{ state_attr('sensor.meter_1018_water_use_trend_14_days', 'previous_14_day_m3') }} m³. Please check for unusual use or a leak.
 
   - alias: "Clnic door entrance - Handle button actions"
     id: clinic_entrance_button_actions
