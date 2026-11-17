@@ -85,6 +85,11 @@ input_datetime:
     has_date: true
     has_time: true
 
+  south_yard_tree_faucets_next_reminder:
+    name: South yard tree faucets next reminder
+    has_date: true
+    has_time: true
+
   pickle_plant_last_watered:
     name: Pickle plant last watered
     has_date: true
@@ -159,6 +164,11 @@ input_datetime:
     name: Indoor plants watering snoozed until
     has_date: true
     has_time: true
+
+
+input_boolean:
+  south_yard_tree_faucets_reminder_pending:
+    name: South yard tree faucets reminder pending
 
 
 script:
@@ -783,9 +793,8 @@ automation:
 
   - alias: "Remind to open south yard watering faucets when summer time starts"
     id: irrigation_open_south_yard_tree_line_on_dst
-    description: "Remind to open the physical south yard tree watering faucets when daylight saving time starts, with weekly reminders until acknowledged."
+    description: "Remind to open the physical south yard tree watering faucets when daylight saving time starts. The pending reminder state survives Home Assistant restarts."
     initial_state: true
-    mode: single
     trigger:
       - platform: state
         entity_id: binary_sensor.dst
@@ -793,6 +802,16 @@ automation:
         to: 'on'
 
     action:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.south_yard_tree_faucets_reminder_pending
+
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.south_yard_tree_faucets_next_reminder
+        data:
+          timestamp: "{{ (now().timestamp() + 7 * 86400) | int }}"
+
       - action: notify.send_message
         data:
           entity_id: notify.telegram_bot_659000495_155103022
@@ -802,29 +821,51 @@ automation:
             inline_keyboard:
               - "Acknowledge:/ack_south_yard_tree_drip_line"
 
-      - repeat:
-          sequence:
-            - wait_for_trigger:
-                - platform: event
-                  event_type: telegram_callback
-                  event_data:
-                    data: "/ack_south_yard_tree_drip_line"
-              timeout:
-                days: 7
-              continue_on_timeout: true
+  - alias: "Repeat south yard faucet reminder weekly"
+    id: irrigation_repeat_south_yard_faucet_reminder
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: time
+        at: input_datetime.south_yard_tree_faucets_next_reminder
+      - platform: homeassistant
+        event: start
 
-            - if:
-                - condition: template
-                  value_template: "{{ not wait.completed }}"
-              then:
-                - action: notify.send_message
-                  data:
-                    entity_id: notify.telegram_bot_659000495_155103022
-                    title: "South yard trees"
-                    message: "Reminder: please open the physical watering faucets for the south yard trees, then acknowledge."
-                    data:
-                      inline_keyboard:
-                        - "Acknowledge:/ack_south_yard_tree_drip_line"
-          until:
-            - condition: template
-              value_template: "{{ wait.completed }}"
+    condition:
+      - condition: state
+        entity_id: input_boolean.south_yard_tree_faucets_reminder_pending
+        state: 'on'
+      - condition: template
+        value_template: >-
+          {{ as_timestamp(now()) >=
+             as_timestamp(states('input_datetime.south_yard_tree_faucets_next_reminder'), 0) }}
+
+    action:
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          title: "South yard trees"
+          message: "Reminder: please open the physical watering faucets for the south yard trees, then acknowledge."
+          data:
+            inline_keyboard:
+              - "Acknowledge:/ack_south_yard_tree_drip_line"
+
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.south_yard_tree_faucets_next_reminder
+        data:
+          timestamp: "{{ (now().timestamp() + 7 * 86400) | int }}"
+
+  - alias: "Acknowledge south yard faucet reminder"
+    id: irrigation_acknowledge_south_yard_faucet_reminder
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: telegram_callback
+        event_data:
+          data: "/ack_south_yard_tree_drip_line"
+
+    action:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.south_yard_tree_faucets_reminder_pending
