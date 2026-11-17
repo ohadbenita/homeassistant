@@ -779,3 +779,52 @@ automation:
                 caption: >-
                   [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.backyard_pano_snapshots_clear?token={{ state_attr('camera.backyard_pano_snapshots_clear', 'access_token') }})
                 parse_mode: markdown
+
+
+  - alias: "Remind to open south yard watering faucets when summer time starts"
+    id: irrigation_open_south_yard_tree_line_on_dst
+    description: "Remind to open the physical south yard tree watering faucets when daylight saving time starts, with weekly reminders until acknowledged."
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.dst
+        from: 'off'
+        to: 'on'
+
+    action:
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          title: "South yard trees"
+          message: "Summer time has started. Please open the physical watering faucets for the south yard trees. Acknowledge when done."
+          data:
+            inline_keyboard:
+              - "Acknowledge:/ack_south_yard_tree_drip_line"
+
+      - repeat:
+          sequence:
+            - wait_for_trigger:
+                - platform: event
+                  event_type: telegram_callback
+                  event_data:
+                    data: "/ack_south_yard_tree_drip_line"
+              timeout:
+                days: 7
+              continue_on_timeout: true
+
+            - if:
+                - condition: template
+                  value_template: "{{ not wait.completed }}"
+              then:
+                - action: notify.send_message
+                  data:
+                    entity_id: notify.telegram_bot_659000495_155103022
+                    title: "South yard trees"
+                    message: "Reminder: please open the physical watering faucets for the south yard trees, then acknowledge."
+                    data:
+                      inline_keyboard:
+                        - "Acknowledge:/ack_south_yard_tree_drip_line"
+          until:
+            - condition: template
+              value_template: "{{ wait.completed }}"
