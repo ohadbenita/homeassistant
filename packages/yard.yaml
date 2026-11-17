@@ -72,6 +72,16 @@ template:
               {{ none }}
             {% endif %}
 
+sensor:
+  - platform: statistics
+    name: "Meter 1018 Water Use (14 days)"
+    unique_id: meter_1018_water_use_14_days
+    entity_id: sensor.meter_1018_total_consumption
+    state_characteristic: change
+    max_age:
+      days: 14
+    precision: 1
+
 
 rest_command:
   analyze_laundry:
@@ -385,6 +395,35 @@ automation:
           message: >-
             The current forecasted monthly water consumption is {{ states('sensor.meter_1018_monthly_forecast') | int }} m³.
             Please check whether there's a water leak.
+
+  - alias: "Alert on upward water-use trend"
+    id: yard_alert_on_upward_water_use_trend
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.meter_1018_water_use_14_days
+        above: 15.6
+      - platform: homeassistant
+        event: start
+
+    condition:
+      - condition: numeric_state
+        entity_id: sensor.meter_1018_water_use_14_days
+        above: 15.6
+      - condition: template  # once a week
+        value_template: >-
+          {% set last = state_attr('automation.alert_on_upward_water_use_trend', 'last_triggered') %}
+          {{ last is none or (as_timestamp(now()) - as_timestamp(last)) > 604800 }}
+
+    action:
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          title: "Alert: Upward water-use trend"
+          message: >-
+            Water use over the last 14 days is {{ states('sensor.meter_1018_water_use_14_days') }} m³.
+            This is more than 20% above the previous 14-day period (about 13.0 m³). Please check for unusual use or a leak.
 
   - alias: "Clnic door entrance - Handle button actions"
     id: clinic_entrance_button_actions
