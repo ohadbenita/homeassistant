@@ -112,14 +112,26 @@
 
 - alias: Kitchen tablet - Show doorbell live preview
   id: kitchen_tablet_show_doorbell_live_preview
-  mode: single
+  mode: queued
   triggers:
     - trigger: state
+      id: ring
       entity_id: event.front_door_ding
       not_to:
         - unknown
         - unavailable
-  conditions:
+    - trigger: state
+      id: alexa
+      entity_id: input_boolean.ring_doorbell_preview
+      to: 'on'
+  actions:
+    - if:
+        - condition: trigger
+          id: alexa
+      then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.ring_doorbell_preview
     - condition: state
       entity_id: input_boolean.away_mode
       state: 'off'
@@ -127,9 +139,15 @@
       after: "06:00:00"
     - condition: template
       value_template: >-
-        {{ trigger.to_state.attributes.event_type == 'ring'
-           and 0 <= as_timestamp(now()) - as_timestamp(trigger.to_state.state, 0) < 30 }}
-  actions:
+        {{ trigger is not defined
+           or trigger.id != 'ring'
+           or (trigger.to_state.attributes.event_type == 'ring'
+               and 0 <= as_timestamp(now()) - as_timestamp(trigger.to_state.state, 0) < 30) }}
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: sensor.kitchen_kitchen_fire_tablet_active_camera_view
+          state: Doorbell
     - action: button.press
       target:
         entity_id: button.kitchen_kitchen_fire_tablet_show_doorbell
