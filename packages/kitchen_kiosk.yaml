@@ -1,0 +1,51 @@
+---
+rest_command:
+  kitchen_kiosk_set_screensaver_schedule:
+    url: !secret kitchen_kiosk_settings_url
+    method: PATCH
+    headers:
+      Authorization: !secret kitchen_kiosk_api_authorization
+    content_type: application/json
+    payload: >-
+      {% set schedule = [
+        {'at': '00:00', 'mode': 'black', 'motion': false, 'face': false,
+         'widgets': false, 'glance': false, 'now_playing': false},
+        {'at': '06:00', 'mode': 'weather_mood', 'face': true},
+        {'at': sunset_at, 'mode': 'celestial', 'face': true}
+      ] %}
+      {{ {'screensaver.schedule_enabled': true, 'screensaver.schedule': schedule | to_json} | to_json }}
+
+automation:
+  - alias: Kitchen kiosk - Schedule Celestial at sunset
+    id: kitchen_kiosk_schedule_celestial_at_sunset
+    mode: single
+    triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: time
+        at:
+          - "00:05:00"
+          - "06:00:00"
+      - trigger: sun
+        event: sunset
+        id: sunset
+    actions:
+      - variables:
+          sunset_at: >-
+            {% set next_setting = as_datetime(state_attr('sun.sun', 'next_setting'), none) %}
+            {% if trigger is defined and trigger.id | default('') == 'sunset' %}
+              {{ now().strftime('%H:%M') }}
+            {% elif next_setting is not none %}
+              {% set local_setting = as_local(next_setting) %}
+              {% if local_setting.date() == now().date() %}
+                {# The kiosk accepts whole minutes. Do not switch early. #}
+                {{ (local_setting + timedelta(seconds=59, microseconds=999999)).strftime('%H:%M') }}
+              {% elif now() > today_at('06:00') and is_state('sun.sun', 'below_horizon') %}
+                {{ now().strftime('%H:%M') }}
+              {% endif %}
+            {% endif %}
+      - condition: template
+        value_template: "{{ '06:00' < (sunset_at | string) < '24:00' }}"
+      - action: rest_command.kitchen_kiosk_set_screensaver_schedule
+        data:
+          sunset_at: "{{ sunset_at }}"
