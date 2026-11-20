@@ -16,6 +16,11 @@
           - segments:
               - 22
             repeat: 2
+    - action: script.alexa_notification
+      data:
+        alexa_device: media_player.kitchen_echo
+        volume: 0.4
+        message: I just sent Yulanda to clean the study
 
 - alias: Kitchen tablet - clean kids bathroom
   id: kitchen_tablet_clean_kids_bathroom
@@ -34,6 +39,11 @@
           - segments:
               - 20
             repeat: 2
+    - action: script.alexa_notification
+      data:
+        alexa_device: media_player.kitchen_echo
+        volume: 0.4
+        message: I just sent Yulanda to clean the kids' bathroom
 
 - alias: Kitchen tablet - clean guest bathroom
   id: kitchen_tablet_clean_guest_bathroom
@@ -52,3 +62,8 @@
           - segments:
               - 17
             repeat: 2
+    - action: script.alexa_notification
+      data:
+        alexa_device: media_player.kitchen_echo
+        volume: 0.4
+        message: I just sent Yulanda to clean the guest bathroom
