@@ -1,4 +1,34 @@
 ---
+template:
+  - cover:
+      - name: תריסי החלל הציבורי
+        default_entity_id: cover.public_space_shutters
+        unique_id: public_space_shutters
+        device_class: shutter
+        position: >-
+          {% set positions = expand('group.public_space_shutters')
+            | selectattr('attributes.current_position', 'number')
+            | map(attribute='attributes.current_position') | list %}
+          {{ positions | average | round(0, 'ceil') | int if positions else none }}
+        open_cover:
+          action: cover.open_cover
+          target:
+            entity_id: group.public_space_shutters
+        close_cover:
+          action: cover.close_cover
+          target:
+            entity_id: group.public_space_shutters
+        stop_cover:
+          action: cover.stop_cover
+          target:
+            entity_id: group.public_space_shutters
+        set_cover_position:
+          action: cover.set_cover_position
+          target:
+            entity_id: group.public_space_shutters
+          data:
+            position: "{{ position }}"
+
 automation:
   - alias: 'Open public space shutters in the morning'
     id: public_space_open_shutters_morning
