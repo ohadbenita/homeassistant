@@ -1,0 +1,54 @@
+---
+- alias: Kitchen tablet - clean study
+  id: kitchen_tablet_clean_study
+  trigger: []
+  condition:
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: 'off'
+  action:
+    - action: vacuum.send_command
+      target:
+        entity_id: vacuum.yulanda
+      data:
+        command: app_segment_clean
+        params:
+          - segments:
+              - 22
+            repeat: 2
+
+- alias: Kitchen tablet - clean kids bathroom
+  id: kitchen_tablet_clean_kids_bathroom
+  trigger: []
+  condition:
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: 'off'
+  action:
+    - action: vacuum.send_command
+      target:
+        entity_id: vacuum.yulanda
+      data:
+        command: app_segment_clean
+        params:
+          - segments:
+              - 20
+            repeat: 2
+
+- alias: Kitchen tablet - clean guest bathroom
+  id: kitchen_tablet_clean_guest_bathroom
+  trigger: []
+  condition:
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: 'off'
+  action:
+    - action: vacuum.send_command
+      target:
+        entity_id: vacuum.yulanda
+      data:
+        command: app_segment_clean
+        params:
+          - segments:
+              - 17
+            repeat: 2
