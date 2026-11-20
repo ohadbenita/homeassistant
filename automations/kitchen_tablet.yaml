@@ -109,3 +109,27 @@
         - action: switch.turn_off
           target:
             entity_id: switch.kitchen_fire_tablet_lockdown_mode
+
+- alias: Kitchen tablet - Show doorbell live preview
+  id: kitchen_tablet_show_doorbell_live_preview
+  mode: single
+  triggers:
+    - trigger: state
+      entity_id: event.front_door_ding
+      not_to:
+        - unknown
+        - unavailable
+  conditions:
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: 'off'
+    - condition: time
+      after: "06:00:00"
+    - condition: template
+      value_template: >-
+        {{ trigger.to_state.attributes.event_type == 'ring'
+           and 0 <= as_timestamp(now()) - as_timestamp(trigger.to_state.state, 0) < 30 }}
+  actions:
+    - action: button.press
+      target:
+        entity_id: button.kitchen_kitchen_fire_tablet_show_doorbell
