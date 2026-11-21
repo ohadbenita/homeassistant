@@ -1,4 +1,50 @@
 ---
+- alias: Kitchen tablet - clean living room
+  id: kitchen_tablet_clean_living_room
+  trigger: []
+  condition:
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: 'off'
+  action:
+    - action: vacuum.send_command
+      target:
+        entity_id: vacuum.yulanda
+      data:
+        command: app_segment_clean
+        params:
+          - segments:
+              - 25
+            repeat: 2
+    - action: script.alexa_notification
+      data:
+        alexa_device: media_player.kitchen_echo
+        volume: 0.4
+        message: I just sent Yulanda to clean the living room
+
+- alias: Kitchen tablet - clean dining room
+  id: kitchen_tablet_clean_dining_room
+  trigger: []
+  condition:
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: 'off'
+  action:
+    - action: vacuum.send_command
+      target:
+        entity_id: vacuum.yulanda
+      data:
+        command: app_segment_clean
+        params:
+          - segments:
+              - 18
+            repeat: 2
+    - action: script.alexa_notification
+      data:
+        alexa_device: media_player.kitchen_echo
+        volume: 0.4
+        message: I just sent Yulanda to clean the dining room
+
 - alias: Kitchen tablet - clean study
   id: kitchen_tablet_clean_study
   trigger: []
