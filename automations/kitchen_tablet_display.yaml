@@ -1,0 +1,44 @@
+---
+- alias: Kitchen tablet - Keep weather visible while occupied
+  id: kitchen_tablet_weather_while_occupied
+  mode: restart
+  triggers:
+    - trigger: state
+      entity_id:
+        - binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
+        - input_boolean.away_mode
+      to:
+        - 'on'
+        - 'off'
+        - unknown
+        - unavailable
+    - trigger: state
+      entity_id: number.kitchen_fire_tablet_screensaver_screen_off_after
+      from:
+        - unknown
+        - unavailable
+      not_to:
+        - unknown
+        - unavailable
+    - trigger: homeassistant
+      event: start
+  actions:
+    - variables:
+        minutes: >-
+          {{ 0 if is_state('binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1', 'on')
+             and is_state('input_boolean.away_mode', 'off') else 1 }}
+    - condition: template
+      value_template: >-
+        {{ states('number.kitchen_fire_tablet_screensaver_screen_off_after') | float(-1)
+           not in [-1, minutes | int] }}
+    - if:
+        - condition: template
+          value_template: "{{ minutes | int == 0 }}"
+      then:
+        # Let the kiosk wake from black on its own before disabling the countdown.
+        - delay: "00:00:02"
+    - action: number.set_value
+      target:
+        entity_id: number.kitchen_fire_tablet_screensaver_screen_off_after
+      data:
+        value: "{{ minutes }}"
