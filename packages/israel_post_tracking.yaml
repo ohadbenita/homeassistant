@@ -1,0 +1,82 @@
+---
+script:
+  register_israel_post_parcel:
+    alias: Register Israel Post parcel
+    mode: queued
+    fields:
+      tracking_number:
+        name: Tracking number
+        required: true
+        selector:
+          text:
+    sequence:
+      - variables:
+          code: "{{ tracking_number | default('') | trim | upper }}"
+          track_service: "{{ config_entry_id('sensor.17track_in_transit') }}"
+      - condition: template
+        value_template: >-
+          {{ track_service and code is match('^[A-Z]{2}[0-9]{9}(?:[A-Z][A-Z0-9]|[0-9][A-Z])$') }}
+      - action: seventeentrack.get_packages
+        data:
+          config_entry_id: "{{ track_service }}"
+        response_variable: tracked
+      - condition: template
+        value_template: >-
+          {{ code not in (tracked.packages | map(attribute='tracking_number') | map('upper') | list) }}
+      - action: seventeentrack.add_package
+        data:
+          config_entry_id: "{{ track_service }}"
+          package_tracking_number: "{{ code }}"
+          package_friendly_name: "{{ 'Israel Post ' ~ code }}"
+
+automation:
+  - id: register_israel_post_parcels_from_gmail
+    alias: Register Israel Post parcels from Gmail
+    mode: queued
+    triggers:
+      - trigger: event
+        event_type: imap_content
+        event_data:
+          server: imap.gmail.com
+          folder: Israel Post
+          initial: true
+    actions:
+      - repeat:
+          for_each: >-
+            {{ trigger.event.data.get('custom', '') | string | regex_findall(
+              '(?<![A-Z0-9])[A-Z]{2}[0-9]{9}(?:[A-Z][A-Z0-9]|[0-9][A-Z])(?![A-Z0-9])'
+            ) | unique | list }}
+          sequence:
+            - action: script.register_israel_post_parcel
+              data:
+                tracking_number: "{{ repeat.item }}"
+
+  - id: archive_delivered_israel_post_parcels
+    alias: Archive delivered Israel Post parcels
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: sensor.17track_delivered
+    conditions:
+      - condition: template
+        value_template: "{{ states('sensor.17track_delivered') | int(0) > 0 }}"
+    actions:
+      - variables:
+          track_service: "{{ config_entry_id('sensor.17track_delivered') }}"
+      - action: seventeentrack.get_packages
+        data:
+          config_entry_id: "{{ track_service }}"
+          package_state:
+            - delivered
+        response_variable: delivered
+      - repeat:
+          for_each: >-
+            {{ delivered.packages | selectattr('friendly_name', 'string')
+                | selectattr('friendly_name', 'match', '^Israel Post [A-Z]{2}[0-9]{9}[A-Z0-9]{2}$') | list }}
+          sequence:
+            - condition: template
+              value_template: "{{ repeat.item.friendly_name == 'Israel Post ' ~ repeat.item.tracking_number }}"
+            - action: seventeentrack.archive_package
+              data:
+                config_entry_id: "{{ track_service }}"
+                package_tracking_number: "{{ repeat.item.tracking_number }}"
