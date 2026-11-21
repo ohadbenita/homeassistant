@@ -27,6 +27,24 @@ template:
         state: >
           {{ states('sensor.openweathermap_feels_like_temperature') | int }}
 
+rest:
+  - resource: https://air-quality-api.open-meteo.com/v1/air-quality
+    scan_interval: 1800
+    params:
+      # CAMS reports regional estimates. Send only a rounded location.
+      latitude: "{{ state_attr('zone.home', 'latitude') | round(1) }}"
+      longitude: "{{ state_attr('zone.home', 'longitude') | round(1) }}"
+      current: european_aqi
+    sensor:
+      - name: Outdoor Air Quality Index
+        unique_id: outdoor_air_quality_index
+        device_class: aqi
+        state_class: measurement
+        value_template: >-
+          {% set current = (value_json | default({})).current | default({}) %}
+          {% set aqi = current.get('european_aqi') if current is mapping else none %}
+          {{ aqi if is_number(aqi) and aqi | float >= 0 else none }}
+
 rest_command:
   rain_visual_init:
     url: !secret rain_visual_init_url
