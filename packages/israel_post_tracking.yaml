@@ -38,7 +38,7 @@ automation:
         event_type: imap_content
         event_data:
           server: imap.gmail.com
-          folder: Israel Post
+          folder: '"Israel Post"'
           initial: true
     actions:
       - repeat:
