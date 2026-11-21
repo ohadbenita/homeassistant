@@ -1,0 +1,36 @@
+---
+- alias: Kitchen tablet - Dim weather screensaver when kitchen is empty
+  id: kitchen_tablet_dim_weather_when_empty
+  mode: restart
+  triggers:
+    - trigger: state
+      entity_id:
+        - binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
+        - input_boolean.away_mode
+      to:
+        - 'on'
+        - 'off'
+        - unknown
+        - unavailable
+    - trigger: state
+      entity_id: switch.kitchen_fire_tablet_screensaver_brightness
+      from:
+        - unknown
+        - unavailable
+      to:
+        - 'on'
+        - 'off'
+    - trigger: homeassistant
+      event: start
+  actions:
+    - variables:
+        dim: >-
+          {{ not (is_state('binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1', 'on')
+                  and is_state('input_boolean.away_mode', 'off')) }}
+    - condition: template
+      value_template: >-
+        {{ is_state('switch.kitchen_fire_tablet_screensaver_brightness',
+                    'off' if dim else 'on') }}
+    - action: "switch.{{ 'turn_on' if dim else 'turn_off' }}"
+      target:
+        entity_id: switch.kitchen_fire_tablet_screensaver_brightness
