@@ -1,6 +1,6 @@
 ---
-- alias: Kitchen tablet - Keep weather visible while occupied
-  id: kitchen_tablet_weather_while_occupied
+- alias: Kitchen tablet - Dim weather screensaver when kitchen is empty
+  id: kitchen_tablet_dim_weather_when_empty
   mode: restart
   triggers:
     - trigger: state
@@ -13,32 +13,24 @@
         - unknown
         - unavailable
     - trigger: state
-      entity_id: number.kitchen_fire_tablet_screensaver_screen_off_after
+      entity_id: switch.kitchen_fire_tablet_screensaver_brightness
       from:
         - unknown
         - unavailable
-      not_to:
-        - unknown
-        - unavailable
+      to:
+        - 'on'
+        - 'off'
     - trigger: homeassistant
       event: start
   actions:
     - variables:
-        minutes: >-
-          {{ 0 if is_state('binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1', 'on')
-             and is_state('input_boolean.away_mode', 'off') else 1 }}
+        dim: >-
+          {{ not (is_state('binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1', 'on')
+                  and is_state('input_boolean.away_mode', 'off')) }}
     - condition: template
       value_template: >-
-        {{ states('number.kitchen_fire_tablet_screensaver_screen_off_after') | float(-1)
-           not in [-1, minutes | int] }}
-    - if:
-        - condition: template
-          value_template: "{{ minutes | int == 0 }}"
-      then:
-        # Let the kiosk wake from black on its own before disabling the countdown.
-        - delay: "00:00:02"
-    - action: number.set_value
+        {{ is_state('switch.kitchen_fire_tablet_screensaver_brightness',
+                    'off' if dim else 'on') }}
+    - action: "switch.{{ 'turn_on' if dim else 'turn_off' }}"
       target:
-        entity_id: number.kitchen_fire_tablet_screensaver_screen_off_after
-      data:
-        value: "{{ minutes }}"
+        entity_id: switch.kitchen_fire_tablet_screensaver_brightness
