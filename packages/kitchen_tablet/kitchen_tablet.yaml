@@ -270,9 +270,22 @@ automation:
           - condition: state
             entity_id: sensor.kitchen_kitchen_fire_tablet_active_camera_view
             state: Doorbell
-      - action: button.press
-        target:
-          entity_id: button.kitchen_kitchen_fire_tablet_show_doorbell
+      - parallel:
+          - action: esphome.ks_kitchen_fire_tablet_notification
+            data:
+              message: צלצול בדלת הכניסה
+              title: ""
+              duration: 8
+              type: info
+              chime: false
+              scale: 1.4
+              icon: mdi:doorbell-video
+              chime_file: ""
+              volume: 0
+              image: /api/camera_proxy/camera.main_entrance_fluent
+          - action: button.press
+            target:
+              entity_id: button.kitchen_kitchen_fire_tablet_show_doorbell
 
   - alias: Kitchen tablet - Dim weather screensaver when kitchen is empty
     id: kitchen_tablet_dim_weather_when_empty
