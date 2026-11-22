@@ -1,0 +1,2114 @@
+---
+views:
+  - title: מטבח
+    path: controls
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: יולנדה
+            icon: mdi:gesture-tap-button
+            badges:
+              - type: entity
+                entity: sensor.roborock_s8_maxv_ultra_status
+                name: יולנדה
+                icon: mdi:robot-vacuum
+                show_state: true
+                state_content:
+                  - name
+                  - state
+                tap_action:
+                  action: more-info
+            card_mod:
+              style: |
+                ha-card .container {
+                  direction: rtl;
+                  padding-inline: 5px;
+                  box-shadow: inset 0 -1px color-mix(in srgb, var(--divider-color) 75%, transparent);
+                }
+                .content ha-icon {
+                  color: color-mix(in srgb, var(--primary-text-color) 68%, #328274);
+                }
+                h2.heading {
+                  font-weight: 650;
+                }
+                hui-entity-heading-badge {
+                  display: block;
+                  border-radius: 999px;
+                  background: var(--secondary-background-color);
+                  padding-inline: 5px;
+                }
+          - type: tile
+            entity: automation.tami4_button_send_yulanda_to_clean_the_kitchen
+            name: מטבח
+            icon: mdi:countertop-outline
+            color: teal
+            vertical: true
+            hide_state: true
+            grid_options:
+              columns: 4
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_send_yulanda_to_clean_the_kitchen
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_send_yulanda_to_clean_the_kitchen
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #328274;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: automation.kitchen_tablet_clean_living_room
+            name: סלון
+            icon: mdi:sofa-outline
+            color: teal
+            vertical: true
+            hide_state: true
+            grid_options:
+              columns: 4
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kitchen_tablet_clean_living_room
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kitchen_tablet_clean_living_room
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #328274;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+            visibility:
+              - condition: state
+                entity: automation.kitchen_tablet_clean_living_room
+                state: 'on'
+          - type: tile
+            entity: automation.kitchen_tablet_clean_dining_room
+            name: פינת אוכל
+            icon: mdi:table-chair
+            color: teal
+            vertical: true
+            hide_state: true
+            grid_options:
+              columns: 4
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kitchen_tablet_clean_dining_room
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kitchen_tablet_clean_dining_room
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #328274;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+            visibility:
+              - condition: state
+                entity: automation.kitchen_tablet_clean_dining_room
+                state: 'on'
+          - type: tile
+            entity: automation.tami4_button_dock_yulanda
+            name: עגינה
+            icon: mdi:robot-vacuum
+            color: teal
+            vertical: true
+            hide_state: true
+            grid_options:
+              columns: 4
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_dock_yulanda
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_dock_yulanda
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #328274;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: automation.tami4_button_send_yulanda_to_clean_the_public_space
+            name: חלל ציבורי
+            icon: mdi:floor-plan
+            color: teal
+            vertical: true
+            hide_state: true
+            grid_options:
+              columns: 4
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_send_yulanda_to_clean_the_public_space
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_send_yulanda_to_clean_the_public_space
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #328274;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: automation.tami4_button_send_yulanda_to_clean_roi_room
+            name: חדר רועי
+            icon: mdi:bed-outline
+            color: teal
+            vertical: true
+            hide_state: true
+            grid_options:
+              columns: 4
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_send_yulanda_to_clean_roi_room
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_send_yulanda_to_clean_roi_room
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #328274;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: automation.tami4_button_send_yulanda_to_clean_adi_room
+            name: חדר עדי
+            icon: mdi:bed-outline
+            color: teal
+            vertical: true
+            hide_state: true
+            grid_options:
+              columns: 4
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_send_yulanda_to_clean_adi_room
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_send_yulanda_to_clean_adi_room
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #328274;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: automation.kitchen_tablet_clean_study
+            name: חדר עבודה
+            icon: mdi:desk
+            color: teal
+            vertical: true
+            hide_state: true
+            grid_options:
+              columns: 4
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kitchen_tablet_clean_study
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kitchen_tablet_clean_study
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #328274;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: automation.kitchen_tablet_clean_kids_bathroom
+            name: שירותי ילדים
+            icon: mdi:toilet
+            color: teal
+            vertical: true
+            hide_state: true
+            grid_options:
+              columns: 4
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kitchen_tablet_clean_kids_bathroom
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kitchen_tablet_clean_kids_bathroom
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #328274;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: automation.kitchen_tablet_clean_guest_bathroom
+            name: שירותי אורחים
+            icon: mdi:toilet
+            color: teal
+            vertical: true
+            hide_state: true
+            grid_options:
+              columns: 4
+              rows: 2
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kitchen_tablet_clean_guest_bathroom
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.kitchen_tablet_clean_guest_bathroom
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #328274;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+      - type: grid
+        cards:
+          - type: heading
+            heading: תריסי החלל הציבורי
+            icon: mdi:window-shutter
+            card_mod:
+              style: |
+                ha-card .container {
+                  direction: rtl;
+                  padding-inline: 5px;
+                  box-shadow: inset 0 -1px color-mix(in srgb, var(--divider-color) 75%, transparent);
+                }
+                .content ha-icon {
+                  color: color-mix(in srgb, var(--primary-text-color) 68%, #328274);
+                }
+                h2.heading {
+                  font-weight: 650;
+                }
+                hui-entity-heading-badge {
+                  display: block;
+                  border-radius: 999px;
+                  background: var(--secondary-background-color);
+                  padding-inline: 5px;
+                }
+          - type: horizontal-stack
+            grid_options:
+              columns: 12
+              rows: 1
+            cards:
+              - type: tile
+                entity: group.public_space_shutters
+                name: פתיחה
+                icon: mdi:window-shutter-open
+                color: blue
+                vertical: false
+                hide_state: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id: group.public_space_shutters
+                icon_tap_action:
+                  action: perform-action
+                  perform_action: cover.open_cover
+                  target:
+                    entity_id: group.public_space_shutters
+                card_mod:
+                  style: |
+                    :host {
+                      --kitchen-accent: #4476aa;
+                    }
+                    ha-card {
+                      --ha-card-border-radius: 18px;
+                      --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                      background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                      box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                      transition: transform 120ms ease, box-shadow 120ms ease;
+                    }
+                    ha-card:active {
+                      transform: scale(.98);
+                      box-shadow: none;
+                    }
+                    ha-tile-container, ha-tile-info {
+                      direction: rtl;
+                    }
+                    .primary {
+                      font-weight: 650;
+                    }
+                    @media (prefers-reduced-motion: reduce) {
+                      ha-card { transition: none; }
+                      ha-card:active { transform: none; }
+                    }
+              - type: tile
+                entity: cover.public_space_shutters
+                name: אחוז פתיחה
+                icon: mdi:percent
+                color: blue
+                hide_state: true
+                tap_action:
+                  action: more-info
+                icon_tap_action:
+                  action: more-info
+                card_mod:
+                  style: |
+                    :host {
+                      --kitchen-accent: #4476aa;
+                    }
+                    ha-card {
+                      --ha-card-border-radius: 18px;
+                      --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                      background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                      box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                      transition: transform 120ms ease, box-shadow 120ms ease;
+                    }
+                    ha-card:active {
+                      transform: scale(.98);
+                      box-shadow: none;
+                    }
+                    ha-tile-container, ha-tile-info {
+                      direction: rtl;
+                    }
+                    .primary {
+                      font-weight: 650;
+                    }
+                    @media (prefers-reduced-motion: reduce) {
+                      ha-card { transition: none; }
+                      ha-card:active { transform: none; }
+                    }
+              - type: tile
+                entity: group.public_space_shutters
+                name: סגירה
+                icon: mdi:window-shutter
+                color: blue
+                vertical: false
+                hide_state: true
+                tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id: group.public_space_shutters
+                icon_tap_action:
+                  action: perform-action
+                  perform_action: cover.close_cover
+                  target:
+                    entity_id: group.public_space_shutters
+                card_mod:
+                  style: |
+                    :host {
+                      --kitchen-accent: #4476aa;
+                    }
+                    ha-card {
+                      --ha-card-border-radius: 18px;
+                      --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                      background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                      box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                      transition: transform 120ms ease, box-shadow 120ms ease;
+                    }
+                    ha-card:active {
+                      transform: scale(.98);
+                      box-shadow: none;
+                    }
+                    ha-tile-container, ha-tile-info {
+                      direction: rtl;
+                    }
+                    .primary {
+                      font-weight: 650;
+                    }
+                    @media (prefers-reduced-motion: reduce) {
+                      ha-card { transition: none; }
+                      ha-card:active { transform: none; }
+                    }
+          - type: heading
+            heading: כל הדלתות
+            icon: mdi:door-closed
+            badges:
+              - type: entity
+                entity: lock.entrance_door
+                name: כניסה
+                color: state
+                show_state: true
+                state_content: name
+                tap_action:
+                  action: more-info
+              - type: entity
+                entity: lock.kitchen_door
+                name: מטבח
+                color: state
+                show_state: true
+                state_content: name
+                tap_action:
+                  action: more-info
+              - type: entity
+                entity: lock.kids_bathroom_door
+                name: ילדים
+                color: state
+                show_state: true
+                state_content: name
+                tap_action:
+                  action: more-info
+              - type: entity
+                entity: lock.clinic_door
+                name: קליניקה
+                color: state
+                show_state: true
+                state_content: name
+                tap_action:
+                  action: more-info
+            card_mod:
+              style: |
+                ha-card .container {
+                  direction: rtl;
+                  padding-inline: 5px;
+                  box-shadow: inset 0 -1px color-mix(in srgb, var(--divider-color) 75%, transparent);
+                }
+                .content ha-icon {
+                  color: color-mix(in srgb, var(--primary-text-color) 68%, #328274);
+                }
+                h2.heading {
+                  font-weight: 650;
+                }
+                hui-entity-heading-badge {
+                  display: block;
+                  border-radius: 999px;
+                  background: var(--secondary-background-color);
+                  padding-inline: 5px;
+                }
+          - type: tile
+            entity: lock.all_doors
+            name: שחרור נעילה
+            icon: mdi:lock-open-variant-outline
+            color: orange
+            vertical: false
+            hide_state: true
+            grid_options:
+              columns: 6
+              rows: 1
+            tap_action:
+              action: perform-action
+              perform_action: lock.unlock
+              target:
+                entity_id: lock.all_doors
+              confirmation:
+                text: >-
+                  לשחרר את הנעילה בדלתות הכניסה, המטבח, הקליניקה וחדר הרחצה של
+                  הילדים?
+            icon_tap_action:
+              action: perform-action
+              perform_action: lock.unlock
+              target:
+                entity_id: lock.all_doors
+              confirmation:
+                text: >-
+                  לשחרר את הנעילה בדלתות הכניסה, המטבח, הקליניקה וחדר הרחצה של
+                  הילדים?
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #b46942;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: lock.all_doors
+            name: נעילה
+            icon: mdi:lock
+            color: green
+            vertical: false
+            hide_state: true
+            grid_options:
+              columns: 6
+              rows: 1
+            tap_action:
+              action: perform-action
+              perform_action: lock.lock
+              target:
+                entity_id: lock.all_doors
+            icon_tap_action:
+              action: perform-action
+              perform_action: lock.lock
+              target:
+                entity_id: lock.all_doors
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #47815e;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: heading
+            heading: מטבח
+            icon: mdi:lightbulb-group-outline
+            card_mod:
+              style: |
+                ha-card .container {
+                  direction: rtl;
+                  padding-inline: 5px;
+                  box-shadow: inset 0 -1px color-mix(in srgb, var(--divider-color) 75%, transparent);
+                }
+                .content ha-icon {
+                  color: color-mix(in srgb, var(--primary-text-color) 68%, #328274);
+                }
+                h2.heading {
+                  font-weight: 650;
+                }
+                hui-entity-heading-badge {
+                  display: block;
+                  border-radius: 999px;
+                  background: var(--secondary-background-color);
+                  padding-inline: 5px;
+                }
+          - type: tile
+            entity: switch.shellyplus2pm_fcb4670e68e8_switch_0
+            name: פס ארוך
+            icon: mdi:led-strip-variant
+            color: amber
+            grid_options:
+              columns: 6
+              rows: 1
+            tap_action:
+              action: toggle
+            icon_tap_action:
+              action: toggle
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #a36b24;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: switch.shellyplus2pm_fcb4670e68e8_switch_1
+            name: פס קצר
+            icon: mdi:led-strip-variant
+            color: amber
+            grid_options:
+              columns: 6
+              rows: 1
+            tap_action:
+              action: toggle
+            icon_tap_action:
+              action: toggle
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #a36b24;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: heading
+            heading: סלון
+            icon: mdi:lightbulb-group-outline
+            card_mod:
+              style: |
+                ha-card .container {
+                  direction: rtl;
+                  padding-inline: 5px;
+                  box-shadow: inset 0 -1px color-mix(in srgb, var(--divider-color) 75%, transparent);
+                }
+                .content ha-icon {
+                  color: color-mix(in srgb, var(--primary-text-color) 68%, #328274);
+                }
+                h2.heading {
+                  font-weight: 650;
+                }
+                hui-entity-heading-badge {
+                  display: block;
+                  border-radius: 999px;
+                  background: var(--secondary-background-color);
+                  padding-inline: 5px;
+                }
+          - type: tile
+            entity: switch.living_room_couch_light
+            name: ספה
+            icon: mdi:led-strip-variant
+            color: amber
+            grid_options:
+              columns: 6
+              rows: 1
+            tap_action:
+              action: toggle
+            icon_tap_action:
+              action: toggle
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #a36b24;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: switch.shelly1pmminig3_34b7da92245c_switch_0
+            name: קמין
+            icon: mdi:led-strip-variant
+            color: amber
+            grid_options:
+              columns: 6
+              rows: 1
+            tap_action:
+              action: toggle
+            icon_tap_action:
+              action: toggle
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #a36b24;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: tile
+            entity: climate.living_room_ac_smartair
+            name: מזגן סלון
+            icon: mdi:air-conditioner
+            color: light-blue
+            vertical: false
+            hide_state: false
+            grid_options:
+              columns: 12
+              rows: 1
+            tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_toggle_vacuum_intensity
+              data:
+                skip_condition: false
+            icon_tap_action:
+              action: perform-action
+              perform_action: automation.trigger
+              target:
+                entity_id: automation.tami4_button_toggle_vacuum_intensity
+              data:
+                skip_condition: false
+            card_mod:
+              style: |
+                :host {
+                  --kitchen-accent: #6879a8;
+                }
+                ha-card {
+                  --ha-card-border-radius: 18px;
+                  --ha-card-border-color: color-mix(in srgb, var(--divider-color) 70%, var(--kitchen-accent) 30%);
+                  background: color-mix(in srgb, var(--card-background-color, #fff) 94%, var(--kitchen-accent) 6%);
+                  box-shadow: 0 2px 6px rgb(16 33 29 / 6%);
+                  transition: transform 120ms ease, box-shadow 120ms ease;
+                }
+                ha-card:active {
+                  transform: scale(.98);
+                  box-shadow: none;
+                }
+                ha-tile-container, ha-tile-info {
+                  direction: rtl;
+                }
+                .primary {
+                  font-weight: 650;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                  ha-card { transition: none; }
+                  ha-card:active { transform: none; }
+                }
+          - type: custom:button-card
+            entity: input_boolean.yard_light_automations_bypass
+            name: תאורת חוץ
+            icon: mdi:outdoor-lamp
+            color: var(--state-icon-color)
+            show_label: true
+            label: >
+              [[[ return ({on: 'מצב ידני', off: 'מצב אוטומטי'})[entity?.state]
+              ?? 'לא זמין'; ]]]
+            tap_action:
+              action: toggle
+            hold_action:
+              action: none
+            state:
+              - value: 'on'
+                color: '#c78b26'
+                styles:
+                  card:
+                    - border-color: '#c78b26'
+            grid_options:
+              columns: 6
+              rows: 1
+            styles:
+              card:
+                - height: 100%
+                - border-radius: 18px
+                - padding: 6px 9px
+                - box-sizing: border-box
+              grid:
+                - direction: rtl
+                - grid-template-areas: '"i n" "i l"'
+                - grid-template-columns: 24px minmax(0, 1fr)
+                - grid-template-rows: min-content min-content
+                - column-gap: 6px
+                - align-content: center
+              icon:
+                - width: 21px
+              name:
+                - justify-self: start
+                - font-size: 13px
+                - font-weight: 650
+              label:
+                - justify-self: start
+                - font-size: 11px
+                - color: var(--secondary-text-color)
+          - type: custom:button-card
+            entity: binary_sensor.post_office_open
+            name: דואר
+            icon: mdi:post-outline
+            color: var(--state-icon-color)
+            triggers_update:
+              - sensor.post_office_next_open
+            show_label: true
+            label: |
+              [[[
+                if (entity?.state === 'on') return 'פתוח';
+                if (entity?.state !== 'off') return 'לא זמין';
+                const next = states['sensor.post_office_next_open']?.state ?? '';
+                const slot = /^(Today|Sun|Mon|Tue|Wed|Thu|Fri|Sat) @ ([0-9]{2}:[0-9]{2})$/.exec(next);
+                if (!slot) return 'סגור';
+                const days = {Today: 'היום', Sun: 'א׳', Mon: 'ב׳', Tue: 'ג׳', Wed: 'ד׳', Thu: 'ה׳', Fri: 'ו׳', Sat: 'שבת'};
+                const day = slot[1] === 'Today' ? 'היום' : 'יום ' + days[slot[1]];
+                return 'סגור · נפתח ' + (slot[1] === 'Today' ? day : 'ב' + day) + ' ב־' + slot[2];
+              ]]]
+            tap_action:
+              action: none
+            hold_action:
+              action: none
+            state:
+              - value: 'on'
+                color: '#47815e'
+            grid_options:
+              columns: 6
+              rows: 1
+            styles:
+              card:
+                - height: 100%
+                - border-radius: 18px
+                - padding: 3px 9px
+                - box-sizing: border-box
+              grid:
+                - direction: rtl
+                - grid-template-areas: '"i n" "i l"'
+                - grid-template-columns: 24px minmax(0, 1fr)
+                - grid-template-rows: min-content min-content
+                - column-gap: 6px
+                - align-content: center
+              icon:
+                - width: 21px
+              name:
+                - justify-self: start
+                - font-size: 13px
+                - font-weight: 650
+              label:
+                - justify-self: start
+                - font-size: 11px
+                - color: var(--secondary-text-color)
+                - text-align: right
+                - white-space: normal
+                - line-height: 1.1
+          - type: button
+            name: חבילות
+            icon: mdi:package-variant-closed
+            show_state: false
+            tap_action:
+              action: navigate
+              navigation_path: /kitchen-tablet-managed/parcels
+    badges: []
+  - title: מזג האוויר
+    path: ambient
+    type: panel
+    cards:
+      - type: custom:mod-card
+        card_mod:
+          style: >
+            {% set occupied =
+            is_state('binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1',
+            'on') and is_state('input_boolean.away_mode', 'off') %}
+
+            :host {
+              display: block;
+              min-height: 100vh;
+              min-height: 100dvh;
+              background: {{ '#101c30' if occupied else '#000' }};
+              overflow: auto;
+            }
+
+            ha-card {
+              background: transparent;
+              border: 0;
+              box-shadow: none;
+              max-width: 620px;
+              width: calc(100% - 24px);
+              margin: 14px auto;
+              overflow: visible;
+            }
+
+            ha-card { opacity: {{ 1 if occupied else 0 }}; }
+        card:
+          type: vertical-stack
+          cards:
+            - type: conditional
+              conditions:
+                - condition: state
+                  entity: binary_sensor.kitchen_tablet_freezer_door_left_open
+                  state: 'on'
+              card:
+                type: markdown
+                content: |
+                  <div dir="rtl" lang="he"><strong>דלת המקפיא פתוחה</strong><br>יותר מ־5 דקות · נא לסגור את הדלת</div>
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: #742536;
+                      color: #fff4f5;
+                      border: 2px solid #fda4af;
+                      border-radius: 16px;
+                      font-size: 17px;
+                      animation: freezer-alert-pulse 3s ease-in-out infinite;
+                    }
+                    @keyframes freezer-alert-pulse {
+                      0%, 100% { border-color: #fda4af; }
+                      50% { border-color: #fff4f5; }
+                    }
+                    @media (prefers-reduced-motion: reduce) {
+                      ha-card { animation: none; }
+                    }
+            - type: custom:button-card
+              show_name: false
+              show_icon: false
+              show_state: false
+              update_timer: >-
+                [[[ return !this._kitchenHourly || this._kitchenHourly.loading ?
+                1000 : 60000; ]]]
+              tap_action:
+                action: none
+              hold_action:
+                action: none
+              double_tap_action:
+                action: none
+              styles:
+                card:
+                  - background: 'linear-gradient(140deg, #142949, #19485a 80%, #1c5d65)'
+                  - color: '#f2f7fd'
+                  - border: '0'
+                  - border-radius: 24px
+                  - box-shadow: none
+                  - max-width: 620px
+                  - margin: 0 auto
+                  - width: min(620px, calc(100vw - 24px))
+                  - padding: '0'
+                grid:
+                  - grid-template-areas: '"panel" "parcels"'
+                  - grid-template-columns: minmax(0, 1fr)
+                  - grid-template-rows: auto auto
+                custom_fields:
+                  panel:
+                    - width: 100%
+                    - white-space: normal
+                    - text-align: right
+              custom_fields:
+                parcels:
+                  card:
+                    type: conditional
+                    conditions:
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity: sensor.17track_in_transit
+                            state_not: '0'
+                          - condition: state
+                            entity: sensor.17track_ready_to_be_picked_up
+                            state_not: '0'
+                    card:
+                      type: custom:mushroom-chips-card
+                      card_mod:
+                        style:
+                          .: >
+                            ha-card {
+                              direction: rtl;
+                              padding: 0 clamp(20px, 5vw, 34px) 15px;
+                              --chip-height: 36px;
+                              --chip-font-size: 15px;
+                              --chip-icon-size: 18px;
+                              --chip-spacing: 8px;
+                              --chip-background: #e3f7ff12;
+                              --chip-border-width: 0;
+                              --primary-text-color: #f2f7fd;
+                            }
+
+                            @media (max-width: 430px) {
+                              ha-card { padding-inline: 17px; }
+                            }
+
+                            {% if states('sensor.17track_ready_to_be_picked_up')
+                            | int(0) > 0 %}
+
+                            .chip-container >
+                            mushroom-template-chip:nth-of-type(2) {
+                              filter: drop-shadow(0 0 3px #ffd47770);
+                              animation: pickup-pulse 3s ease-in-out infinite;
+                            }
+
+                            @keyframes pickup-pulse {
+                              0%, 100% { filter: drop-shadow(0 0 2px #ffd47755); }
+                              50% { filter: drop-shadow(0 0 8px #ffd477b0); }
+                            }
+
+                            @media (prefers-reduced-motion: reduce) {
+                              .chip-container > mushroom-template-chip:nth-of-type(2) { animation: none; }
+                            }
+
+                            {% endif %}
+                          mushroom-template-chip $: |
+                            ha-state-icon { margin-inline-end: 7px; }
+                      chips:
+                        - type: template
+                          icon: mdi:truck-delivery-outline
+                          icon_color: light-blue
+                          content: >-
+                            חבילות בדרך · {{ states('sensor.17track_in_transit')
+                            if has_value('sensor.17track_in_transit') else '—'
+                            }}
+                          tap_action:
+                            action: navigate
+                            navigation_path: /kitchen-tablet-managed/parcels
+                        - type: template
+                          icon: mdi:package-variant-closed
+                          icon_color: amber
+                          content: >-
+                            ממתינות לאיסוף · {{
+                            states('sensor.17track_ready_to_be_picked_up') if
+                            has_value('sensor.17track_ready_to_be_picked_up')
+                            else '—' }}
+                          tap_action:
+                            action: navigate
+                            navigation_path: /kitchen-tablet-managed/parcels
+                panel: >-
+                  [[[
+
+                  const weather = states['weather.openweathermap'];
+
+                  const feels =
+                  Number.parseFloat(states['sensor.openweathermap_feels_like_temperature']?.state);
+
+                  const temperature =
+                  Number.parseFloat(weather?.attributes?.temperature);
+
+                  const humidity =
+                  Number.parseFloat(weather?.attributes?.humidity);
+
+                  const indoor =
+                  Number.parseFloat(states['sensor.living_room_ac_temperature']?.state);
+
+                  const indoorHumidity =
+                  Number.parseFloat(states['sensor.living_room_ac_humidity']?.state);
+
+                  const indoorText = Number.isFinite(indoor) ? `<bdi
+                  dir="ltr">${Math.trunc(indoor)}°</bdi>` : 'אין נתון כרגע';
+
+                  const indoorHumidityText = Number.isFinite(indoorHumidity) ?
+                  `<span>לחות <bdi
+                  dir="ltr">${Math.round(indoorHumidity)}%</bdi></span>` : '';
+
+                  const wind =
+                  Number.parseFloat(weather?.attributes?.wind_speed);
+
+                  const now = new Date();
+
+                  const timeZone = hass.config.time_zone;
+
+                  const clock = new Intl.DateTimeFormat('he-IL', {timeZone,
+                  hour:'2-digit', minute:'2-digit',
+                  hourCycle:'h23'}).format(now);
+
+                  const date = new Intl.DateTimeFormat('he-IL', {timeZone,
+                  weekday:'long', day:'numeric', month:'long'}).format(now);
+
+                  const dateKey = new Intl.DateTimeFormat('en-CA', {timeZone,
+                  year:'numeric', month:'2-digit', day:'2-digit'});
+
+                  const hourLabel = new Intl.DateTimeFormat('he-IL', {timeZone,
+                  hour:'2-digit', minute:'2-digit', hourCycle:'h23'});
+
+                  const night = states['sun.sun']?.state === 'below_horizon';
+
+                  const today = dateKey.format(now);
+
+                  const forecast = this._kitchenHourly ??= {hours: [],
+                  refreshAt: 0, loading: false};
+
+                  if (now.getTime() >= forecast.refreshAt) {
+                    forecast.refreshAt = now.getTime() + 900000;
+                    forecast.loading = true;
+                    const source = 'weather.openweathermap';
+                    hass.callService('weather', 'get_forecasts', {type:'hourly'}, {entity_id:source}, true, true)
+                      .then(result => {
+                        forecast.hours = result?.response?.[source]?.forecast ?? [];
+                        if (!forecast.hours.length) forecast.refreshAt = Date.now() + 60000;
+                      })
+                      .catch(() => { forecast.refreshAt = Date.now() + 60000; })
+                      .finally(() => { forecast.loading = false; this.requestUpdate(); });
+                  }
+
+                  const hours = forecast.hours.filter(slot => {
+                    const time = new Date(slot.datetime);
+                    if (!Number.isFinite(time.getTime()) || time <= now) return false;
+                    if (!night) return dateKey.format(time) === today;
+                    const clockTime = hourLabel.format(time);
+                    if (clock < '06:00') return dateKey.format(time) === today && clockTime < '06:00';
+                    return dateKey.format(time) === today || (clockTime < '06:00' && time - now <= 12 * 3600000);
+                  });
+
+                  const temperatures = hours.map(slot =>
+                  slot.temperature).filter(Number.isFinite).map(Math.round);
+
+                  const low = Math.min(...temperatures);
+
+                  const high = Math.max(...temperatures);
+
+                  const probabilities = hours.map(slot =>
+                  slot.precipitation_probability).filter(Number.isFinite);
+
+                  const rainChance = probabilities.length ?
+                  Math.round(Math.max(...probabilities)) : null;
+
+                  const rain = rainChance === 0 ? 'לא צפוי גשם' : rainChance ===
+                  null ? '' : `עד <bdi dir="ltr">${rainChance}%</bdi> סיכוי
+                  לגשם`;
+
+                  const examples = hours.filter(slot =>
+                  Number.isFinite(slot.temperature));
+
+                  const selected = examples.length > 4 ? [examples[0],
+                  examples[Math.floor((examples.length - 1) / 2)],
+                  examples[examples.length - 1]] : examples.slice(0,3);
+
+                  const upcoming = temperatures.length ? `
+                    <strong><bdi dir="ltr">${low === high ? `${low}°` : `${low}°–${high}°`}</bdi></strong>
+                    ${rain ? `<div class="weather-rain">${rain}</div>` : ''}
+                    <div class="weather-upcoming">${selected.map(slot => `<span><time dir="ltr">${hourLabel.format(new Date(slot.datetime))}</time><bdi dir="ltr">${Math.round(slot.temperature)}°</bdi></span>`).join('')}</div>
+                  ` : `<div class="weather-rain">${forecast.loading ? 'טוען
+                  תחזית…' : 'אין תחזית זמינה לשעות הקרובות'}</div>`;
+
+                  const conditions = {
+                    sunny:['שמשי','weather-sunny'], 'clear-night':['לילה בהיר','weather-night'],
+                    partlycloudy:['מעונן חלקית','weather-partly-cloudy'], cloudy:['מעונן','weather-cloudy'],
+                    fog:['ערפל','weather-fog'], rainy:['גשום','weather-rainy'], pouring:['גשם כבד','weather-pouring'],
+                    lightning:['ברקים','weather-lightning'], 'lightning-rainy':['סופות רעמים','weather-lightning-rainy'],
+                    windy:['רוחות ערות','weather-windy'], 'windy-variant':['רוחות ועננות','weather-windy-variant'],
+                    snowy:['שלג','weather-snowy'], 'snowy-rainy':['גשם ושלג','weather-snowy-rainy'],
+                    hail:['ברד','weather-hail'], exceptional:['מזג אוויר חריג','alert-outline']
+                  };
+
+                  const [condition, weatherIcon] = conditions[weather?.state] ??
+                  ['נתוני מזג האוויר אינם זמינים','weather-cloudy-alert'];
+
+                  const phases = {new_moon:'מולד הירח', waxing_crescent:'סהר
+                  מתמלא', first_quarter:'רבע ראשון',
+                    waxing_gibbous:'ירח מתמלא', full_moon:'ירח מלא', waning_gibbous:'ירח מתמעט',
+                    last_quarter:'רבע אחרון', waning_crescent:'סהר מתמעט'};
+                  const phase = states['sensor.moon_phase']?.state;
+
+                  const moon = phases[phase];
+
+                  const phaseIcon = phase === 'new_moon' ? 'new' : phase ===
+                  'full_moon' ? 'full' : phase?.replaceAll('_','-');
+
+                  const warnings =
+                  states['sensor.ims_active_weather_warnings']?.state;
+
+                  const warningKnown = warnings && !['unknown',
+                  'unavailable'].includes(warnings);
+
+                  const warningActive = warningKnown && warnings !== 'clear';
+
+                  const escapeText = str => str.replaceAll('&',
+                  '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+                  const warningText = warningActive ? escapeText(warnings) :
+                  warningKnown ? 'אין אזהרות מזג אוויר בתוקף' : 'מקור האזהרות
+                  אינו זמין כרגע';
+
+                  let clothes = 'אין כרגע נתון על הטמפרטורה המורגשת.'; let
+                  clothingIcons = [];
+
+                  if (Number.isFinite(feels)) {
+                    if (feels < 10) [clothes, clothingIcons] = ['סוודר, מעיל חם ומכנסיים ארוכים.', ["sweater","jacket","pants"]];
+                    else if (feels < 16) [clothes, clothingIcons] = ['סוודר, מעיל קל ומכנסיים ארוכים.', ["sweater","jacket","pants"]];
+                    else if (feels < 21) [clothes, clothingIcons] = ['חולצה ארוכה ומכנסיים ארוכים. אפשר לקחת ג׳קט דק.', ["longSleeve","pants","jacket"]];
+                    else if (feels < 24) [clothes, clothingIcons] = ['חולצה קצרה ומכנסיים ארוכים מבד דק.', ["shirt","pants"]];
+                    else [clothes, clothingIcons] = ['חולצה קצרה ומכנסיים קצרים.', ["shirt","shorts"]];
+                  }
+
+                  if (states['input_boolean.rain_expected_next_12_hours']?.state
+                  === 'on') {
+                    clothes += ' כדאי לקחת מטרייה.';
+                    clothingIcons.push('umbrella');
+                  }
+
+                  const clothingPaths = {
+                    shirt: 'M9 4 4 6l-2 5 4 2 2-3v10h8V10l2 3 4-2-2-5-5-2m-6 0a3 3 0 0 0 6 0',
+                    sweater: 'M9 4 5 6l-3 12 4 1 3-8v9h6v-9l3 8 4-1-3-12-4-2m-6 0a3 3 0 0 0 6 0M9 17h6',
+                    longSleeve: 'M9 4 5 6l-3 12 4 1 3-8v9h6v-9l3 8 4-1-3-12-4-2m-6 0a3 3 0 0 0 6 0',
+                    jacket: 'M9 4 5 6l-3 12 4 1 2-8v9h8v-9l2 8 4-1-3-12-4-2H9l3 4 3-4m-3 4v12m-3-6h1m4 0h1',
+                    pants: 'M6 3h12l2 18h-6l-2-10-2 10H4L6 3zm0 4h12',
+                    shorts: 'M6 5h12l3 13h-7l-2-5-2 5H3L6 5zm0 3h12',
+                    umbrella: 'M3 13a9 9 0 0 1 18 0H3zm9 0v6a2 2 0 0 0 4 0M12 2v2',
+                  }; const outfitIcons = clothingIcons.map((item) => `<svg
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="1.9" stroke-linecap="round"
+                  stroke-linejoin="round" focusable="false"><path
+                  d="${clothingPaths[item]}"></path></svg>`).join('');
+
+                  const commuteMinutes =
+                  Math.round(Number.parseFloat(states['sensor.waze_home_to_high_tech_village']?.state));
+                  const commuteColor = commuteMinutes <= 75 ? 'green' :
+                  commuteMinutes <= 100 ? 'yellow' : 'red';
+
+                  const showCommute =
+                  states['binary_sensor.workday_sensor']?.state === 'on' &&
+                  clock >= '05:30' && clock < '08:30'; const commuteRow =
+                  showCommute && Number.isFinite(commuteMinutes) &&
+                  commuteMinutes > 0
+                    ? `<div class="weather-commute" dir="rtl"><ha-icon icon="mdi:car-outline" aria-hidden="true"></ha-icon><strong>זמן נסיעה לעבודה</strong><bdi class="commute-time ${commuteColor}" dir="ltr">${Math.floor(commuteMinutes / 60)}:${String(commuteMinutes % 60).padStart(2, '0')}</bdi></div>` : '';
+
+                  const details = [];
+
+                  if (Number.isFinite(humidity)) details.push(`<span>לחות <bdi
+                  dir="ltr">${Math.round(humidity)}%</bdi></span>`);
+
+                  if (Number.isFinite(wind)) details.push(`<span>רוח <bdi
+                  dir="ltr">${Math.round(wind)}</bdi> קמ״ש</span>`);
+
+                  const uv =
+                  Math.round(Number.parseFloat(states['sensor.openweathermap_uv_index']?.state));
+
+                  if (states['sun.sun']?.state === 'above_horizon' &&
+                  Number.isFinite(uv) && uv >= 0) {
+                   const levels = [[2,'נמוך'],[5,'בינוני'],[7,'גבוה'],[10,'גבוה מאוד'],[Infinity,'קיצוני']];
+                   const band = levels.findIndex(([limit]) => uv <= limit);
+                   const label = levels[band][1];
+                   details.push('<span class="weather-uv-rating weather-uv-scale-' + band + '" dir="rtl"><bdi dir="ltr">UV ' + uv + '</bdi> · ' + label + '</span>');
+                  }
+
+                  const aqi =
+                  Number.parseFloat(states['sensor.outdoor_air_quality_index']?.state);
+
+                  if (Number.isFinite(aqi) && aqi >= 0) {
+                   const levels = [[20,'טובה'],[40,'סבירה'],[60,'בינונית'],[80,'ירודה'],[100,'ירודה מאוד'],[Infinity,'ירודה במיוחד']];
+                   const band = levels.findIndex(([limit]) => aqi <= limit);
+                   const label = levels[band][1];
+                   const className = 'weather-air-scale-' + band;
+                   details.push('<span class="weather-air-value ' + className + '" dir="rtl" title="Open-Meteo / CAMS">איכות האוויר: <strong class="weather-air-rating">' + label + ' <bdi dir="ltr">(' + Math.round(aqi) + ')</bdi></strong></span>');
+                  }
+
+                  if (moon) details.push(`<span><ha-icon
+                  icon="mdi:moon-${phaseIcon}"></ha-icon> ${moon}</span>`);
+
+                  const tempText = Number.isFinite(temperature) ?
+                  `${Math.round(temperature)}°` : '—';
+
+                  const feelsText = Number.isFinite(feels) ? `<div
+                  class="weather-feels">מרגיש כמו <bdi
+                  dir="ltr">${Math.round(feels)}°</bdi></div>` : '';
+
+                  return `<div class="weather-frame" dir="rtl" lang="he">
+                    <div class="weather-header"><div class="weather-date">${date}</div><time dir="ltr">${clock}</time></div>
+                    <div class="weather-current">
+                      <div class="weather-primary"><div class="weather-now-label">בחוץ עכשיו</div>
+                        <div class="weather-temperature-line"><div class="weather-symbol"><ha-icon class="${weatherIcon}" icon="mdi:${weatherIcon}" aria-hidden="true"></ha-icon><div class="weather-condition">${condition}</div></div><div class="weather-temp" dir="ltr">${tempText}</div></div>
+                      </div>
+                      <div class="weather-snippet"><div class="weather-snippet-title">${night ? "תחזית ללילה" : "להמשך היום"}</div>${upcoming}</div>
+                    </div>
+                    <div class="weather-wear"><div class="wear-label" dir="rtl">מה ללבוש <span class="wear-icons" aria-hidden="true">${outfitIcons}</span></div>
+                      <div class="wear-text">${clothes}</div>${feelsText}</div>
+                    ${commuteRow}
+                    <div class="weather-details">${details.join('')}</div>
+                    <div class="weather-indoor" dir="rtl"><span class="weather-row-icon"><ha-icon icon="mdi:home-thermometer-outline"></ha-icon></span><strong>בבית</strong>${indoorText}${indoorHumidityText}</div>
+                    <div class="weather-alert ${warningActive ? 'active' : ''}" dir="rtl"><span class="weather-row-icon"><ha-icon icon="mdi:${warningActive ? 'alert-outline' : 'shield-outline'}"></ha-icon></span><div><div class="weather-alert-title">אזהרות בישראל · השירות המטאורולוגי</div><div class="weather-alert-message" dir="rtl">${warningText}</div></div></div>
+                  </div>`;
+
+                  ]]]
+              extra_styles: >
+                :host { display: block; width: 100% !important; }
+
+                .weather-frame { font-family: system-ui, sans-serif; padding:
+                clamp(20px, 5vw, 34px); line-height: 1.35; }
+
+                .weather-header { display: flex; justify-content: space-between;
+                align-items: baseline; gap: 10px; font-size: clamp(19px, 4vw,
+                25px); }
+
+                .weather-header time { font-weight: 650; font-variant-numeric:
+                tabular-nums; color: #b1ede4; white-space: nowrap; }
+
+                .weather-date { color: #cae3ed; font-size: clamp(15px, 3vw,
+                17px); }
+
+                .weather-now-label { font-size: 16px; font-weight: 650; color:
+                #b8e9eb; margin-bottom: 5px; }
+
+                .weather-temp { display: inline-block; font-size: clamp(68px,
+                17vw, 99px); line-height: .92; letter-spacing: -.065em;
+                font-weight: 670; }
+
+                .weather-condition { margin-top: 5px; font-size: clamp(19px,
+                4.5vw, 27px); font-weight: 540; }
+
+                .weather-wear { background: #e3f7ff12; border: 1px solid
+                #d8f9ff32; border-radius: 16px; padding: 11px 13px; }
+
+                .wear-label { font-size: 15px; color: #b1ede4; font-weight: 650;
+                }
+
+                .wear-icons { display: inline-flex; gap: 5px; vertical-align:
+                middle; margin-inline-end: 6px; }
+
+                .wear-icons:empty { display: none; }
+
+                .wear-icons svg { width: 24px; height: 24px; }
+
+                .wear-text { margin-top: 4px; font-size: clamp(18px, 4vw, 23px);
+                font-weight: 620; }
+
+                .weather-feels { margin-top: 4px; font-size: 14px; color:
+                #cae3ed; }
+
+                .weather-details { display: flex; flex-wrap: wrap; gap: 6px
+                15px; margin-block: 12px; font-size: 14px; color: #d6e9f0; }
+
+                .weather-details ha-icon { --mdc-icon-size: 16px; }
+
+                .weather-alert { display: flex; align-items: center; gap: 8px;
+                background: #0c273f66; padding: 8px 10px; border-radius: 12px;
+                color: #e9f7f7; font-size: 14px; }
+
+                .weather-alert ha-icon { --mdc-icon-size: 21px; color: #a8e8d7;
+                }
+
+                .weather-alert-title { font-size: 12px; color: #b6d7e4; }
+
+                .weather-alert.active { background: #713e19; border: 1px solid
+                #ecb070; }
+
+                .weather-alert.active ha-icon { color: #ffdcad; }
+
+                @media (max-width: 430px) { .weather-frame { padding: 17px; }
+                .weather-current { margin-block: 13px; } }
+
+                .weather-commute { display: flex; align-items: center; gap: 8px;
+                padding: 7px 9px; border-radius: 12px; background: #e3f7ff12;
+                color: #f2f7fd; font-size: 16px; }
+
+                .commute-time { font-weight: 700; }
+
+                .commute-time.green { color: #86efac; }
+
+                .commute-time.yellow { color: #fde68a; }
+
+                .commute-time.red { color: #fca5a5; }
+
+                .weather-commute ha-icon { flex: none; margin: 0;
+                --mdc-icon-size: 21px; color: #b1ede4; }
+
+                .weather-indoor { display: flex; align-items: center; gap: 8px
+                12px; flex-wrap: wrap; border-block-start: 1px solid #cbefff2a;
+                padding: 9px 0; font-size: 16px; font-weight: 500; color:
+                #f2f7fd; }
+
+                .weather-indoor ha-icon { --mdc-icon-size: 20px; color: #b1ede4;
+                }
+
+                .weather-indoor strong { font-size: 17px; font-weight: 700; }
+
+                .weather-indoor > ha-icon, .weather-alert > ha-icon { flex: 0 0
+                var(--mdc-icon-size); width: var(--mdc-icon-size) !important;
+                height: var(--mdc-icon-size) !important; }
+
+                .weather-alert { direction: rtl; justify-content: flex-start;
+                text-align: right; }
+
+                .weather-alert > div { flex: 1 1 auto; min-width: 0; text-align:
+                right; }
+
+                .weather-alert-title, .weather-alert-message { direction: rtl;
+                text-align: right; unicode-bidi: isolate; }
+
+                .weather-row-icon { display: inline-flex; align-items: center;
+                justify-content: center; flex: 0 0 22px; width: 22px; height:
+                22px; }
+
+                .weather-row-icon > ha-icon { display: block; width: 20px
+                !important; height: 20px !important; --mdc-icon-size: 20px; }
+
+                .weather-indoor { direction: rtl; justify-content: flex-start;
+                text-align: right; gap: 8px; }
+
+
+                .weather-current { display: grid; grid-template-columns:
+                minmax(0, max-content) minmax(0, 1fr); align-items: center; gap:
+                clamp(12px, 4.2vw, 22px); margin-block: 18px; }
+
+                .weather-condition { display: flex; align-items: center; gap:
+                7px; }
+
+                .weather-snippet { justify-self: start; box-sizing: border-box;
+                width: 100%; max-width: 176px; min-width: 0; padding: 10px 12px;
+                background: #e3f7ff12; border: 1px solid #d8f9ff32;
+                border-radius: 14px; color: #c9e4ec; font-size: clamp(13px,
+                3.4vw, 15px); }
+
+                .weather-snippet strong { display: block; margin-block-start:
+                3px; color: #f2f7fd; font-size: clamp(21px, 5vw, 29px);
+                font-weight: 650; }
+
+                @media (max-width: 430px) { .weather-current { margin-block:
+                13px; } }
+
+
+                .weather-current { grid-template-columns: minmax(0, max-content)
+                minmax(0, 1fr); gap: clamp(10px, 3.25vw, 23px); }
+
+                .weather-temp { font-size: clamp(52px, 15vw, 99px); }
+
+                .weather-condition { font-size: clamp(17px, 4vw, 25px); }
+
+                .weather-snippet { justify-self: end; max-width: 270px; padding:
+                clamp(8px, 2.5vw, 14px); }
+
+                .weather-snippet-title { font-weight: 650; color: #d5ecf3; }
+
+                .weather-snippet strong { font-size: clamp(23px, 5vw, 34px);
+                line-height: 1.14; }
+
+                .weather-rain { margin-block-start: 4px; font-size: clamp(11px,
+                2.7vw, 14px); }
+
+                .weather-upcoming { display: flex; gap: 5px; margin-block-start:
+                8px; padding-block-start: 7px; border-block-start: 1px solid
+                #d8f9ff32; font-variant-numeric: tabular-nums; }
+
+                .weather-upcoming span { flex: 1; display: grid; gap: 2px;
+                text-align: center; }
+
+                .weather-upcoming time { font-size: clamp(9px, 2.4vw, 13px); }
+
+                .weather-upcoming bdi { color: #f2f7fd; font-weight: 650; }
+
+                .weather-temperature-line { --current-temp-size: clamp(52px,
+                15vw, 99px); --condition-size: clamp(15px, 3.4vw, 21px);
+                display: flex; align-items: flex-end; gap: clamp(5px, 1.6vw,
+                12px); }
+
+                .weather-temperature-line .weather-temp { font-size:
+                var(--current-temp-size); line-height: .92; }
+
+                .weather-symbol { display: grid; justify-items: center;
+                padding-block-end: 4px; }
+
+                .weather-symbol > ha-icon { --mdc-icon-size:
+                calc(var(--current-temp-size) * .92 - var(--condition-size) *
+                1.15 - 4px); display: block; width: var(--mdc-icon-size);
+                height: var(--mdc-icon-size); color: #aceade; transform:
+                scale(1.25); }
+
+                @media (prefers-reduced-motion: no-preference) {
+                  .weather-symbol > ha-icon:is(.weather-cloudy, .weather-partly-cloudy, .weather-fog) { animation: weather-drift 9s ease-in-out infinite; }
+                  .weather-symbol > ha-icon:is(.weather-windy, .weather-windy-variant) { animation: weather-drift 5s ease-in-out infinite; }
+                  .weather-symbol > ha-icon:is(.weather-rainy, .weather-pouring, .weather-lightning-rainy, .weather-snowy, .weather-snowy-rainy, .weather-hail) { animation: weather-float 5s ease-in-out infinite; }
+                  .weather-symbol > ha-icon.weather-night { animation: weather-float 10s ease-in-out infinite; }
+                  .weather-symbol > ha-icon.weather-sunny { animation: weather-sun 18s ease-in-out infinite; }
+                }
+
+                @keyframes weather-drift {
+                  0%, 100% { transform: translateX(-3px) scale(1.25); }
+                  50% { transform: translateX(3px) scale(1.25); }
+                }
+
+                @keyframes weather-float {
+                  0%, 100% { transform: translateY(0) scale(1.25); }
+                  50% { transform: translateY(-4px) scale(1.25); }
+                }
+
+                @keyframes weather-sun {
+                  0%, 100% { transform: rotate(-6deg) scale(1.25); }
+                  50% { transform: rotate(6deg) scale(1.25); }
+                }
+
+                .weather-symbol .weather-condition { margin: 0; font-size:
+                var(--condition-size); line-height: 1.15; white-space: nowrap;
+                transform: translateY(-4px); }
+
+                .weather-details .weather-air-value { white-space: nowrap; }
+
+                .weather-details .weather-air-rating { color:
+                var(--air-rating-color, #d6e9f0); font-weight: 650; }
+
+                .weather-air-scale-0 { --air-rating-color: #8bebae; }
+
+                .weather-air-scale-1 { --air-rating-color: #f6e58e; }
+
+                .weather-air-scale-2 { --air-rating-color: #ffc185; }
+
+                .weather-air-scale-3 { --air-rating-color: #ffa79d; }
+
+                .weather-air-scale-4 { --air-rating-color: #ff9ad2; }
+
+                .weather-air-scale-5 { --air-rating-color: #dcb0ff; }
+
+                .weather-details .weather-uv-rating { color:
+                var(--uv-rating-color, #d6e9f0); font-weight: 650; white-space:
+                nowrap; }
+
+                .weather-uv-scale-0 { --uv-rating-color: #8bebae; }
+
+                .weather-uv-scale-1 { --uv-rating-color: #f6e58e; }
+
+                .weather-uv-scale-2 { --uv-rating-color: #ffc185; }
+
+                .weather-uv-scale-3 { --uv-rating-color: #ffa79d; }
+
+                .weather-uv-scale-4 { --uv-rating-color: #dcb0ff; }
+
+                .weather-frame { padding-block-end: 12px; }
+            - type: custom:plotly-graph
+              hours_to_show: 24
+              time_offset: 24h
+              refresh_interval: 900
+              entities:
+                - entity: ''
+                  name: טמפרטורה
+                  mode: lines+markers
+                  line:
+                    color: '#69dfcd'
+                    width: 3
+                    shape: spline
+                  marker:
+                    size: 4
+                  hovertemplate: '%{y:.1f}°C<extra></extra>'
+                  filters:
+                    - fn: |-
+                        async ({ hass, vars }) => {
+                         const source = "weather.openweathermap";
+                         const request = type => hass.callService("weather", "get_forecasts", { type }, { entity_id: source }, true, true);
+                         const [hourly, daily] = await Promise.allSettled([request("hourly"), request("daily")]);
+                         const date = new Intl.DateTimeFormat("en-CA", {timeZone:hass.config.time_zone,year:"numeric",month:"2-digit",day:"2-digit"});
+                         const now = new Date();
+                         const today = daily.value?.response?.[source]?.forecast?.find(day => date.format(new Date(day.datetime)) === date.format(now));
+                         const summary = [];
+                         if (Number.isFinite(today?.templow)) summary.push("מינ׳ \u2066" + Math.round(today.templow) + "°\u2069");
+                         if (Number.isFinite(today?.precipitation_probability)) summary.push("סיכוי לגשם \u2066" + Math.round(today.precipitation_probability) + "%\u2069");
+                         vars.todaySummary = summary.length ? summary.join(" · ") : "התחזית היומית אינה זמינה כרגע";
+                         const forecast = hourly.value?.response?.[source]?.forecast ?? [];
+                         const hours = forecast.filter(hour => Number.isFinite(hour.temperature) && new Date(hour.datetime) >= new Date(now.getTime() - 3600000)).slice(0,24);
+                         vars.forecastHours = hours;
+                         return { xs: hours.map(hour => new Date(hour.datetime)), ys: hours.map(hour => hour.temperature) };
+                        }
+                - entity: ''
+                  name: כמות משקעים
+                  yaxis: y2
+                  type: bar
+                  width: 2400000
+                  marker:
+                    color: rgba(110, 182, 255, 0.5)
+                  hovertemplate: '%{x|%H:%M} · %{y:.1f} מ״מ<extra>כמות משקעים</extra>'
+                  filters:
+                    - fn: |-
+                        ({ vars }) => {
+                          const hours = vars.forecastHours ?? [];
+                          const hasRain = hours.some(hour => Number.isFinite(hour.precipitation) && hour.precipitation > 0);
+                          return {
+                            xs: hours.map(hour => new Date(hour.datetime)),
+                            ys: hours.map(hour => hasRain && Number.isFinite(hour.precipitation) ? hour.precipitation : null)
+                          };
+                        }
+                  text: >-
+                    $fn ({ vars }) => (vars.forecastHours ?? []).map(hour =>
+                    hour.precipitation > 0 ?
+                    hour.precipitation.toFixed(1).replace(/\.0$/, "") : "")
+                  textposition: outside
+                  textfont:
+                    color: '#a7d4ff'
+                    size: 10
+                  cliponaxis: false
+                - entity: ''
+                  name: סיכוי לגשם
+                  yaxis: y3
+                  type: scatter
+                  mode: lines+markers
+                  line:
+                    color: '#d5b2ff'
+                    width: 2
+                    dash: dot
+                  marker:
+                    size: 3
+                  hovertemplate: '%{x|%H:%M} · %{y:.0f}%<extra>סיכוי לגשם</extra>'
+                  filters:
+                    - fn: |-
+                        ({ vars }) => {
+                          const hours = vars.forecastHours ?? [];
+                          const hasRain = hours.some(hour => Number.isFinite(hour.precipitation_probability) && hour.precipitation_probability > 0);
+                          return {
+                            xs: hours.map(hour => new Date(hour.datetime)),
+                            ys: hours.map(hour => hasRain && Number.isFinite(hour.precipitation_probability) ? hour.precipitation_probability : null)
+                          };
+                        }
+              layout:
+                height: 274
+                paper_bgcolor: rgba(0,0,0,0)
+                plot_bgcolor: rgba(0,0,0,0)
+                font:
+                  family: system-ui, sans-serif
+                  color: '#d6e9f0'
+                margin:
+                  l: 42
+                  r: 42
+                  t: 98
+                  b: 34
+                xaxis:
+                  tickformat: '%H:%M'
+                  nticks: 5
+                  fixedrange: true
+                  gridcolor: '#ffffff20'
+                  anchor: 'y'
+                yaxis:
+                  ticksuffix: °
+                  nticks: 5
+                  fixedrange: true
+                  gridcolor: '#ffffff20'
+                  zeroline: false
+                showlegend: false
+                annotations:
+                  - x: 1
+                    'y': 1.45
+                    xref: paper
+                    yref: paper
+                    xanchor: right
+                    yanchor: middle
+                    showarrow: false
+                    text: תחזית ל־24 השעות הקרובות
+                    font:
+                      size: 17
+                      color: '#f2f7fd'
+                  - x: 1
+                    'y': 1.28
+                    xref: paper
+                    yref: paper
+                    xanchor: right
+                    yanchor: middle
+                    showarrow: false
+                    text: >-
+                      $fn ({ vars }) => '\u202Bהיום · ' + (vars.todaySummary ??
+                      'התחזית אינה זמינה כרגע') + '\u202C'
+                    font:
+                      size: 13
+                      color: '#b1ede4'
+                  - x: 1
+                    'y': 1.11
+                    xref: paper
+                    yref: paper
+                    xanchor: right
+                    yanchor: middle
+                    showarrow: false
+                    text: |-
+                      $fn ({ vars }) => {
+                        const hours = vars.forecastHours ?? [];
+                        if (!hours.length || hours.every(hour => !Number.isFinite(hour.precipitation) && !Number.isFinite(hour.precipitation_probability))) return "תחזית הגשם אינה זמינה";
+                        if (hours.every(hour => hour.precipitation === 0 && hour.precipitation_probability === 0)) return "לא צפוי גשם ב־24 השעות הקרובות";
+                        return hours.some(hour => Number.isFinite(hour.precipitation)) ? "■  כמות משקעים במ״מ" : "";
+                      }
+                    font:
+                      size: 12
+                      color: '#a7d4ff'
+                  - x: 0
+                    'y': 1.11
+                    xref: paper
+                    yref: paper
+                    xanchor: left
+                    yanchor: middle
+                    showarrow: false
+                    text: >-
+                      $fn ({ vars }) => (vars.forecastHours ?? []).some(hour =>
+                      hour.precipitation_probability > 0) ? "⋯  סיכוי לגשם
+                      באחוזים" : ""
+                    font:
+                      size: 12
+                      color: '#d5b2ff'
+                yaxis2:
+                  anchor: x
+                  overlaying: 'y'
+                  fixedrange: true
+                  visible: false
+                  range: >-
+                    $fn ({ vars }) => [0, Math.max(1, ...(vars.forecastHours ??
+                    []).map(hour => Number.isFinite(hour.precipitation) ?
+                    hour.precipitation * 2 : 0))]
+                yaxis3:
+                  anchor: x
+                  overlaying: 'y'
+                  side: right
+                  fixedrange: true
+                  range:
+                    - 0
+                    - 120
+                  visible: >-
+                    $fn ({ vars }) => (vars.forecastHours ?? []).some(hour =>
+                    hour.precipitation_probability > 0)
+                  tickvals:
+                    - 0
+                    - 50
+                    - 100
+                  ticksuffix: '%'
+                  tickfont:
+                    size: 10
+                    color: '#d5b2ff'
+                  showgrid: false
+                  zeroline: false
+                hovermode: x unified
+              config:
+                displayModeBar: false
+                scrollZoom: false
+              card_mod:
+                style: |-
+                  ha-card {
+                    background: #193447;
+                    border: 0;
+                    box-shadow: none;
+                    border-radius: 24px;
+                    margin: 0;
+                    max-width: 620px;
+                    width: 100%;
+                  }
+    subview: true
+    back_path: /kitchen-tablet-managed/controls
+  - title: חבילות
+    path: parcels
+    subview: true
+    back_path: /kitchen-tablet-managed/ambient
+    type: sections
+    max_columns: 1
+    sections:
+      - type: grid
+        cards:
+          - type: markdown
+            content: |
+              <div dir="rtl" lang="he">
+              {% if not has_value('sensor.kitchen_tablet_active_parcels') %}
+              פרטי החבילות עדיין לא זמינים.
+              {% else %}
+                {% set parcels = state_attr('sensor.kitchen_tablet_active_parcels', 'packages') or [] %}
+                {% if not parcels %}
+              אין חבילות בדרך או ממתינות לאיסוף.
+                {% else %}
+                  {% for parcel in parcels %}
+              <p><bdi dir="ltr"><strong>{{ parcel.tracking_number | e }}</strong></bdi> · {{ {'In Transit': 'בדרך', 'Ready to be picked up': 'ממתינה לאיסוף'}.get(parcel.status, parcel.status) | e }}</p>
+                  {% endfor %}
+                {% endif %}
+              {% endif %}
+              </div>
+          - type: button
+            name: חזרה לשומר המסך
+            icon: mdi:arrow-right
+            tap_action:
+              action: navigate
+              navigation_path: /kitchen-tablet-managed/ambient
+          - type: button
+            name: בקרת המטבח
+            icon: mdi:tablet-dashboard
+            tap_action:
+              action: navigate
+              navigation_path: /kitchen-tablet-managed/controls
