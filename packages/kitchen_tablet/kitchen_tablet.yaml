@@ -1,13 +1,4 @@
 ---
-lovelace:
-  dashboards:
-    kitchen-tablet-managed:
-      mode: yaml
-      filename: packages/kitchen_tablet/dashboard.yml
-      title: Kitchen Tablet
-      icon: mdi:tablet-dashboard
-      show_in_sidebar: false
-
 template:
   - binary_sensor:
       - name: Kitchen tablet freezer door left open
@@ -47,6 +38,41 @@ template:
         state: "{{ tracking.packages | count }}"
         attributes:
           packages: "{{ tracking.packages }}"
+
+  - triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        minutes: "/15"
+    actions:
+      - action: weather.get_forecasts
+        continue_on_error: true
+        target:
+          entity_id: weather.openweathermap
+        data:
+          type: hourly
+        response_variable: hourly
+      - variables:
+          forecast: "{{ (hourly | default({}, true)).get('weather.openweathermap', {}).get('forecast', []) }}"
+    binary_sensor:
+      - name: Kitchen tablet rain forecast next 24 hours
+        unique_id: kitchen_tablet_rain_forecast_next_24_hours
+        icon: mdi:weather-rainy
+        availability: "{{ forecast | count > 0 }}"
+        state: >-
+          {% set start = as_timestamp(now().replace(minute=0, second=0, microsecond=0)) %}
+          {% set end = as_timestamp(now()) + 24 * 60 * 60 %}
+          {% set rain = namespace(expected=false) %}
+          {% for hour in forecast %}
+            {% set timestamp = as_timestamp(hour.get('datetime'), 0) %}
+            {% set condition = hour.get('condition') %}
+            {% if start <= timestamp < end and (
+                condition in ['rainy', 'pouring', 'lightning-rainy', 'snowy-rainy'] or
+                (condition not in ['snowy', 'hail'] and hour.get('precipitation', 0) | float(0) > 0)) %}
+              {% set rain.expected = true %}
+            {% endif %}
+          {% endfor %}
+          {{ rain.expected }}
 
 automation:
   - alias: Kitchen tablet - clean living room
