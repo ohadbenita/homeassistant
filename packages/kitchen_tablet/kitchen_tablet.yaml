@@ -275,7 +275,7 @@ automation:
             data:
               message: צלצול בדלת הכניסה
               title: ""
-              duration: 8
+              duration: 30
               type: info
               chime: false
               scale: 1.4
