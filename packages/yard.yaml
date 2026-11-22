@@ -617,6 +617,22 @@ automation:
         entity_id: switch.shelly1pmminig3_34b7dac9ea68_switch_0
 
 
+  - alias: "Restart house sign light when front lawn disconnects"
+    id: yard_restart_house_sign_light_when_front_lawn_disconnects
+    trigger:
+      - platform: state
+        entity_id: switch.shelly1pmminig3_34b7dac9ea68_switch_0
+        to: unavailable
+    action:
+      - action: button.press
+        target:
+          entity_id: button.shelly1pmminig3_34b7da8f8b78_reboot
+      - delay: "00:00:15"
+      - action: homeassistant.reload_config_entry
+        data:
+          entry_id: shelly:HJX5
+
+
   - alias: "Analyze laundry when the sun sets"
     id: yard_analyze_laundry_sunset
     initial_state: true
