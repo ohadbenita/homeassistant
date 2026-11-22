@@ -630,7 +630,7 @@ automation:
       - delay: "00:00:15"
       - action: homeassistant.reload_config_entry
         data:
-          entry_id: shelly:HJX5
+          entry_id: "{{ config_entry_id('switch.shelly1pmminig3_34b7dac9ea68_switch_0') }}"
 
 
   - alias: "Analyze laundry when the sun sets"
