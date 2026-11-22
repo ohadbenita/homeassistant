@@ -28,6 +28,9 @@ script:
           config_entry_id: "{{ track_service }}"
           package_tracking_number: "{{ code }}"
           package_friendly_name: "{{ 'Israel Post ' ~ code }}"
+      - action: homeassistant.update_entity
+        target:
+          entity_id: sensor.17track_in_transit
 
 automation:
   - id: register_israel_post_parcels_from_gmail
