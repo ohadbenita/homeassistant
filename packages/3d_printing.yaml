@@ -230,11 +230,42 @@ automation:
       - action: notify.send_message
         data:
           entity_id: notify.telegram_bot_659000495_155103022
-          message: "A possible issue has been detected in the current 3D print"
+          message: >-
+            The 3D print {{ states('sensor.creality_ender_v3_ke_current_print_state') }}.
+            Printer message: {{ states('sensor.creality_ender_v3_ke_current_print_message') }}.
+            Hotend: {{ states('sensor.creality_ender_v3_ke_extruder_temperature') }}°C
+            (target {{ states('number.creality_ender_v3_ke_extruder_target') }}°C).
+            Progress: {{ states('sensor.creality_ender_v3_ke_progress') }}%.
           data:
             photo:
               - file: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
-                caption: "A possible issue has been detected in the current 3D print"
+                caption: "The 3D print {{ states('sensor.creality_ender_v3_ke_current_print_state') }}"
+
+  - alias: 'Alert on 3D printer hotend temperature fault'
+    id: 3d_print_hotend_temperature_fault_alert
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: template
+        value_template: >-
+          {{ is_state('sensor.creality_ender_v3_ke_current_print_state', 'printing')
+             and states('sensor.creality_ender_v3_ke_extruder_temperature') not in ['unknown', 'unavailable', 'none', '']
+             and states('number.creality_ender_v3_ke_extruder_target') not in ['unknown', 'unavailable', 'none', '']
+             and (states('sensor.creality_ender_v3_ke_extruder_temperature') | float(0)
+                  - states('number.creality_ender_v3_ke_extruder_target') | float(0)) | abs > 20 }}
+        for:
+          seconds: 30
+    action:
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          message: >-
+            Hotend temperature fault during a 3D print. The nozzle temperature
+            has stayed more than 20°C from target for 30 seconds.
+            Current: {{ states('sensor.creality_ender_v3_ke_extruder_temperature') }}°C;
+            target: {{ states('number.creality_ender_v3_ke_extruder_target') }}°C.
+            Print: {{ states('sensor.creality_ender_v3_ke_filename') }}
+            ({{ states('sensor.creality_ender_v3_ke_progress') }}% complete).
 
 
   - alias: '3D Print Init'
