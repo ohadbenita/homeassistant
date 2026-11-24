@@ -126,11 +126,20 @@ automation:
       - action: notify.send_message
         data:
           entity_id: notify.telegram_bot_659000495_155103022
-          message: "The 3D print has come to an error. Here's a snapshot"
+          message: >-
+            The 3D print {{ states('sensor.creality_ender_v3_ke_current_print_state') }}.
+            Error: {{ states('sensor.creality_ender_v3_ke_current_print_message')
+              if states('sensor.creality_ender_v3_ke_current_print_message') not in ['', 'unknown', 'unavailable']
+              else states('sensor.creality_ender_v3_ke_printer_message') }}.
+            Nozzle: {{ states('sensor.creality_ender_v3_ke_extruder_temperature') }}°C
+            (target {{ states('number.creality_ender_v3_ke_extruder_target') }}°C).
+            Bed: {{ states('sensor.creality_ender_v3_ke_bed_temperature') }}°C
+            (target {{ states('number.creality_ender_v3_ke_bed_target') }}°C).
+            Progress: {{ states('sensor.creality_ender_v3_ke_progress') }}%.
           data:
             photo:
               - file: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
-                caption: "The 3D print has come to an error. Here's a snapshot"
+                caption: "3D print {{ states('sensor.creality_ender_v3_ke_current_print_state') }} — nozzle and bed temperatures"
 
 
   - alias: '3D print completed light notification'
@@ -208,39 +217,6 @@ automation:
           - switch.shellyplus1pm_e465b8f12024_switch_0
           - light.study_ender_led_driver
 
-
-  - alias: 'Alert on a possible printing fault'
-    id: 3d_print_alert_on_possible_fault
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: sensor.creality_ender_v3_ke_current_print_state
-        to:
-          - paused
-          - error
-
-    action:
-      - action: camera.snapshot
-        data:
-          entity_id: camera.study_rpi3b_creality_nebula
-          filename: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
-
-      - delay: '00:00:02'
-
-      - action: notify.send_message
-        data:
-          entity_id: notify.telegram_bot_659000495_155103022
-          message: >-
-            The 3D print {{ states('sensor.creality_ender_v3_ke_current_print_state') }}.
-            Printer message: {{ states('sensor.creality_ender_v3_ke_current_print_message') }}.
-            Hotend: {{ states('sensor.creality_ender_v3_ke_extruder_temperature') }}°C
-            (target {{ states('number.creality_ender_v3_ke_extruder_target') }}°C).
-            Progress: {{ states('sensor.creality_ender_v3_ke_progress') }}%.
-          data:
-            photo:
-              - file: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
-                caption: "The 3D print {{ states('sensor.creality_ender_v3_ke_current_print_state') }}"
-
   - alias: 'Alert on 3D printer hotend temperature fault'
     id: 3d_print_hotend_temperature_fault_alert
     initial_state: true
@@ -256,6 +232,13 @@ automation:
         for:
           seconds: 30
     action:
+      - action: camera.snapshot
+        data:
+          entity_id: camera.creality_ender_v3_ke
+          filename: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
+
+      - delay: '00:00:02'
+
       - action: notify.send_message
         data:
           entity_id: notify.telegram_bot_659000495_155103022
@@ -264,8 +247,17 @@ automation:
             has stayed more than 20°C from target for 30 seconds.
             Current: {{ states('sensor.creality_ender_v3_ke_extruder_temperature') }}°C;
             target: {{ states('number.creality_ender_v3_ke_extruder_target') }}°C.
+            Bed: {{ states('sensor.creality_ender_v3_ke_bed_temperature') }}°C;
+            target: {{ states('number.creality_ender_v3_ke_bed_target') }}°C.
+            Printer message: {{ states('sensor.creality_ender_v3_ke_current_print_message')
+              if states('sensor.creality_ender_v3_ke_current_print_message') not in ['', 'unknown', 'unavailable']
+              else states('sensor.creality_ender_v3_ke_printer_message') }}.
             Print: {{ states('sensor.creality_ender_v3_ke_filename') }}
             ({{ states('sensor.creality_ender_v3_ke_progress') }}% complete).
+          data:
+            photo:
+              - file: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
+                caption: "Hotend temperature fault — nozzle and bed temperatures"
 
 
   - alias: '3D Print Init'
