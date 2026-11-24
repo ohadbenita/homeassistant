@@ -31,6 +31,9 @@ input_boolean:
   skip_firmware_updates:
     name: Skip firmware checks by end of week
     icon: mdi:update
+  update_restart_scheduled:
+    name: Home Assistant restart scheduled for 3 AM
+    icon: mdi:restart
 
 
 template:
@@ -387,8 +390,8 @@ automation:
             The {{ trigger.to_state.attributes.friendly_name }} has a low battery.
 
 
-  - alias: "Check for Pending Device Firmware Updates"
-    id: ha_check_for_pending_firmware_updates
+  - alias: "Check for Pending Updates"
+    id: ha_check_for_pending_updates
     description: "Send a Telegram message if there are pending updates for devices"
     initial_state: true
     trigger:
@@ -396,7 +399,7 @@ automation:
         event: start
       - platform: template
         value_template: >
-          {{ states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | list | count > 0 }}
+          {{ states.update | selectattr('state', 'eq', 'on') | list | count > 0 }}
       - platform: state
         entity_id: input_boolean.skip_firmware_updates
         to: 'off'
@@ -404,53 +407,96 @@ automation:
     condition:
       - condition: template
         value_template: >
-          {{ states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | list | count > 0 }}
+          {{ states.update | selectattr('state', 'eq', 'on') | list | count > 0 }}
       - condition: state
         entity_id: input_boolean.skip_firmware_updates
         state: 'off'
 
     action:
+      - variables:
+          pending_updates: >-
+            {{ states.update | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
+      - repeat:
+          for_each: "{{ pending_updates }}"
+          sequence:
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_bot_659000495_155103022
+                message: >-
+                  {{ state_attr(repeat.item, 'friendly_name') }} has an update available
+                  ({{ state_attr(repeat.item, 'installed_version') }} → {{ state_attr(repeat.item, 'latest_version') }}).
+                  Install this update?
+                data:
+                  inline_keyboard:
+                    - "Update:/update_{{ repeat.item }}"
       - action: notify.send_message
         data:
           entity_id: notify.telegram_bot_659000495_155103022
-          message: >
-            {% set updates = states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | list %}
-            {% if updates | count > 0 %}
-            There are pending firmware updates for the following devices:
-            {%- for update in updates %}
-              {% set release_url = update.attributes.release_url %}
-              - Entity: {{ update.entity_id | replace('_', '\_') }} - Installed: {{ update.attributes.installed_version }} | Available: [{{ update.attributes.latest_version }}]({{ release_url }})
-            {%- endfor %}
-            Do you want to update now?
-            {% else %}
-            There are no pending firmware updates at this time.
-            {% endif %}
+          message: "Install all pending updates, or snooze update notifications?"
           data:
-            parse_mode: markdown
             inline_keyboard:
-              - "Update Now:/trigger_firmware_update, Snooze Updates (EOW):/snooze_firmware_updates"
+              - "Update all:/trigger_pending_updates, Snooze (EOW):/snooze_firmware_updates"
 
 
-  - alias: "Trigger Firmware Update via Telegram"
-    id: ha_check_trigger_firmware_updates
-    description: "Trigger firmware update when the user responds via Telegram."
+  - alias: "Trigger Selected Updates via Telegram"
+    id: ha_trigger_selected_updates
+    description: "Install selected pending updates and report completion."
     initial_state: true
     trigger:
       - platform: event
         event_type: telegram_callback
-        event_data:
-          data: "/trigger_firmware_update"
+
+    condition:
+      - condition: template
+        value_template: "{{ trigger.event.data.data == '/trigger_pending_updates' or trigger.event.data.data.startswith('/update_') }}"
 
     action:
-      - action: update.install
-        data_template:
-          entity_id: >
-            {{ states.update | selectattr('attributes.device_class', 'eq', 'firmware') | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
-
+      - variables:
+          selected_update: "{{ trigger.event.data.data | regex_replace('^/update_', '') }}"
+          update_entities: >-
+            {% if trigger.event.data.data == '/trigger_pending_updates' %}
+              {{ states.update | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
+            {% else %}
+              {{ [selected_update] if is_state(selected_update, 'on') else [] }}
+            {% endif %}
+      - condition: template
+        value_template: "{{ update_entities | count > 0 }}"
       - action: notify.send_message
         data:
           entity_id: notify.telegram_bot_659000495_155103022
-          message: "Triggered installation of pending firmware updates"
+          message: "Starting updates for {{ update_entities | join(', ') }}"
+      - action: update.install
+        target:
+          entity_id: "{{ update_entities }}"
+      - wait_template: "{{ update_entities | select('is_state', 'on') | list | count == 0 }}"
+        timeout: "02:00:00"
+        continue_on_timeout: true
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ wait.completed and (update_entities | map('state_attr', 'requires_restart') | select('eq', true) | list | count > 0) }}"
+            sequence:
+              - action: notify.send_message
+                data:
+                  entity_id: notify.telegram_bot_659000495_155103022
+                  message: "Update finished. A restart is required. Restart Home Assistant now?"
+                  data:
+                    inline_keyboard:
+                      - "Restart now:/restart_home_assistant, At 3 AM:/schedule_update_restart"
+                      - "Later:/dismiss_update_restart"
+          - conditions:
+              - condition: template
+                value_template: "{{ not wait.completed }}"
+            sequence:
+              - action: notify.send_message
+                data:
+                  entity_id: notify.telegram_bot_659000495_155103022
+                  message: "The update did not finish within 2 hours. Check Home Assistant before trying again."
+        default:
+          - action: notify.send_message
+            data:
+              entity_id: notify.telegram_bot_659000495_155103022
+              message: "The update completed. No restart is required."
 
 
   - alias: "Update check firmware skipped helper"
@@ -471,6 +517,64 @@ automation:
         data:
           entity_id: notify.telegram_bot_659000495_155103022
           message: "Update check will be snoozed by end of week"
+
+
+  - alias: Restart Home Assistant after approved update
+    id: ha_restart_after_update_approval
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: telegram_callback
+        event_data:
+          data: "/restart_home_assistant"
+    action:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.update_restart_scheduled
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          message: "Restarting Home Assistant now."
+      - action: homeassistant.restart
+
+
+  - alias: Schedule Home Assistant restart after update
+    id: ha_schedule_update_restart
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: telegram_callback
+        event_data:
+          data: "/schedule_update_restart"
+    action:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.update_restart_scheduled
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          message: "Home Assistant will restart at 3:00 AM. This schedule remains active until it runs."
+
+
+  - alias: Restart Home Assistant at scheduled 3 AM
+    id: ha_restart_at_scheduled_3am
+    initial_state: true
+    trigger:
+      - platform: time
+        at: "03:00:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.update_restart_scheduled
+        state: "on"
+    action:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.update_restart_scheduled
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_bot_659000495_155103022
+          message: "Restarting Home Assistant now, as scheduled."
+      - action: homeassistant.restart
 
 
   - alias: Reset Firmware Check helper
