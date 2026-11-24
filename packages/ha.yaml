@@ -413,29 +413,31 @@ automation:
         state: 'off'
 
     action:
+      - delay:
+          minutes: 1
+      - condition: template
+        value_template: >-
+          {{ states.update | selectattr('state', 'eq', 'on') | list | count > 0 }}
       - variables:
           pending_updates: >-
-            {{ states.update | selectattr('state', 'eq', 'on') | map(attribute='entity_id') | list }}
-      - repeat:
-          for_each: "{{ pending_updates }}"
-          sequence:
-            - action: notify.send_message
-              data:
-                entity_id: notify.telegram_bot_659000495_155103022
-                message: >-
-                  {{ state_attr(repeat.item, 'friendly_name') }} has an update available
-                  ({{ state_attr(repeat.item, 'installed_version') }} → {{ state_attr(repeat.item, 'latest_version') }}).
-                  Install this update?
-                data:
-                  inline_keyboard:
-                    - "Update:/update_{{ repeat.item }}"
+            {{ states.update | selectattr('state', 'eq', 'on') | list }}
       - action: notify.send_message
         data:
           entity_id: notify.telegram_bot_659000495_155103022
-          message: "Install all pending updates, or snooze update notifications?"
+          message: >-
+            Pending updates:
+            {% for update in pending_updates %}
+            • {{ update.attributes.friendly_name }} ({{ update.attributes.installed_version }} → {{ update.attributes.latest_version }})
+            {% endfor %}
+            Choose individual updates below, or install all.
           data:
-            inline_keyboard:
-              - "Update all:/trigger_pending_updates, Snooze (EOW):/snooze_firmware_updates"
+            inline_keyboard: >-
+              {% set ns = namespace(rows=[]) %}
+              {% for update in pending_updates %}
+              {% set ns.rows = ns.rows + [update.attributes.friendly_name ~ ':/update_' ~ update.entity_id] %}
+              {% endfor %}
+              {% set ns.rows = ns.rows + ['Update all:/trigger_pending_updates, Snooze (EOW):/snooze_firmware_updates'] %}
+              {{ ns.rows }}
 
 
   - alias: "Trigger Selected Updates via Telegram"
