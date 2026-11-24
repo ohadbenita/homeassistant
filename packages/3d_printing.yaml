@@ -50,6 +50,31 @@ template:
           {% else %}
             0
           {% endif %}
+      # Estimate only: nozzle temperature ranges overlap between filament types.
+      - name: "3D Printer Filament Estimate"
+        unique_id: 3d_printer_filament_estimate
+        icon: mdi:printer-3d-nozzle
+        state: >
+          {% set target_state = states('number.creality_ender_v3_ke_extruder_target') %}
+          {% set target = target_state | float(none) %}
+          {% if target is none %}
+            Unknown (no nozzle target)
+          {% elif target < 210 %}
+            PLA likely
+          {% elif target < 220 %}
+            PLA / TPU range
+          {% elif target < 230 %}
+            PLA / TPU / ABS overlap
+          {% elif target <= 250 %}
+            PETG likely (overlapping ranges)
+          {% elif target <= 260 %}
+            ABS / ASA likely
+          {% else %}
+            High-temperature filament likely
+          {% endif %}
+        attributes:
+          nozzle_target: "{{ states('number.creality_ender_v3_ke_extruder_target') }} °C"
+          estimate_note: "Guessed from nozzle target only; check the slicer or filament label to confirm."
 
 automation:
   - alias: "Initialize Print Active Start Time on Startup"
