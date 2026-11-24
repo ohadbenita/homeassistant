@@ -5,6 +5,16 @@ input_datetime:
     has_date: true
     has_time: true
 
+input_number:
+  printer_filament_grams_per_meter:
+    name: Printer Filament Grams per Meter
+    min: 0.1
+    max: 10
+    step: 0.01
+    initial: 3.05
+    unit_of_measurement: g/m
+    mode: box
+
 
 sensor:
   - platform: history_stats
@@ -75,6 +85,40 @@ template:
         attributes:
           nozzle_target: "{{ states('number.creality_ender_v3_ke_extruder_target') }} °C"
           estimate_note: "Guessed from nozzle target only; check the slicer or filament label to confirm."
+      # Default is about 3.05 g/m for 1.75 mm PETG; adjust the YAML helper for other filament.
+      - name: "3D Print Estimated Filament Weight Used"
+        unique_id: 3d_print_estimated_filament_weight_used
+        icon: mdi:weight-gram
+        device_class: weight
+        state_class: measurement
+        unit_of_measurement: g
+        attributes:
+          grams_per_meter: "{{ states('input_number.printer_filament_grams_per_meter') }}"
+          estimate_note: "Estimated from filament length and configured grams per meter."
+        state: >
+          {% set length = states('sensor.creality_ender_v3_ke_filament_used') | float(none) %}
+          {% set grams_per_meter = states('input_number.printer_filament_grams_per_meter') | float(none) %}
+          {% if length is not none and grams_per_meter is not none %}
+            {{ (length * grams_per_meter) | round(1) }}
+          {% else %}
+            unknown
+          {% endif %}
+      - name: "3D Print Projected Total Filament Weight"
+        unique_id: 3d_print_projected_total_filament_weight
+        icon: mdi:weight
+        device_class: weight
+        state_class: measurement
+        unit_of_measurement: g
+        attributes:
+          estimate_note: "Projected from current filament use and print progress; actual use can vary."
+        state: >
+          {% set used_weight = states('sensor.3d_print_estimated_filament_weight_used') | float(none) %}
+          {% set progress = states('sensor.creality_ender_v3_ke_progress') | float(none) %}
+          {% if used_weight is not none and progress is not none and progress > 0 %}
+            {{ (used_weight * 100 / progress) | round(1) }}
+          {% else %}
+            unknown
+          {% endif %}
 
 automation:
   - alias: "Initialize Print Active Start Time on Startup"
@@ -105,7 +149,7 @@ automation:
           datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
 
 
-  - alias: "Send picture once printing is done"
+  - alias: "Send print details and final picture when printing is done"
     id: 3d_printer_send_snapshot_when_done
     initial_state: true
     trigger:
@@ -125,11 +169,22 @@ automation:
       - action: notify.send_message
         data:
           entity_id: notify.telegram_bot_659000495_155103022
-          message: "The 3D print has completed"
+          message: >-
+            3D print complete: {{ states('sensor.creality_ender_v3_ke_filename') }}.
+            Material estimate: {{ states('sensor.3d_printer_filament_estimate') }}.
+            Print duration: {{ (states('sensor.creality_ender_v3_ke_print_duration') | float(0) / 60) | round(1) }} hours.
+            Filament used: {{ states('sensor.creality_ender_v3_ke_filament_used') | float(0) | round(1) }} m
+            (about {{ states('sensor.3d_print_estimated_filament_weight_used') }} g at
+            {{ states('input_number.printer_filament_grams_per_meter') }} g/m).
+            Estimated total filament: {{ states('sensor.3d_print_projected_total_filament_weight') }} g.
+            Nozzle: {{ states('sensor.creality_ender_v3_ke_extruder_temperature') }}°C
+            (target {{ states('number.creality_ender_v3_ke_extruder_target') }}°C).
+            Bed: {{ states('sensor.creality_ender_v3_ke_bed_temperature') }}°C
+            (target {{ states('number.creality_ender_v3_ke_bed_target') }}°C).
           data:
             photo:
               - file: "/config/www/snapshots/3d_printer_snapshot.jpg"
-                caption: "The 3D print has completed"
+                caption: "Print complete: {{ states('sensor.creality_ender_v3_ke_filename') }}"
 
   - alias: "Send picture once printing is in error"
     id: 3d_printer_send_snapshot_when_in_error
