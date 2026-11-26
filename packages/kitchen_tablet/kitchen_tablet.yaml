@@ -50,6 +50,18 @@ template:
             {{ tracking.packages
                | selectattr('info_text', 'search', 'נשלח מסרון הגעה ליחידה')
                | list }}
+      - name: Kitchen tablet in transit
+        unique_id: kitchen_tablet_in_transit
+        icon: mdi:truck-delivery-outline
+        state: >-
+          {{ tracking.packages
+             | rejectattr('info_text', 'search', 'נשלח מסרון הגעה ליחידה')
+             | list | count }}
+        attributes:
+          packages: >-
+            {{ tracking.packages
+               | rejectattr('info_text', 'search', 'נשלח מסרון הגעה ליחידה')
+               | list }}
 
   - triggers:
       - trigger: homeassistant
