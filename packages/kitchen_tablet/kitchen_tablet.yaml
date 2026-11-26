@@ -132,6 +132,43 @@ script:
           entity_id: sensor.17track_in_transit
 
 automation:
+  - alias: Kitchen tablet - receive Israel Post pickup SMS
+    id: kitchen_tablet_receive_israel_post_pickup_sms
+    mode: queued
+    trigger:
+      - platform: webhook
+        webhook_id: kitchen_tablet_israel_post_pickup_sms_8f4d2c9a17e64b3b96a08d5f71c2e4a9
+        allowed_methods:
+          - POST
+        local_only: false
+    variables:
+      message: "{{ trigger.json.message | default('', true) }}"
+      tracking_number: >-
+        {{ message | regex_findall_index('(?i)[A-Z]{2}[0-9]{10}[A-Z]', 0)
+           | default('', true) | upper }}
+      pickup_code: >-
+        {{ message | regex_findall_index('[א-ת]\\s*[0-9]{4}', 0)
+           | default('', true) }}
+    condition:
+      - condition: template
+        value_template: "{{ tracking_number and pickup_code }}"
+    action:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.kitchen_tablet_pickup_codes
+        data:
+          value: >-
+            {% set current = states('input_text.kitchen_tablet_pickup_codes') -%}
+            {% set entries = current.split(',') if current else [] -%}
+            {% set codes = namespace(entries=[]) -%}
+            {% for entry in entries -%}
+            {% if entry.split('|')[0] != tracking_number -%}
+            {% set codes.entries = codes.entries + [entry] -%}
+            {% endif -%}
+            {% endfor -%}
+            {% set codes.entries = codes.entries + [tracking_number ~ '|' ~ pickup_code] -%}
+            {{ codes.entries | join(',') }}
+
   - alias: Kitchen tablet - clean living room
     id: kitchen_tablet_clean_living_room
     trigger: []

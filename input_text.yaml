@@ -5,3 +5,7 @@ alexa_actionable_notification:
   initial: >
     '{"text": "This is a test of the alexa actions custom skill. Did it work?",
     "event": "actionable.skill.test"}'
+
+kitchen_tablet_pickup_codes:
+  name: Kitchen tablet pickup codes
+  max: 255
