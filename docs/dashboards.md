@@ -6,7 +6,7 @@ Home Assistant stores these dashboards as UI-managed configuration. Their card Y
 
 | Dashboard / view | URL | What it contains | Where to change it |
 | --- | --- | --- | --- |
-| Kitchen Tablet / Controls | `/kitchen-tablet/controls` | Kitchen tablet controls and room/device sections | Edit the **Kitchen Tablet** dashboard in Home Assistant. |
+| Kitchen Tablet / Controls | `/kitchen-tablet/ambient` | Kitchen tablet controls and room/device sections | Edit the **Kitchen Tablet** dashboard in Home Assistant. |
 | מזג האוויר / Ambient | `/kitchen-weather/ambient` | Kitchen screensaver weather, post-office chip, and parcel chips with detail popups | Edit the **מזג האוויר** dashboard's `ambient` view. Its main card is a `custom:mod-card` containing `custom:button-card` JavaScript and styles. |
 
 The screensaver's chip counts, popup matching, and parcel details live together in that custom card. Keep the in-transit list/count excluding packages classified as pickup ready (`נשלח מסרון הגעה ליחידה`), and keep pickup-ready packages in the pickup popup with their tracking number, pickup code, status, update text, and date. Match pickup codes from `input_text.kitchen_tablet_pickup_codes` by tracking number; do not hardcode codes in the dashboard.
