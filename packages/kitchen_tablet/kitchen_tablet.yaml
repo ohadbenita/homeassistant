@@ -144,14 +144,14 @@ automation:
     variables:
       message: "{{ trigger.json.message | default('', true) }}"
       tracking_number: >-
-        {{ message | regex_findall_index('(?i)[A-Z]{2}[0-9]{10}[A-Z]', 0)
+        {{ (message | regex_findall('(?i)[A-Z]{2}[0-9]{10}[A-Z]') | first)
            | default('', true) | upper }}
       pickup_code: >-
-        {{ message | regex_findall_index('[א-ת]\\s*[0-9]{4}', 0)
+        {{ (message | regex_findall('[א-ת]\\s*[0-9]{4}') | first)
            | default('', true) }}
     condition:
       - condition: template
-        value_template: "{{ tracking_number and pickup_code }}"
+        value_template: "{{ (tracking_number | length > 0) and (pickup_code | length > 0) }}"
     action:
       - action: input_text.set_value
         target:
