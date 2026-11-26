@@ -38,6 +38,18 @@ template:
         state: "{{ tracking.packages | count }}"
         attributes:
           packages: "{{ tracking.packages }}"
+      - name: Kitchen tablet pickup ready
+        unique_id: kitchen_tablet_pickup_ready
+        icon: mdi:package-variant
+        state: >-
+          {{ tracking.packages
+             | selectattr('info_text', 'search', 'נשלח מסרון הגעה ליחידה')
+             | list | count }}
+        attributes:
+          packages: >-
+            {{ tracking.packages
+               | selectattr('info_text', 'search', 'נשלח מסרון הגעה ליחידה')
+               | list }}
 
   - triggers:
       - trigger: homeassistant
