@@ -139,6 +139,35 @@ template:
 
 
 automation:
+  - alias: Reboot Nuki Hubs offline after Home Assistant start
+    id: reboot_nuki_hubs_offline_after_home_assistant_start
+    mode: single
+
+    trigger:
+      - platform: homeassistant
+        event: start
+
+    action:
+      - delay: "00:00:30"
+      - repeat:
+          for_each:
+            - availability: binary_sensor.clinic_nuki_hub_poe_mqtt_connected
+              reboot: switch.clinic_nuki_hub_poe_restart_nuki_hub
+            - availability: binary_sensor.entrance_nuki_m5stack_mqtt_connected
+              reboot: switch.entrance_nuki_m5stack_restart_nuki_hub
+            - availability: binary_sensor.kitchen_nuki_hub_mqtt_connected
+              reboot: switch.nh185718968883256_restart_nuki_hub
+            - availability: binary_sensor.kids_bathroom_nuki_poesp32_mqtt_connected
+              reboot: switch.kids_bathroom_nuki_poesp32_restart_nuki_hub
+          sequence:
+            - if:
+                - condition: template
+                  value_template: "{{ is_state(repeat.item.availability, 'off') }}"
+              then:
+                - action: switch.turn_on
+                  target:
+                    entity_id: "{{ repeat.item.reboot }}"
+
   - alias: "Security - Camera snapshot on person trigger"
     id: security_camera_snapshot_on_person_trigger
     mode: queued
