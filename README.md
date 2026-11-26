@@ -74,6 +74,7 @@ Reusable scripts are in [scripts](./scripts/):
 | [scripts/](./scripts/) | Home Assistant scripts and utility scripts. |
 | [generative-ai/](./generative-ai/) | Camera-analysis application and container build files. |
 | [docs/](./docs/) | Setup notes, including the [Raspberry Pi USB camera to RTSP guide](./docs/rpi-mediamtx-usb-camera.md). |
+| [AGENTS.md](./AGENTS.md), [docs/dashboards.md](./docs/dashboards.md) | Agent guidance and a map of UI-managed dashboards and their YAML-backed data sources. |
 | [.github/workflows/](./.github/workflows/) | Linting, Home Assistant configuration validation, and optional live-sync workflow. |
 
 ## Configuration and secrets
