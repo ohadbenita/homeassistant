@@ -18,7 +18,7 @@ Home Assistant server address with the following paths.
 
 | Setting | Path |
 | --- | --- |
-| Start URL | `/kitchen-tablet/controls` |
+| Start URL | `/kitchen-tablet/ambient` |
 | Website screensaver URL | `/kitchen-weather/ambient` |
 
 Grant the required tablet permissions and set the RTSP credentials on the
