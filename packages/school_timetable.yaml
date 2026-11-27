@@ -1,3 +1,4 @@
+---
 template:
   - binary_sensor:
       - name: School timetable display
