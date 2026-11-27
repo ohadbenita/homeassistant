@@ -11,6 +11,8 @@ Home Assistant stores these dashboards as UI-managed configuration. Their card Y
 
 The screensaver's chip counts, popup matching, and parcel details live together in that custom card. Keep the in-transit list/count excluding packages classified as pickup ready (`נשלח מסרון הגעה ליחידה`), and keep pickup-ready packages in the pickup popup with their tracking number, pickup code, status, update text, and date. Match pickup codes from `input_text.kitchen_tablet_pickup_codes` by tracking number; do not hardcode codes in the dashboard.
 
+The [Kiosk Satellite setup](kiosk-satellite/README.md#weather-screensaver-and-parcel-tables) owns the idle view and background tap. Keep the card's `data-kitchen-parcel-open`, `data-kitchen-post-office-open`, and `.parcel-popup-content` selectors in sync with the kiosk script so that chips and table controls receive taps. The table's **סגירה** button stays on the weather view.
+
 The iOS Messages automation should POST its SMS text as JSON `{ "message": "..." }` to the Home Assistant webhook configured by `kitchen_tablet_receive_israel_post_pickup_sms` in the kitchen tablet package. Home Assistant extracts the tracking number and the Hebrew pickup letter plus four-digit code, and stores only those parsed values for the dashboard. The iPhone Shortcut configuration is device-local and is not in this repository.
 
 ## YAML-backed entities
