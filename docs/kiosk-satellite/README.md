@@ -50,3 +50,8 @@ chips and tables. See the [dashboard map](../dashboards.md#kitchen-tablet).
 To verify, let the tablet idle and tap each parcel chip once. Its table should
 open. Tap **סגירה** to close the table and stay on the weather view. A tap on
 the weather background should return to Kitchen Tablet controls.
+
+On November 27, 2026, the physical Fire Tablet test confirmed that both parcel
+chips open their tables with one tap and that **סגירה** returns to the weather
+view. A separate check in the tablet WebView confirmed that a background tap
+returns to Kitchen Tablet controls.
