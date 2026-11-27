@@ -1,4 +1,10 @@
 ---
+input_boolean:
+  school_timetable_override:
+    name: School timetable override
+    initial: false
+    icon: mdi:calendar-clock
+
 template:
   - binary_sensor:
       - name: School timetable display
@@ -6,18 +12,20 @@ template:
         state: >-
           {% set day = now().weekday() %}
           {% set hour = now().hour %}
-          {{ (day in [0, 1, 2, 3, 6] and 20 <= hour < 23)
+          {% set school_days = [0, 1, 2, 3, 4, 6] %}
+          {{ is_state('input_boolean.school_timetable_override', 'on')
+             or (((day + 1) % 7 in school_days) and 20 <= hour < 23)
              or (day in [0, 1, 2, 3, 4, 6] and 7 <= hour < 8) }}
         attributes:
           display_target: >-
-            {{ 'למחר' if now().hour >= 20 and now().hour < 23 else 'להיום' }}
+            {{ 'למחר' if 20 <= now().hour < 23 else 'להיום' }}
           display_day: >-
-            {% set target = now() + timedelta(days=1 if now().hour >= 20 and now().hour < 23 else 0) %}
+            {% set target = now() + timedelta(days=1 if 20 <= now().hour < 23 else 0) %}
             {{ ['יום שני', 'יום שלישי', 'יום רביעי', 'יום חמישי', 'יום שישי', 'שבת', 'יום ראשון'][target.weekday()] }}
           display_date: >-
-            {{ (now() + timedelta(days=1 if now().hour >= 20 and now().hour < 23 else 0)).strftime('%d/%m') }}
+            {{ (now() + timedelta(days=1 if 20 <= now().hour < 23 else 0)).strftime('%d/%m') }}
           day_key: >-
-            {% set target = now() + timedelta(days=1 if now().hour >= 20 and now().hour < 23 else 0) %}
+            {% set target = now() + timedelta(days=1 if 20 <= now().hour < 23 else 0) %}
             {{ ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'][target.weekday()] }}
           students: >-
             {{ {
@@ -29,6 +37,15 @@ template:
                 'thursday': ['גאוגרפיה', 'זה״ב — אפרת', 'מתמטיקה — אתי', 'מתמטיקה — אתי', 'חנ״ג — עופרה', 'שביל המורשת — מאיר'],
                 'friday': ['תרבות ישראלית', 'תנ״ך', 'גאוגרפיה — אתי', 'כישורי חיים', '', ''],
                 'saturday': ['', '', '', '', '', '']
+              },
+              'רועי': {
+                'sunday': ['מגמות', 'מגמות', 'אנגלית', 'אנגלית', 'חנ״ג', 'ספרות', 'תנ״ך', 'מתמטיקה', 'מתמטיקה'],
+                'monday': ['מדעי המחשב', 'מדעי המחשב', 'מדעי המחשב', 'מדעי המחשב', 'מדעי המחשב', 'פיזיקה', 'פיזיקה', '', ''],
+                'tuesday': ['ספרות', 'ספרות', 'מתמטיקה', 'מתמטיקה', 'חנ״ג', 'חינוך', 'ספרות', 'אנגלית', 'אנגלית'],
+                'wednesday': ['מתמטיקה', 'מתמטיקה', 'אנגלית', 'לשון', 'לשון', 'לשון', 'לשון', 'תנ״ך', 'תנ״ך'],
+                'thursday': ['לשון', 'לשון', 'תנ״ך', 'תנ״ך', 'לשון', 'לשון', 'חינוך פיננסי', 'חינוך תעבורתי', ''],
+                'friday': [],
+                'saturday': []
               }
             } | to_json }}
 
@@ -61,7 +78,7 @@ automation:
                 target:
                   entity_id: select.kitchen_fire_tablet_dashboard_view
                 data:
-                  option: kitchen-weather/timetable
+                  option: kitchen-weather/ambient
               - action: select.select_option
                 target:
                   entity_id: select.kitchen_fire_tablet_screensaver_mode
