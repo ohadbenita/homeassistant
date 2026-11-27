@@ -1,0 +1,82 @@
+template:
+  - binary_sensor:
+      - name: School timetable display
+        unique_id: school_timetable_display
+        state: >-
+          {% set day = now().weekday() %}
+          {% set hour = now().hour %}
+          {{ (day in [0, 1, 2, 3, 6] and 20 <= hour < 23)
+             or (day in [0, 1, 2, 3, 4, 6] and 7 <= hour < 8) }}
+        attributes:
+          display_target: >-
+            {{ 'למחר' if now().hour >= 20 and now().hour < 23 else 'להיום' }}
+          display_day: >-
+            {% set target = now() + timedelta(days=1 if now().hour >= 20 and now().hour < 23 else 0) %}
+            {{ ['יום שני', 'יום שלישי', 'יום רביעי', 'יום חמישי', 'יום שישי', 'שבת', 'יום ראשון'][target.weekday()] }}
+          display_date: >-
+            {{ (now() + timedelta(days=1 if now().hour >= 20 and now().hour < 23 else 0)).strftime('%d/%m') }}
+          day_key: >-
+            {% set target = now() + timedelta(days=1 if now().hour >= 20 and now().hour < 23 else 0) %}
+            {{ ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'][target.weekday()] }}
+          students: >-
+            {{ {
+              'עדי': {
+                'sunday': ['פותחים שבוע', 'עברית', 'חנ״ג — עופרה', 'אנגלית — אתי', 'מדעים', 'מדעים'],
+                'monday': ['מתמטיקה — אתי', 'תנ״ך', 'מיומנויות מחשב', 'מתמטיקה — אתי', 'אנגלית — אתי', 'כתיבה'],
+                'tuesday': ['עברית', 'עברית', 'מעגלי בחירה', 'מעגלי בחירה', 'מתמטיקה — אתי', 'כישורי חיים'],
+                'wednesday': ['לשון', 'לשון', 'גאוגרפיה', 'קוד ורובוטיקה — ים', 'אנגלית — אתי', 'כישורי חיים'],
+                'thursday': ['גאוגרפיה', 'זה״ב — אפרת', 'מתמטיקה — אתי', 'מתמטיקה — אתי', 'חנ״ג — עופרה', 'שביל המורשת — מאיר'],
+                'friday': ['תרבות ישראלית', 'תנ״ך', 'גאוגרפיה — אתי', 'כישורי חיים', '', ''],
+                'saturday': ['', '', '', '', '', '']
+              }
+            } | to_json }}
+
+automation:
+  - alias: Kitchen tablet - School timetable
+    id: kitchen_tablet_school_timetable
+    initial_state: true
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.school_timetable_display
+        to: 'on'
+        id: show
+      - platform: state
+        entity_id: binary_sensor.school_timetable_display
+        from: 'on'
+        to: 'off'
+        id: hide
+      - platform: homeassistant
+        event: start
+        id: startup
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.school_timetable_display
+                state: 'on'
+            sequence:
+              - action: select.select_option
+                target:
+                  entity_id: select.kitchen_fire_tablet_dashboard_view
+                data:
+                  option: kitchen-weather/timetable
+              - action: select.select_option
+                target:
+                  entity_id: select.kitchen_fire_tablet_screensaver_mode
+                data:
+                  option: Home Assistant Dashboard
+          - conditions:
+              - condition: trigger
+                id: hide
+            sequence:
+              - action: select.select_option
+                target:
+                  entity_id: select.kitchen_fire_tablet_dashboard_view
+                data:
+                  option: kitchen-weather/ambient
+              - action: select.select_option
+                target:
+                  entity_id: select.kitchen_fire_tablet_screensaver_mode
+                data:
+                  option: Dim
