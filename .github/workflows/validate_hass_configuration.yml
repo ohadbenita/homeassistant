@@ -169,7 +169,9 @@ jobs:
 
           for _ in $(seq 1 60); do
             status_json="$(curl --fail --show-error --silent \
-              "$HA_URL/local/github_sync_status.json?commit=$short_sha")"
+              --header "Authorization: Bearer $HA_TOKEN" \
+              "$HA_URL/api/states/sensor.github_sync_status?commit=$short_sha")"
+            status_json="$(printf '%s' "$status_json" | jq -c '.attributes + {status: .state}')"
             status="$(printf '%s' "$status_json" | jq -r '.status // ""')"
             commit="$(printf '%s' "$status_json" | jq -r '.commit // ""')"
 

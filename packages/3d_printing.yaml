@@ -179,7 +179,7 @@ automation:
         continue_on_error: true
         data:
           entity_id: camera.study_rpi3b_creality_nebula
-          filename: "/config/www/snapshots/3d_printer_snapshot.jpg"
+          filename: "/config/snapshots/3d_printer_snapshot.jpg"
 
       - delay: '00:00:02'
 
@@ -187,7 +187,7 @@ automation:
         continue_on_error: true
         data:
           chat_id: !secret telegram_homeassistant_notifications_chat_id
-          file: "/config/www/snapshots/3d_printer_snapshot.jpg"
+          file: "/config/snapshots/3d_printer_snapshot.jpg"
           caption: "Print complete: {{ states('sensor.creality_ender_v3_ke_filename') }}"
 
   - alias: "Send picture once printing is in error"
@@ -204,7 +204,7 @@ automation:
       - action: camera.snapshot
         data:
           entity_id: camera.creality_ender_v3_ke
-          filename: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
+          filename: "/config/snapshots/3d_printer_snapshot_error.jpg"
       - delay: '00:00:02'
 
       - action: notify.send_message
@@ -222,7 +222,7 @@ automation:
             Progress: {{ states('sensor.creality_ender_v3_ke_progress') }}%.
           data:
             photo:
-              - file: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
+              - file: "/config/snapshots/3d_printer_snapshot_error.jpg"
                 caption: "3D print {{ states('sensor.creality_ender_v3_ke_current_print_state') }} — nozzle and bed temperatures"
 
 
@@ -319,7 +319,7 @@ automation:
       - action: camera.snapshot
         data:
           entity_id: camera.creality_ender_v3_ke
-          filename: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
+          filename: "/config/snapshots/3d_printer_snapshot_error.jpg"
 
       - delay: '00:00:02'
 
@@ -340,7 +340,7 @@ automation:
             ({{ states('sensor.creality_ender_v3_ke_progress') }}% complete).
           data:
             photo:
-              - file: "/config/www/snapshots/3d_printer_snapshot_error.jpg"
+              - file: "/config/snapshots/3d_printer_snapshot_error.jpg"
                 caption: "Hotend temperature fault — nozzle and bed temperatures"
 
 

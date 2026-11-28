@@ -703,7 +703,7 @@ automation:
               continue_on_error: true
               data:
                 entity_id: camera.lpg_timercamera
-                filename: "/config/www/snapshots/lpg_auto_switcher_snapshot.jpg"
+                filename: "/config/snapshots/lpg_auto_switcher_snapshot.jpg"
 
             - delay: "00:00:02"
 
@@ -748,7 +748,7 @@ automation:
       - action: telegram_bot.send_photo
         data:
           chat_id: !secret telegram_homeassistant_notifications_chat_id
-          file: "/config/www/snapshots/lpg_auto_switcher_snapshot.jpg"
+          file: "/config/snapshots/lpg_auto_switcher_snapshot.jpg"
           caption: >-
             🚨 **LPG Auto-Switcher Alert**
 
@@ -828,7 +828,7 @@ automation:
       - action: telegram_bot.send_photo
         data:
           chat_id: !secret telegram_homeassistant_notifications_chat_id
-          file: "/config/www/snapshots/lpg_auto_switcher_snapshot.jpg"
+          file: "/config/snapshots/lpg_auto_switcher_snapshot.jpg"
           caption: >-
             🚨 **LPG Watchdog Alert**
 
@@ -874,7 +874,7 @@ automation:
       - action: camera.snapshot
         data:
           entity_id: camera.kitchen_path_snapshots_clear
-          filename: "/config/www/snapshots/kitchen_path_camera_clear_snapshot.jpg"
+          filename: "/config/snapshots/kitchen_path_camera_clear_snapshot.jpg"
 
       - delay: '00:00:02'
 
@@ -886,7 +886,7 @@ automation:
             please consider bringing it into the house
           data:
             photo:
-              - file: "/config/www/snapshots/kitchen_path_camera_clear_snapshot.jpg"
+              - file: "/config/snapshots/kitchen_path_camera_clear_snapshot.jpg"
                 caption: >-
                   **Alert**: Laundry is out - [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.kitchen_path_snapshots_clear?token={{ state_attr('camera.kitchen_path_snapshots_clear', 'access_token') }})
                 parse_mode: markdown

@@ -17,7 +17,7 @@ import urllib.request
 from pathlib import Path
 
 CONFIG = Path("/config")
-STATUS = CONFIG / "www/home_assistant_upgrade/status.json"
+STATUS = CONFIG / "home_assistant_upgrade/status.json"
 LOCK = CONFIG / ".home_assistant_upgrade.lock"
 COMPOSE_PATH = "hass/docker-compose.yaml"
 REPO = "ohadbenita/docker-config"
@@ -237,7 +237,7 @@ def docker_request(method, path, body=None, timeout=30):
 
 
 def deploy(version, compose_content):
-    helper_dir = CONFIG / "www/home_assistant_upgrade"
+    helper_dir = CONFIG / "home_assistant_upgrade"
     helper_dir.mkdir(parents=True, exist_ok=True)
     (helper_dir / "docker-compose.yaml").write_text(compose_content, encoding="utf-8")
     write_status(
@@ -283,7 +283,7 @@ def deploy(version, compose_content):
                 "Binds": [
                     "/var/run/docker.sock:/var/run/docker.sock",
                     f"{HOST_COMPOSE_DIR}:/repo:ro",
-                    f"{HOST_CONFIG_DIR}/www/home_assistant_upgrade:/upgrade:rw",
+                    f"{HOST_CONFIG_DIR}/home_assistant_upgrade:/upgrade:rw",
                 ],
                 "AutoRemove": True,
             },
