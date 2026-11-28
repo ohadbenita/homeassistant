@@ -190,8 +190,7 @@ automation:
             {{ '/config/snapshots/person_detection_' + now().strftime('%Y_%m_%d_%H_%M') + '.jpg' }}
       - action: camera.snapshot
         data:
-          entity_id: >-
-            {{ 'camera.' + trigger.entity_id.split('.')[1].replace('_person', '_snapshots_clear') }}
+          entity_id: camera.main_entrance_clear
           filename: "{{ states('input_text.person_detection_snapshot_filename') }}"
       - delay:
           seconds: 1
