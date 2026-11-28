@@ -198,7 +198,7 @@ automation:
       - action: camera.snapshot
         data:
           entity_id: camera.gas_heater_cam_gas_heater_esp32_cam
-          filename: "/config/www/snapshots/gas_heater_cam_gas_heater_esp32_cam_snapshot.jpg"
+          filename: "/config/snapshots/gas_heater_cam_gas_heater_esp32_cam_snapshot.jpg"
 
       - delay: '00:00:02'
 
@@ -209,7 +209,7 @@ automation:
           message: "Please check the heater display"
           data:
             photo:
-              - file: "/config/www/snapshots/gas_heater_cam_gas_heater_esp32_cam_snapshot.jpg"
+              - file: "/config/snapshots/gas_heater_cam_gas_heater_esp32_cam_snapshot.jpg"
                 caption: >-
                   [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.gas_heater_cam_gas_heater_esp32_cam?token={{ state_attr('camera.gas_heater_cam_gas_heater_esp32_cam', 'access_token') }})
                 parse_mode: markdown

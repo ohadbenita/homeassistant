@@ -6,7 +6,7 @@ REMOTE_URL="${REMOTE_URL:-https://github.com/ohadbenita/homeassistant.git}"
 BRANCH="${BRANCH:-master}"
 RELOAD_AFTER_SYNC="${RELOAD_AFTER_SYNC:-0}"
 LOCK_FILE="${LOCK_FILE:-.ha_git_sync.lock}"
-STATUS_FILE="${STATUS_FILE:-www/github_sync_status.json}"
+STATUS_FILE="${STATUS_FILE:-github_sync_status.json}"
 export GIT_CONFIG_GLOBAL="${GIT_CONFIG_GLOBAL:-$PWD/.gitconfig}"
 
 git() {
@@ -118,6 +118,47 @@ reload_home_assistant() {
   log "Synced successfully, but no reload command is configured."
 }
 
+migrate_public_files() {
+  python3 - <<'PY'
+from pathlib import Path
+import shutil
+
+config = Path.cwd()
+www = config / "www"
+
+def move_tree(source, destination):
+    if not source.exists():
+        return
+    destination.mkdir(parents=True, exist_ok=True)
+    for item in source.iterdir():
+        target = destination / item.name
+        if item.is_dir():
+            move_tree(item, target)
+        elif target.exists():
+            if not item.is_file() or not target.is_file() or item.read_bytes() != target.read_bytes():
+                raise FileExistsError(f"Refusing to overwrite {target}")
+            item.unlink()
+        else:
+            shutil.move(str(item), str(target))
+    source.rmdir()
+
+private = config / "snapshots"
+private.mkdir(exist_ok=True)
+move_tree(www / "snapshots", private)
+move_tree(www / "camera_captures", private / "camera_captures")
+move_tree(www / "home_assistant_upgrade", config / "home_assistant_upgrade")
+
+old_status = www / "github_sync_status.json"
+new_status = config / "github_sync_status.json"
+if old_status.exists():
+    if new_status.exists():
+        # The sync script has already written the current status to this private path.
+        old_status.unlink()
+    else:
+        shutil.move(str(old_status), str(new_status))
+PY
+}
+
 main() {
   local last_command=""
 
@@ -171,6 +212,9 @@ main() {
 
   log "Validation passed. Resetting to $upstream"
   git reset --hard "$target"
+
+  log "Moving existing www files to private storage"
+  migrate_public_files
 
   reload_home_assistant
   write_status "success" "Synced successfully." "$(current_commit)"

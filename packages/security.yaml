@@ -187,7 +187,7 @@ automation:
         data:
           entity_id: input_text.person_detection_snapshot_filename
           value: >-
-            {{ '/config/www/camera_captures/' + trigger.entity_id.split('.')[1].replace('_person', '') + '/' + now().strftime('%Y_%m_%d_%H_%M') + '.jpg' }}
+            {{ '/config/snapshots/person_detection_' + now().strftime('%Y_%m_%d_%H_%M') + '.jpg' }}
       - action: camera.snapshot
         data:
           entity_id: >-

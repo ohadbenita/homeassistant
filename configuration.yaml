@@ -11,7 +11,7 @@ homeassistant:
   auth_mfa_modules:
     - type: totp
   allowlist_external_dirs:
-    - /config/www/snapshots
+    - /config/snapshots
 
 recorder:
   purge_keep_days: 30

@@ -774,7 +774,7 @@ automation:
       - action: camera.snapshot
         data:
           entity_id: camera.backyard_pano_snapshots_clear
-          filename: "/config/www/snapshots/backyard_watering_leakage_snapshot.jpg"
+          filename: "/config/snapshots/backyard_watering_leakage_snapshot.jpg"
 
       - delay: '00:00:02'
 
@@ -785,7 +785,7 @@ automation:
           message: "Possible irrigation leakage detected in the backyard"
           data:
             photo:
-              - file: "/config/www/snapshots/backyard_watering_leakage_snapshot.jpg"
+              - file: "/config/snapshots/backyard_watering_leakage_snapshot.jpg"
                 caption: >-
                   [View Live Feed]({{ states('sensor.ha_base_url') }}/api/camera_proxy/camera.backyard_pano_snapshots_clear?token={{ state_attr('camera.backyard_pano_snapshots_clear', 'access_token') }})
                 parse_mode: markdown
