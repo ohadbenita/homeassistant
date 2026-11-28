@@ -108,9 +108,7 @@ automation:
           {% if trigger.id == "offset_trigger" %}
             {{ is_state('binary_sensor.dst', 'on') }}
           {% elif trigger.id == "sunset_trigger" %}
-            {{ is_state('binary_sensor.dst', 'off') and
-              (not is_state('climate.living_room_ac_smartair', 'on')
-                or states('sensor.openweathermap_feels_like_temperature') | int < 15) }}
+            {{ is_state('binary_sensor.dst', 'off') }}
           {% else %}
             false
           {% endif %}
