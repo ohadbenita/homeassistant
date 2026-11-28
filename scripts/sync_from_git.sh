@@ -186,6 +186,7 @@ main() {
   if [[ "$current" == "$upstream" ]]; then
     log "Already up to date at $current"
     git reset --hard "$target"
+    migrate_public_files
     write_status "success" "Already up to date." "$(current_commit)"
     exit 0
   fi
