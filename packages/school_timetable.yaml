@@ -50,26 +50,17 @@ template:
             } | to_json }}
 
 automation:
-  - alias: Kitchen tablet - Show weather when occupied
-    id: kitchen_tablet_show_weather_when_occupied
+  - alias: Kitchen tablet - Keep weather as kiosk home
+    id: kitchen_tablet_keep_weather_as_kiosk_home
     initial_state: true
     mode: restart
     trigger:
       - platform: state
-        entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
-        to: 'on'
-      - platform: state
-        entity_id: input_boolean.away_mode
-        to: 'off'
+        entity_id:
+          - binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
+          - input_boolean.away_mode
       - platform: homeassistant
         event: start
-    condition:
-      - condition: state
-        entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
-        state: 'on'
-      - condition: state
-        entity_id: input_boolean.away_mode
-        state: 'off'
     action:
       - action: esphome.ks_kitchen_fire_tablet_open_url
         data:
