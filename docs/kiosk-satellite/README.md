@@ -41,6 +41,13 @@ Dim saver to start and shows `/kitchen-weather/ambient` in the same WebView.
 Kiosk Satellite applies adaptive brightness to the Dim level. Its separate
 screensaver brightness switch does not control Dim mode.
 
+The Home Assistant automation `Kitchen tablet - Dim weather screensaver when
+kitchen is empty` toggles that separate switch according to room presence and
+Away mode. It does not set the native Dim level. The weather card also hides
+its contents against a black background when the room is unoccupied. The
+tablet's backlight dims through Kiosk Satellite's native Dim saver after its
+idle timeout, independently of the presence automation.
+
 After restoring the snapshot, check **Web Browsing → Inject JavaScript on the
 HA dashboard** for the block beginning `// Kitchen weather on the live
 dashboard while the native Dim saver is active.` Reload the kiosk page after
@@ -55,3 +62,10 @@ On November 27, 2026, the physical Fire Tablet test confirmed that both parcel
 chips open their tables with one tap and that **סגירה** returns to the weather
 view. A separate check in the tablet WebView confirmed that a background tap
 returns to Kitchen Tablet controls.
+
+On November 28, 2026, the live settings showed the Dim saver enabled with a
+60-second idle timeout, a 100% bright-room ceiling, and adaptive brightness.
+The presence automation was enabled; at the time of inspection, presence was
+on, Away mode was off, and the separate screensaver-brightness switch was off.
+This verified the configuration and current occupied state, not the physical
+backlight level after the room becomes empty.
