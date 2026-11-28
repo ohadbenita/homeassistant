@@ -50,51 +50,28 @@ template:
             } | to_json }}
 
 automation:
-  - alias: Kitchen tablet - School timetable
-    id: kitchen_tablet_school_timetable
+  - alias: Kitchen tablet - Show weather when occupied
+    id: kitchen_tablet_show_weather_when_occupied
     initial_state: true
     mode: restart
     trigger:
       - platform: state
-        entity_id: binary_sensor.school_timetable_display
+        entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
         to: 'on'
-        id: show
       - platform: state
-        entity_id: binary_sensor.school_timetable_display
-        from: 'on'
+        entity_id: input_boolean.away_mode
         to: 'off'
-        id: hide
       - platform: homeassistant
         event: start
-        id: startup
+    condition:
+      - condition: state
+        entity_id: binary_sensor.presence_sensor_fp2_69e2_presence_sensor_1
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.away_mode
+        state: 'off'
     action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.school_timetable_display
-                state: 'on'
-            sequence:
-              - action: select.select_option
-                target:
-                  entity_id: select.kitchen_fire_tablet_dashboard_view
-                data:
-                  option: kitchen-weather/ambient
-              - action: select.select_option
-                target:
-                  entity_id: select.kitchen_fire_tablet_screensaver_mode
-                data:
-                  option: Home Assistant Dashboard
-          - conditions:
-              - condition: trigger
-                id: hide
-            sequence:
-              - action: select.select_option
-                target:
-                  entity_id: select.kitchen_fire_tablet_dashboard_view
-                data:
-                  option: kitchen-weather/ambient
-              - action: select.select_option
-                target:
-                  entity_id: select.kitchen_fire_tablet_screensaver_mode
-                data:
-                  option: Dim
+      - action: esphome.ks_kitchen_fire_tablet_open_url
+        data:
+          url: http://127.0.0.1:2325/kitchen-weather/ambient
+          hold_mode: false
